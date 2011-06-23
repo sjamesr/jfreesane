@@ -469,7 +469,7 @@ public class SaneSession implements Closeable {
 			}
 
 			WritableRaster raster = Raster.createInterleavedRaster(
-					new DataBufferByte(bigArray, 0),
+					new DataBufferByte(bigArray, bigArray.length),
 					parameters.getPixelsPerLine(), parameters.getLineCount(),
 					parameters.getPixelsPerLine() * 3, 3,
 					new int[] { 0, 1, 2 }, null);
