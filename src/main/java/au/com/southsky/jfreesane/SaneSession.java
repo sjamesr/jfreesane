@@ -1,10 +1,20 @@
 package au.com.southsky.jfreesane;
 
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.image.BufferedImage;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,8 +23,11 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
+import com.sun.image.codec.jpeg.JPEGCodec;
+import com.sun.image.codec.jpeg.JPEGImageEncoder;
 
 /**
  * Represents a conversation taking place with a SANE daemon.
@@ -55,8 +68,88 @@ public class SaneSession implements Closeable {
 
 	@Override
 	public void close() throws IOException {
-		outputStream.write(SaneWord.forInt(10));
-		outputStream.close();
+		try {
+			outputStream.write(SaneWord.forInt(10));
+			outputStream.close();
+		} finally {
+			// Seems like an oversight that Socket is not Closeable?
+			Closeables.closeQuietly(new Closeable() {
+				@Override
+				public void close() throws IOException {
+					socket.close();
+				}
+			});
+		}
+	}
+
+	SaneDeviceHandle openDevice(SaneDevice device) throws IOException {
+		outputStream.write(SaneWord.forInt(2));
+		outputStream.write(device.getName());
+
+		SaneWord status = inputStream.readWord();
+
+		if (status.integerValue() != 0) {
+			throw new IOException("unexpected status (" + status.integerValue()
+					+ ") while opening device");
+		}
+
+		SaneWord handle = inputStream.readWord();
+		String resource = inputStream.readString();
+
+		return new SaneDeviceHandle(status, handle, resource);
+	}
+
+	BufferedImage acquireImage(SaneDeviceHandle handle) throws IOException {
+		outputStream.write(SaneWord.forInt(7));
+		outputStream.write(handle.getHandle());
+
+		{
+			int status = inputStream.readWord().integerValue();
+			if (status != 0) {
+				throw new IOException("Unexpected status (" + status
+						+ ") on image acquisition");
+			}
+		}
+
+		int port = inputStream.readWord().integerValue();
+		SaneWord byteOrder = inputStream.readWord();
+		String resource = inputStream.readString();
+
+		// TODO(sjr): use the correct byte order, also need to maybe
+		// authenticate to the resource
+
+		// Ask the server for the parameters of this scan
+		outputStream.write(SaneWord.forInt(6));
+		outputStream.write(handle.getHandle());
+
+		Socket imageSocket = new Socket(socket.getInetAddress(), port);
+
+		{
+			int status = inputStream.readWord().integerValue();
+			if (status != 0) {
+				throw new IOException("Unexpected status (" + status
+						+ ") in get_parameters");
+			}
+
+		}
+
+		SaneParameters parameters = inputStream.readSaneParameters();
+		SaneRecordInputStream recordStream = new SaneRecordInputStream(
+				parameters, imageSocket.getInputStream());
+
+		BufferedImage image = recordStream.readImage();
+		imageSocket.close();
+
+		return image;
+	}
+
+	void closeDevice(SaneDeviceHandle handle) throws IOException {
+		outputStream.write(SaneWord.forInt(3));
+		outputStream.write(handle.getHandle());
+
+		// read the dummy value from the wire, if it doesn't throw an exception
+		// we assume the close was successful
+		inputStream.readWord();
 	}
 
 	private void initSane() throws IOException {
@@ -73,7 +166,7 @@ public class SaneSession implements Closeable {
 		inputStream.readWord();
 	}
 
-	private static class SaneInputStream extends InputStream {
+	private class SaneInputStream extends InputStream {
 		private InputStream wrappedStream;
 
 		public SaneInputStream(InputStream wrappedStream) {
@@ -109,6 +202,10 @@ public class SaneSession implements Closeable {
 				result.add(device);
 			}
 
+			// read past a trailing byte in the response that I haven't figured
+			// out yet...
+			inputStream.readWord();
+
 			return result.build();
 		}
 
@@ -140,8 +237,8 @@ public class SaneSession implements Closeable {
 			String deviceModel = readString();
 			String deviceType = readString();
 
-			return new SaneDevice(deviceName, deviceVendor, deviceModel,
-					deviceType);
+			return new SaneDevice(SaneSession.this, deviceName, deviceVendor,
+					deviceModel, deviceType);
 		}
 
 		public String readString() throws IOException {
@@ -158,9 +255,21 @@ public class SaneSession implements Closeable {
 				throw new IllegalStateException(
 						"truncated input while reading string");
 			}
-			
+
 			// skip the null terminator
 			return new String(input, 0, input.length - 1);
+		}
+
+		public SaneParameters readSaneParameters() throws IOException {
+			int frame = readWord().integerValue();
+			boolean lastFrame = readWord().integerValue() == 1;
+			int bytesPerLine = readWord().integerValue();
+			int pixelsPerLine = readWord().integerValue();
+			int lines = readWord().integerValue();
+			int depth = readWord().integerValue();
+
+			return new SaneParameters(frame, lastFrame, bytesPerLine,
+					pixelsPerLine, lines, depth);
 		}
 
 		public SaneWord readWord() throws IOException {
@@ -257,6 +366,146 @@ public class SaneSession implements Closeable {
 			} catch (IOException e) {
 				throw new IllegalStateException(e);
 			}
+		}
+	}
+
+	static class SaneDeviceHandle {
+		private final SaneWord status;
+		private final SaneWord handle;
+		private final String resource;
+
+		private SaneDeviceHandle(SaneWord status, SaneWord handle,
+				String resource) {
+			this.status = status;
+			this.handle = handle;
+			this.resource = resource;
+		}
+
+		public SaneWord getStatus() {
+			return status;
+		}
+
+		public SaneWord getHandle() {
+			return handle;
+		}
+
+		public String getResource() {
+			return resource;
+		}
+
+		public boolean isAuthorizationRequired() {
+			return !Strings.isNullOrEmpty(resource);
+		}
+	}
+
+	public class SaneParameters {
+		private final int frame;
+		private final boolean lastFrame;
+		private final int bytesPerLine;
+		private final int pixelsPerLine;
+		private final int lineCount;
+		private final int depthPerPixel;
+
+		public SaneParameters(int frame, boolean lastFrame, int bytesPerLine,
+				int pixelsPerLine, int lines, int depth) {
+			this.frame = frame;
+			this.lastFrame = lastFrame;
+			this.bytesPerLine = bytesPerLine;
+			this.pixelsPerLine = pixelsPerLine;
+			this.lineCount = lines;
+			this.depthPerPixel = depth;
+		}
+
+		public int getFrame() {
+			return frame;
+		}
+
+		public boolean isLastFrame() {
+			return lastFrame;
+		}
+
+		public int getBytesPerLine() {
+			return bytesPerLine;
+		}
+
+		public int getPixelsPerLine() {
+			return pixelsPerLine;
+		}
+
+		public int getLineCount() {
+			return lineCount;
+		}
+
+		public int getDepthPerPixel() {
+			return depthPerPixel;
+		}
+	}
+
+	private static class SaneRecordInputStream extends InputStream {
+		private final SaneParameters parameters;
+		private final InputStream underlyingStream;
+
+		public SaneRecordInputStream(SaneParameters parameters,
+				InputStream underlyingStream) {
+			this.parameters = parameters;
+			this.underlyingStream = underlyingStream;
+		}
+
+		@Override
+		public int read() throws IOException {
+			return underlyingStream.read();
+		}
+
+		public BufferedImage readImage() throws IOException {
+			byte[] bigArray = new byte[parameters.getBytesPerLine()
+					* parameters.getLineCount()];
+
+			byte[] record;
+
+			int offset = 0;
+			while ((record = readRecord()) != null) {
+				System.arraycopy(record, 0, bigArray, offset, record.length);
+				offset += record.length;
+			}
+
+			WritableRaster raster = Raster.createInterleavedRaster(
+					new DataBufferByte(bigArray, 0),
+					parameters.getPixelsPerLine(), parameters.getLineCount(),
+					parameters.getPixelsPerLine() * 3, 3,
+					new int[] { 0, 1, 2 }, null);
+
+			BufferedImage result = new BufferedImage(new ComponentColorModel(
+					ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB), null,
+					false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE),
+					raster, false, null);
+			result.flush();
+
+			return result;
+		}
+
+		public byte[] readRecord() throws IOException {
+			DataInputStream inputStream = new DataInputStream(this);
+			long length = inputStream.readInt();
+
+			if (length == 0xffffffff) {
+				System.out.println("Reached end of records");
+				return null;
+			}
+
+			if (length > Integer.MAX_VALUE) {
+				throw new IllegalStateException("TODO: support massive records");
+			}
+
+			byte[] record = new byte[(int) length];
+
+			int result = read(record);
+			if (result != length) {
+				throw new IllegalStateException("read too few bytes (" + result
+						+ "), was expecting " + length);
+			}
+
+			System.out.println("Read a record of " + result + " bytes");
+			return record;
 		}
 	}
 }
