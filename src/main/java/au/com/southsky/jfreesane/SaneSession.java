@@ -166,7 +166,7 @@ public class SaneSession implements Closeable {
 		inputStream.readWord();
 	}
 
-	private class SaneInputStream extends InputStream {
+	public class SaneInputStream extends InputStream {
 		private InputStream wrappedStream;
 
 		public SaneInputStream(InputStream wrappedStream) {
@@ -277,7 +277,7 @@ public class SaneSession implements Closeable {
 		}
 	}
 
-	private static class SaneOutputStream extends OutputStream {
+	public static class SaneOutputStream extends OutputStream {
 		private OutputStream wrappedStream;
 
 		public SaneOutputStream(OutputStream wrappedStream) {
@@ -320,7 +320,7 @@ public class SaneSession implements Closeable {
 		}
 	}
 
-	private static class SaneWord {
+	public static class SaneWord {
 		private final byte[] value;
 
 		private SaneWord(byte[] value) {
@@ -469,8 +469,8 @@ public class SaneSession implements Closeable {
 			}
 
 			WritableRaster raster = Raster.createInterleavedRaster(
-					new DataBufferByte(bigArray, 0),
-					parameters.getPixelsPerLine(), parameters.getLineCount(),
+					new DataBufferByte(bigArray, 0), parameters
+							.getPixelsPerLine(), parameters.getLineCount(),
 					parameters.getPixelsPerLine() * 3, 3,
 					new int[] { 0, 1, 2 }, null);
 
@@ -508,4 +508,13 @@ public class SaneSession implements Closeable {
 			return record;
 		}
 	}
+
+	public SaneOutputStream getOutputStream() {
+		return outputStream;
+	}
+
+	public SaneInputStream getInputStream() {
+		return inputStream;
+	}
+
 }

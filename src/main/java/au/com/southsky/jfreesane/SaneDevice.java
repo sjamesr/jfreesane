@@ -3,10 +3,15 @@ package au.com.southsky.jfreesane;
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 
 import au.com.southsky.jfreesane.SaneSession.SaneDeviceHandle;
+import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
+import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a
@@ -76,4 +81,30 @@ public class SaneDevice implements Closeable {
 		return "SaneDevice [name=" + name + ", vendor=" + vendor + ", model="
 				+ model + ", type=" + type + "]";
 	}
+	
+	
+	
+	
+	
+	
+	public SaneDeviceHandle getHandle() {
+		return handle;
+	}
+
+	/**
+	 * Implements SANE_NET_GET_OPTION_DESCRIPTORS 
+	 * @return List of SaneOptions
+	 * @throws IOException
+	 */
+	public List<SaneOption> listOptions() throws IOException {
+		
+		return SaneOption.optionsFor(this);
+		
+	}
+
+	public SaneSession getSession() {
+		return session;
+	}
+	
+	
 }

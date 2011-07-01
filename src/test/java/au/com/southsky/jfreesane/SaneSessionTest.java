@@ -7,9 +7,12 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.swing.text.html.Option;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.io.Closeables;
@@ -53,6 +56,7 @@ public class SaneSessionTest {
 	}
 	
 	@Test
+	@Ignore
 	public void imageAcquisitionSucceeds() throws Exception {
 		// open the first device we get
 		List<SaneDevice> devices = session.listDevices();
@@ -72,5 +76,24 @@ public class SaneSessionTest {
 			Closeables.closeQuietly(stream);
 			Closeables.close(device, false);
 		}
+	}
+	
+	@Test 
+	public void listOptionsSucceeds() throws Exception {
+		List<SaneDevice> devices = session.listDevices();
+		SaneDevice device = devices.get(0);
+		try {
+			device.open();
+			List <SaneOption> options = device.listOptions();
+			Assert.assertTrue("Expect multiple SaneOptions", options.size()>0);
+			System.out.println("We found " + options.size() + " options");
+			for (SaneOption option : options) {
+				System.out.println(option.toString());
+			}
+			Assert.assertTrue("Expected first option 'Number of options'",options.get(0).getTitle().equals("Number of options"));
+		} finally {
+			Closeables.closeQuietly(device);
+		}
+		
 	}
 }
