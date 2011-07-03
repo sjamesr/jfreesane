@@ -116,7 +116,7 @@ public class SaneSessionTest {
 			// print out the value of all integer-valued options
 			
 			for (SaneOption option : options) {
-				if (option.getType()==OptionValueType.INT) {
+				if (option.getType()==OptionValueType.INT && option.getValueCount() == 1) {
 					System.out.println(option.getTitle()+"="+option.getIntegerValue());
 				}
 			}

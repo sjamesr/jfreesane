@@ -256,9 +256,9 @@ public class SaneOption {
 			SaneDevice device, int optionNumber) throws IOException {
 
 		SaneOption option = null;
-		
+
 		// discard pointer
-		
+
 		inputStream.readWord();
 
 		String optionName = inputStream.readString();
@@ -317,7 +317,7 @@ public class SaneOption {
 			int w1 = inputStream.readWord().integerValue();
 			int w2 = inputStream.readWord().integerValue();
 			int w3 = inputStream.readWord().integerValue();
-			//int w4 = inputStream.readWord().integerValue();
+			// int w4 = inputStream.readWord().integerValue();
 
 			switch (valueType) {
 
@@ -406,6 +406,23 @@ public class SaneOption {
 		return size;
 	}
 
+	public int getValueCount() {
+		switch (valueType) {
+		case BOOLEAN:
+			return 1;
+		case INT:
+		case FIXED:
+			return size / SaneWord.SIZE_IN_BYTES;
+		case BUTTON:
+		case GROUP:
+			throw new IllegalStateException("Option type '" + valueType
+					+ "' has no value count");
+		default:
+			throw new IllegalStateException("Option type '" + valueType
+					+ "' unknown");
+		}
+	}
+
 	public int getCapabilityWord() {
 		return capabilityWord;
 	}
@@ -427,8 +444,8 @@ public class SaneOption {
 	}
 
 	public String toString() {
-		return String.format("Option: %s, %s, value type: %s, units: %s", name, title,
-				valueType, units);
+		return String.format("Option: %s, %s, value type: %s, units: %s", name,
+				title, valueType, units);
 	}
 
 	/**
@@ -446,7 +463,10 @@ public class SaneOption {
 
 		// check for type agreement
 
-		Preconditions.checkState(valueType == OptionValueType.INT);
+		Preconditions.checkState(valueType == OptionValueType.INT,
+				"option is not an integer");
+		Preconditions.checkState(getValueCount() == 1, 
+				"option is an integer array, not integer");
 
 		// check that this option is readable
 
@@ -477,7 +497,11 @@ public class SaneOption {
 		SaneWord returnedinfo = in.readWord(); // ignore??
 		SaneWord returnedValueType = in.readWord(); // ignore
 		SaneWord returnedValueSize = in.readWord(); // ignore
-		int valueCount = in.readWord().integerValue(); // must be one in the case of an integer value
+
+		int valueCount = in.readWord().integerValue(); // must be one in the
+														// case of an integer
+														// value
+		Preconditions.checkState(valueCount == 1, "unexpected value count");
 		result = in.readWord().integerValue(); // the value
 		String resource = in.readString(); // TODO: handle resource
 		// authorisation
@@ -534,7 +558,9 @@ public class SaneOption {
 		SaneWord returnedinfo = in.readWord(); // ignore??
 		SaneWord returnedValueType = in.readWord(); // ignore
 		SaneWord returnedValueSize = in.readWord(); // ignore
-		int valueCount = in.readWord().integerValue(); // must be one in the case of an integer value
+		int valueCount = in.readWord().integerValue(); // must be one in the
+														// case of an integer
+														// value
 		result = in.readWord().integerValue();
 		String resource = in.readString(); // TODO: handle resource
 		// authorisation
@@ -547,7 +573,7 @@ public class SaneOption {
 	public boolean isReadable() {
 		return ((capabilityWord & OptionCapability.SOFT_DETECT.capBit()) > 0);
 	}
-	
+
 	public boolean isWriteable() {
 		return ((capabilityWord & OptionCapability.SOFT_SELECT.capBit()) > 0);
 	}
