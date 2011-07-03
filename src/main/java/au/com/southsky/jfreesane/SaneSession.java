@@ -317,6 +317,8 @@ public class SaneSession implements Closeable {
 	}
 
 	public static class SaneWord {
+		public static final int SIZE_IN_BYTES = 4;
+		
 		private final byte[] value;
 
 		private SaneWord(byte[] value) {
@@ -324,7 +326,7 @@ public class SaneSession implements Closeable {
 		}
 
 		public static SaneWord fromStream(InputStream input) throws IOException {
-			byte[] newValue = new byte[4];
+			byte[] newValue = new byte[SIZE_IN_BYTES];
 			if (input.read(newValue) != newValue.length) {
 				throw new IllegalArgumentException(
 						"input stream was truncated while reading a word");
@@ -334,7 +336,7 @@ public class SaneSession implements Closeable {
 		}
 
 		public static SaneWord forInt(int value) {
-			ByteArrayOutputStream byteStream = new ByteArrayOutputStream(4);
+			ByteArrayOutputStream byteStream = new ByteArrayOutputStream(SIZE_IN_BYTES);
 			DataOutputStream stream = new DataOutputStream(byteStream);
 			try {
 				stream.writeInt(value);
