@@ -238,15 +238,11 @@ public class SaneOption {
 
 		int length = inputStream.readWord().integerValue() - 1;
 
-		// discard a word
-
-		inputStream.readWord();
-
 		if (length <= 0) {
 			return ImmutableList.of();
 		}
 
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i <= length; i++) {
 			SaneOption option = SaneOption.fromStream(inputStream, device, i);
 			if (option != null) {
 				options.add(option);
@@ -260,6 +256,10 @@ public class SaneOption {
 			SaneDevice device, int optionNumber) throws IOException {
 
 		SaneOption option = null;
+		
+		// discard pointer
+		
+		inputStream.readWord();
 
 		String optionName = inputStream.readString();
 		String optionTitle = inputStream.readString();
@@ -291,7 +291,7 @@ public class SaneOption {
 
 		switch (constraintType) {
 		case NO_CONSTRAINT:
-			inputStream.readWord(); // discard empty list
+			// inputStream.readWord(); // discard empty list
 			break;
 		case STRING_LIST_CONSTRAINT:
 			stringConstraints = Lists.newArrayList();
@@ -299,7 +299,7 @@ public class SaneOption {
 			for (int i = 0; i < n; i++) {
 				stringConstraints.add(inputStream.readString());
 			}
-			inputStream.readWord();
+			// inputStream.readWord();
 			break;
 		case VALUE_LIST_CONSTRAINT:
 			valueConstraints = Lists.newArrayList();
@@ -307,7 +307,7 @@ public class SaneOption {
 			for (int i = 0; i < n; i++) {
 				valueConstraints.add(inputStream.readWord().integerValue());
 			}
-			inputStream.readWord(); // TODO: Is this necessary?
+			// inputStream.readWord(); // TODO: Is this necessary?
 			break;
 		case RANGE_CONSTRAINT:
 
@@ -317,7 +317,7 @@ public class SaneOption {
 			int w1 = inputStream.readWord().integerValue();
 			int w2 = inputStream.readWord().integerValue();
 			int w3 = inputStream.readWord().integerValue();
-			int w4 = inputStream.readWord().integerValue();
+			//int w4 = inputStream.readWord().integerValue();
 
 			switch (valueType) {
 
@@ -427,7 +427,7 @@ public class SaneOption {
 	}
 
 	public String toString() {
-		return String.format("Option: %s, value type: %s, units: %s", title,
+		return String.format("Option: %s, %s, value type: %s, units: %s", name, title,
 				valueType, units);
 	}
 
@@ -459,13 +459,15 @@ public class SaneOption {
 		// SANE_Int * i);
 
 		SaneOutputStream out = this.device.getSession().getOutputStream();
+		out.write(SaneWord.forInt(5));
 		out.write(SaneWord
 				.forInt(device.getHandle().getHandle().integerValue()));
 		out.write(SaneWord.forInt(this.optionNumber));
 		out.write(SaneWord.forInt(OptionAction.GET_VALUE.getWireValue()));
 		out.write(SaneWord.forInt(valueType.getWireValue()));
 		out.write(SaneWord.forInt(size));
-		out.write(SaneWord.forInt(0)); // why do we need to provide a value
+		out.write(SaneWord.forInt(1));
+		out.write(SaneWord.forInt(0));// why do we need to provide a value
 		// buffer in an RPC call ???
 
 		// read result
@@ -475,11 +477,12 @@ public class SaneOption {
 		SaneWord returnedinfo = in.readWord(); // ignore??
 		SaneWord returnedValueType = in.readWord(); // ignore
 		SaneWord returnedValueSize = in.readWord(); // ignore
-		result = in.readWord().integerValue();
+		int valueCount = in.readWord().integerValue(); // must be one in the case of an integer value
+		result = in.readWord().integerValue(); // the value
 		String resource = in.readString(); // TODO: handle resource
 		// authorisation
 
-		// TODO: check status
+		// TODO: check status -- may have to reload options!!
 
 		return result;
 	}
@@ -519,7 +522,7 @@ public class SaneOption {
 		out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
 		out.write(SaneWord.forInt(valueType.getWireValue()));
 		out.write(SaneWord.forInt(size));
-		out.write(SaneWord.forInt(size));
+		out.write(SaneWord.forInt(1)); // only one value follows
 		out.write(SaneWord.forInt(newValue)); // why do we need to provide a
 												// value
 		// buffer in an RPC call ???
@@ -531,6 +534,7 @@ public class SaneOption {
 		SaneWord returnedinfo = in.readWord(); // ignore??
 		SaneWord returnedValueType = in.readWord(); // ignore
 		SaneWord returnedValueSize = in.readWord(); // ignore
+		int valueCount = in.readWord().integerValue(); // must be one in the case of an integer value
 		result = in.readWord().integerValue();
 		String resource = in.readString(); // TODO: handle resource
 		// authorisation

@@ -15,6 +15,8 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import au.com.southsky.jfreesane.SaneOption.OptionValueType;
+
 import com.google.common.io.Closeables;
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGImageEncoder;
@@ -91,6 +93,33 @@ public class SaneSessionTest {
 				System.out.println(option.toString());
 			}
 			Assert.assertTrue("Expected first option 'Number of options'",options.get(0).getTitle().equals("Number of options"));
+		} finally {
+			Closeables.closeQuietly(device);
+		}
+		
+	}
+	
+	@Test 
+	public void getOptionValueSucceeds() throws Exception {
+		List<SaneDevice> devices = session.listDevices();
+		SaneDevice device = devices.get(0);
+		try {
+			device.open();
+			List <SaneOption> options = device.listOptions();
+			Assert.assertTrue("Expect multiple SaneOptions", options.size()>0);
+			// option 0 is always "Number of options"
+			// must be greater than zero
+			
+			int optionCount = options.get(0).getIntegerValue();
+			Assert.assertTrue("Option count must be > 0", optionCount > 0);
+			
+			// print out the value of all integer-valued options
+			
+			for (SaneOption option : options) {
+				if (option.getType()==OptionValueType.INT) {
+					System.out.println(option.getTitle()+"="+option.getIntegerValue());
+				}
+			}
 		} finally {
 			Closeables.closeQuietly(device);
 		}
