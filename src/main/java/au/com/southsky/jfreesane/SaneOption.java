@@ -2,21 +2,22 @@ package au.com.southsky.jfreesane;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
 import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
 import au.com.southsky.jfreesane.SaneSession.SaneWord;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 public class SaneOption {
 
 	private static Group currentGroup = null;
 
-	public enum OptionValueType {
-		BOOLEAN(0), INT(1), FIXED(2), STRING(3), BUTTON(
-				4), GROUP(5);
+	public enum OptionValueType implements SaneEnum {
+		BOOLEAN(0), INT(1), FIXED(2), STRING(3), BUTTON(4), GROUP(5);
 
 		private int typeNo;
 
@@ -27,10 +28,27 @@ public class SaneOption {
 		public int typeNo() {
 			return typeNo;
 		}
+
+		@Override
+		public int getWireValue() {
+			return typeNo;
+		}
 	};
 
-	public enum OptionUnits {
-		UNIT_NONE, UNIT_PIXEL, UNIT_BIT, UNIT_MM, UNIT_DPI, UNIT_PERCENT, UNIT_MICROSECOND
+	public enum OptionUnits implements SaneEnum {
+		UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(
+				5), UNIT_MICROSECOND(6);
+
+		private final int wireValue;
+
+		OptionUnits(int wireValue) {
+			this.wireValue = wireValue;
+		}
+
+		@Override
+		public int getWireValue() {
+			return wireValue;
+		}
 	};
 
 	public enum OptionCapability {
@@ -58,18 +76,25 @@ public class SaneOption {
 		}
 	}
 
-	public enum OptionValueConstraintType {
-		NO_CONSTRAINT("No constraint"), RANGE_CONSTRAINT(""), VALUE_LIST_CONSTRAINT(
-				""), STRING_LIST_CONSTRAINT("");
+	public enum OptionValueConstraintType implements SaneEnum {
+		NO_CONSTRAINT(0, "No constraint"), RANGE_CONSTRAINT(1, ""), VALUE_LIST_CONSTRAINT(
+				2, ""), STRING_LIST_CONSTRAINT(3, "");
 
-		private String description;
+		private final int wireValue;
+		private final String description;
 
-		OptionValueConstraintType(String description) {
+		OptionValueConstraintType(int wireValue, String description) {
+			this.wireValue = wireValue;
 			this.description = description;
 		}
 
 		public String description() {
 			return description;
+		}
+
+		@Override
+		public int getWireValue() {
+			return wireValue;
 		}
 	}
 
@@ -218,11 +243,12 @@ public class SaneOption {
 		String optionDescription = inputStream.readString();
 		int typeInt = inputStream.readWord().integerValue();
 		// TODO: range check here
-		OptionValueType valueType = OptionValueType.values()[typeInt];
+		OptionValueType valueType = SaneEnums.valueOf(OptionValueType.class,
+				typeInt);
 
 		int unitsInt = inputStream.readWord().integerValue();
 		// TODO: range check here
-		OptionUnits units = OptionUnits.values()[unitsInt];
+		OptionUnits units = SaneEnums.valueOf(OptionUnits.class, unitsInt);
 
 		int size = inputStream.readWord().integerValue();
 
@@ -231,8 +257,8 @@ public class SaneOption {
 		int capabilityWord = inputStream.readWord().integerValue();
 		int constraintTypeInt = inputStream.readWord().integerValue();
 		// TODO: range check here
-		OptionValueConstraintType constraintType = OptionValueConstraintType
-				.values()[constraintTypeInt];
+		OptionValueConstraintType constraintType = SaneEnums.valueOf(
+				OptionValueConstraintType.class, constraintTypeInt);
 
 		// decode the constraint
 
@@ -241,50 +267,50 @@ public class SaneOption {
 		RangeConstraint rangeConstraint = null;
 
 		switch (constraintType) {
-		case NO_CONSTRAINT:
-			inputStream.readWord(); // discard empty list
-			break;
-		case STRING_LIST_CONSTRAINT:
-			stringConstraints = Lists.newArrayList();
-			int n = inputStream.readWord().integerValue();
-			for (int i = 0; i < n; i++) {
-				stringConstraints.add(inputStream.readString());
-			}
-			inputStream.readWord();
-			break;
-		case VALUE_LIST_CONSTRAINT:
-			valueConstraints = Lists.newArrayList();
-			n = inputStream.readWord().integerValue();
-			for (int i = 0; i < n; i++) {
-				valueConstraints.add(inputStream.readWord().integerValue());
-			}
-			inputStream.readWord(); // TODO: Is this necessary?
-			break;
-		case RANGE_CONSTRAINT:
-
-			// TODO: still don't understand the 6 values
-
-			int w0 = inputStream.readWord().integerValue();
-			int w1 = inputStream.readWord().integerValue();
-			int w2 = inputStream.readWord().integerValue();
-			int w3 = inputStream.readWord().integerValue();
-			int w4 = inputStream.readWord().integerValue();
-
-			switch (valueType) {
-
-			case INT:
-				rangeConstraint = new IntegerRangeContraint(w1, w2, w3);
+			case NO_CONSTRAINT :
+				inputStream.readWord(); // discard empty list
 				break;
-			case FIXED:
-				rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
+			case STRING_LIST_CONSTRAINT :
+				stringConstraints = Lists.newArrayList();
+				int n = inputStream.readWord().integerValue();
+				for (int i = 0; i < n; i++) {
+					stringConstraints.add(inputStream.readString());
+				}
+				inputStream.readWord();
 				break;
-			default:
-				throw new IllegalStateException(
-						"Integer or Fixed type expected for range constraint");
-			}
-			break;
-		default:
-			throw new IllegalStateException("Unknow constrint type");
+			case VALUE_LIST_CONSTRAINT :
+				valueConstraints = Lists.newArrayList();
+				n = inputStream.readWord().integerValue();
+				for (int i = 0; i < n; i++) {
+					valueConstraints.add(inputStream.readWord().integerValue());
+				}
+				inputStream.readWord(); // TODO: Is this necessary?
+				break;
+			case RANGE_CONSTRAINT :
+
+				// TODO: still don't understand the 6 values
+
+				int w0 = inputStream.readWord().integerValue();
+				int w1 = inputStream.readWord().integerValue();
+				int w2 = inputStream.readWord().integerValue();
+				int w3 = inputStream.readWord().integerValue();
+				int w4 = inputStream.readWord().integerValue();
+
+				switch (valueType) {
+
+					case INT :
+						rangeConstraint = new IntegerRangeContraint(w1, w2, w3);
+						break;
+					case FIXED :
+						rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
+						break;
+					default :
+						throw new IllegalStateException(
+								"Integer or Fixed type expected for range constraint");
+				}
+				break;
+			default :
+				throw new IllegalStateException("Unknow constrint type");
 		}
 
 		// handle a change of group
@@ -322,9 +348,9 @@ public class SaneOption {
 		public OptionValueType getValueType() {
 			return valueType;
 		}
-		
+
 	}
-	
+
 	public SaneDevice getDevice() {
 		return device;
 	}
@@ -378,7 +404,8 @@ public class SaneOption {
 	}
 
 	public String toString() {
-		return String.format("Option: %s, value type: %s, units: %s", title, type, units);
+		return String.format("Option: %s, value type: %s, units: %s", title,
+				type, units);
 	}
 
 }
