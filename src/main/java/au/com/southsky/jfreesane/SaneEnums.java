@@ -51,7 +51,7 @@ public class SaneEnums {
 		T[] enumConstants = enumType.getEnumConstants();
 		List<T> values = Lists.newArrayListWithCapacity(enumConstants.length);
 
-		for (T value : enumType.getEnumConstants()) {
+		for (T value : enumConstants) {
 			if ((wireValue & value.getWireValue()) != 0) {
 				values.add(value);
 			}
