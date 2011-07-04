@@ -1,7 +1,9 @@
 package au.com.southsky.jfreesane;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
 import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
@@ -24,16 +26,10 @@ public class SaneOption {
 			this.actionNo = actionNo;
 		}
 
-		public int actionNo() {
-			return actionNo;
-		}
-
 		@Override
 		public int getWireValue() {
-			// TODO Auto-generated method stub
-			return 0;
+			return actionNo;
 		}
-
 	}
 
 	public enum OptionValueType implements SaneEnum {
@@ -71,7 +67,7 @@ public class SaneOption {
 		}
 	};
 
-	public enum OptionCapability {
+	public enum OptionCapability implements SaneEnum {
 		SOFT_SELECT(1, "Option value may be set by software"), HARD_SELECT(2,
 				"Option value may be set by user intervention at the scanner"), SOFT_DETECT(
 				4, "Option value may be read by software"), EMULATED(8,
@@ -88,13 +84,50 @@ public class SaneOption {
 			this.description = description;
 		}
 
-		public int capBit() {
-			return capBit;
-		}
-
 		public String description() {
 			return description;
 		}
+
+		@Override
+		public int getWireValue() {
+			return capBit;
+		}
+	}
+
+	/**
+	 * Represents the information that the SANE daemon returns about the effect
+	 * of modifying an option.
+	 */
+	public enum OptionWriteInfo implements SaneEnum {
+		/**
+		 * The value passed to SANE was accepted, but the SANE daemon has chosen
+		 * a slightly different value than the one specified.
+		 */
+		INEXACT(1),
+
+		/**
+		 * Setting the option may have resulted in changes to other options and
+		 * the client should re-read options whose values it needs.
+		 */
+		RELOAD_OPTIONS(2),
+
+		/**
+		 * Setting the option may have caused a parameter set by the user to
+		 * have changed.
+		 */
+		RELOAD_PARAMETERS(4);
+
+		private final int wireValue;
+
+		OptionWriteInfo(int wireValue) {
+			this.wireValue = wireValue;
+		}
+
+		@Override
+		public int getWireValue() {
+			return wireValue;
+		}
+
 	}
 
 	public enum OptionValueConstraintType implements SaneEnum {
@@ -183,7 +216,7 @@ public class SaneOption {
 	private final OptionValueType valueType;
 	private final OptionUnits units;
 	private final int size;
-	private final int capabilityWord;
+	private final Set<OptionCapability> optionCapabilities;
 	private final OptionValueConstraintType constraintType;
 	private final RangeConstraint rangeConstraints;
 	private final List<String> stringContraints;
@@ -206,7 +239,8 @@ public class SaneOption {
 		this.valueType = type;
 		this.units = units;
 		this.size = size;
-		this.capabilityWord = capabilityWord;
+		this.optionCapabilities = SaneEnums.enumSet(OptionCapability.class,
+				capabilityWord);
 		this.constraintType = constraintType;
 		this.rangeConstraints = rangeConstraints;
 		this.stringContraints = stringContraints;
@@ -409,6 +443,7 @@ public class SaneOption {
 	public int getValueCount() {
 		switch (valueType) {
 		case BOOLEAN:
+		case STRING:
 			return 1;
 		case INT:
 		case FIXED:
@@ -423,8 +458,8 @@ public class SaneOption {
 		}
 	}
 
-	public int getCapabilityWord() {
-		return capabilityWord;
+	public Set<OptionCapability> getCapabilities() {
+		return EnumSet.copyOf(optionCapabilities);
 	}
 
 	public OptionValueConstraintType getConstraintType() {
@@ -459,13 +494,11 @@ public class SaneOption {
 	 * @throws IOException
 	 */
 	public int getIntegerValue() throws IOException {
-		int result = 0;
-
 		// check for type agreement
 
 		Preconditions.checkState(valueType == OptionValueType.INT,
 				"option is not an integer");
-		Preconditions.checkState(getValueCount() == 1, 
+		Preconditions.checkState(getValueCount() == 1,
 				"option is an integer array, not integer");
 
 		// check that this option is readable
@@ -491,24 +524,39 @@ public class SaneOption {
 		// buffer in an RPC call ???
 
 		// read result
-
-		SaneInputStream in = this.device.getSession().getInputStream();
-		SaneWord status = in.readWord();
-		SaneWord returnedinfo = in.readWord(); // ignore??
-		SaneWord returnedValueType = in.readWord(); // ignore
-		SaneWord returnedValueSize = in.readWord(); // ignore
-
-		int valueCount = in.readWord().integerValue(); // must be one in the
-														// case of an integer
-														// value
-		Preconditions.checkState(valueCount == 1, "unexpected value count");
-		result = in.readWord().integerValue(); // the value
-		String resource = in.readString(); // TODO: handle resource
-		// authorisation
-
+		ControlOptionResult result = ControlOptionResult.fromStream(device.getSession().getInputStream());
+		Preconditions.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES, "unexpected value count");
+		Preconditions.checkState(result.getType() == OptionValueType.INT);
+		
+		// TODO: handle resource authorisation
 		// TODO: check status -- may have to reload options!!
+		return SaneWord.fromBytes(result.getValue()).integerValue(); // the value
+	}
 
-		return result;
+	public String setStringValue(String newValue) throws IOException {
+		// check for type agreement
+		Preconditions.checkState(valueType == OptionValueType.STRING);
+		Preconditions.checkState(getValueCount() == 1);
+		Preconditions.checkState(isWriteable());
+
+		// new value must be STRICTLY less than size(), as SANE includes the
+		// trailing null
+		// that we will add later in its size
+		Preconditions.checkState(newValue.length() < getSize());
+
+		ControlOptionResult result = writeOption(newValue);
+		Preconditions.checkState(result.getType() == OptionValueType.STRING);
+
+		// TODO(sjr): maybe this should go somewhere common?
+		String optionValueFromServer = new String(result.getValue(), 0,
+				result.getValueSize() - 1 /* trim trailing null */);
+
+		Preconditions.checkState(
+				result.getInfo().contains(OptionWriteInfo.INEXACT)
+						^ newValue.equals(optionValueFromServer),
+				"new option value does not match when it should");
+
+		return optionValueFromServer;
 	}
 
 	/**
@@ -523,23 +571,54 @@ public class SaneOption {
 	 * @throws IOException
 	 */
 	public int setIntegerValue(int newValue) throws IOException {
-		int result = 0;
-
 		// check for type agreement
-
 		Preconditions.checkState(valueType == OptionValueType.INT);
+		Preconditions.checkState(getValueCount() == 1,
+				"option is an integer array");
 
 		// check that this option is readable
 
 		Preconditions.checkState(isWriteable());
 
-		// Send RCP corresponding to:
+		// Send RPC corresponding to:
 		//
 		// SANE_Status sane_control_option (SANE_Handle h, SANE_Int n,
 		// SANE_Action a, void *v,
 		// SANE_Int * i);
 
-		SaneOutputStream out = this.device.getSession().getOutputStream();
+		ControlOptionResult result = writeOption(newValue);
+		Preconditions.checkState(result.getType() == OptionValueType.INT);
+		Preconditions
+				.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES);
+
+		return SaneWord.fromBytes(result.getValue()).integerValue();
+	}
+
+	private ControlOptionResult writeOption(String value) throws IOException {
+		Preconditions.checkState(valueType == OptionValueType.STRING);
+		SaneOutputStream out = device.getSession().getOutputStream();
+		out.write(SaneWord.forInt(5) /* rpc #5 */);
+		out.write(SaneWord
+				.forInt(device.getHandle().getHandle().integerValue()));
+		out.write(SaneWord.forInt(this.optionNumber));
+		out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
+		out.write(valueType);
+
+		// even if the string is empty, we still write out at least 1 byte (null
+		// terminator)
+		out.write(SaneWord.forInt(value.length() + 1));
+
+		// write(String) takes care of writing the size for us
+		out.write(value);
+
+		return ControlOptionResult.fromStream(device.getSession()
+				.getInputStream());
+	}
+
+	private ControlOptionResult writeOption(int value) throws IOException {
+		Preconditions.checkState(valueType == OptionValueType.INT);
+		SaneOutputStream out = device.getSession().getOutputStream();
+		out.write(SaneWord.forInt(5) /* rpc #5 */);
 		out.write(SaneWord
 				.forInt(device.getHandle().getHandle().integerValue()));
 		out.write(SaneWord.forInt(this.optionNumber));
@@ -547,35 +626,102 @@ public class SaneOption {
 		out.write(SaneWord.forInt(valueType.getWireValue()));
 		out.write(SaneWord.forInt(size));
 		out.write(SaneWord.forInt(1)); // only one value follows
-		out.write(SaneWord.forInt(newValue)); // why do we need to provide a
-												// value
-		// buffer in an RPC call ???
+		out.write(SaneWord.forInt(value));
 
-		// read result
-
-		SaneInputStream in = this.device.getSession().getInputStream();
-		SaneWord status = in.readWord();
-		SaneWord returnedinfo = in.readWord(); // ignore??
-		SaneWord returnedValueType = in.readWord(); // ignore
-		SaneWord returnedValueSize = in.readWord(); // ignore
-		int valueCount = in.readWord().integerValue(); // must be one in the
-														// case of an integer
-														// value
-		result = in.readWord().integerValue();
-		String resource = in.readString(); // TODO: handle resource
-		// authorisation
-
-		// TODO: check status
-
-		return result;
+		return ControlOptionResult.fromStream(device.getSession()
+				.getInputStream());
 	}
 
+	public boolean isActive() {
+		return !optionCapabilities.contains(OptionCapability.INACTIVE);
+	}
+	
 	public boolean isReadable() {
-		return ((capabilityWord & OptionCapability.SOFT_DETECT.capBit()) > 0);
+		return optionCapabilities.contains(OptionCapability.SOFT_DETECT);
 	}
 
 	public boolean isWriteable() {
-		return ((capabilityWord & OptionCapability.SOFT_SELECT.capBit()) > 0);
+		return optionCapabilities.contains(OptionCapability.SOFT_SELECT);
 	}
 
+	/**
+	 * Represents the result of calling {@code SANE_NET_CONTROL_OPTION} (RPC
+	 * code 5).
+	 */
+	private static class ControlOptionResult {
+		private final int status;
+		private final Set<OptionWriteInfo> info;
+		private final OptionValueType type;
+		private final int valueSize;
+		private final byte[] value;
+		private final String resource;
+
+		private ControlOptionResult(int status, int info, OptionValueType type,
+				int valueSize, byte[] value, String resource) {
+			this.status = status;
+			this.info = SaneEnums.enumSet(OptionWriteInfo.class, info);
+			this.type = type;
+			this.valueSize = valueSize;
+			this.value = value;
+			this.resource = resource;
+		}
+
+		public static ControlOptionResult fromStream(SaneInputStream stream)
+				throws IOException {
+			int status = stream.readWord().integerValue();
+
+			if (status != 0) {
+				throw new IOException("unexpected status " + status);
+			}
+
+			int info = stream.readWord().integerValue();
+
+			OptionValueType type = SaneEnums.valueOf(OptionValueType.class,
+					stream.readWord().integerValue());
+
+			int valueSize = stream.readWord().integerValue();
+
+			// read the pointer
+			int pointer = stream.readWord().integerValue();
+			byte[] value = null;
+			if (pointer == 0) {
+				// there is no value
+			} else {
+				value = new byte[valueSize];
+
+				if (stream.read(value) != valueSize) {
+					throw new IOException("truncated read while getting value");
+				}
+			}
+
+			String resource = stream.readString();
+
+			return new ControlOptionResult(status, info, type, valueSize,
+					value, resource);
+		}
+
+		public int getStatus() {
+			return status;
+		}
+
+		public Set<OptionWriteInfo> getInfo() {
+			return EnumSet.copyOf(info);
+		}
+
+		public OptionValueType getType() {
+			return type;
+		}
+
+		public int getValueSize() {
+			return valueSize;
+		}
+
+		public byte[] getValue() {
+			return value;
+		}
+
+		public String getResource() {
+			return resource;
+		}
+	}
 }
