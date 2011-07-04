@@ -516,7 +516,7 @@ public class SaneOption {
 		out.write(SaneWord
 				.forInt(device.getHandle().getHandle().integerValue()));
 		out.write(SaneWord.forInt(this.optionNumber));
-		out.write(SaneWord.forInt(OptionAction.GET_VALUE.getWireValue()));
+		out.write(OptionAction.GET_VALUE);
 		out.write(SaneWord.forInt(valueType.getWireValue()));
 		out.write(SaneWord.forInt(size));
 		out.write(SaneWord.forInt(1));
