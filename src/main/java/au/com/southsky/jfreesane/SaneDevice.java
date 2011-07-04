@@ -4,20 +4,21 @@ import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import au.com.southsky.jfreesane.SaneSession.SaneDeviceHandle;
-import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
-import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a
  * {@link SaneSession}.
  * 
- * <p>Not thread-safe.
+ * <p>
+ * Not thread-safe.
  * 
  * @author James Ring (sjr@jdns.org)
  */
@@ -29,7 +30,9 @@ public class SaneDevice implements Closeable {
 	private final String type;
 
 	private SaneDeviceHandle handle;
-	
+
+	private Map<String, SaneOption> optionTitleMap = null;
+
 	SaneDevice(SaneSession session, String name, String vendor, String model,
 			String type) {
 		this.session = session;
@@ -58,20 +61,23 @@ public class SaneDevice implements Closeable {
 	private boolean isOpen() {
 		return handle != null;
 	}
-	
+
 	public void open() throws IOException {
 		Preconditions.checkState(!isOpen(), "device is already open");
 		handle = session.openDevice(this);
 	}
-	
+
 	public BufferedImage acquireImage() throws IOException {
 		Preconditions.checkState(isOpen(), "device is not open");
 		return session.acquireImage(handle);
 	}
-	
+
 	@Override
 	public void close() throws IOException {
-		Preconditions.checkState(isOpen(), "device is already closed");
+		if (!isOpen()) {
+			throw new IOException("device is already closed");
+		}
+
 		session.closeDevice(handle);
 		handle = null;
 	}
@@ -81,30 +87,39 @@ public class SaneDevice implements Closeable {
 		return "SaneDevice [name=" + name + ", vendor=" + vendor + ", model="
 				+ model + ", type=" + type + "]";
 	}
-	
-	
-	
-	
-	
-	
+
 	public SaneDeviceHandle getHandle() {
 		return handle;
 	}
 
 	/**
-	 * Implements SANE_NET_GET_OPTION_DESCRIPTORS 
+	 * Implements SANE_NET_GET_OPTION_DESCRIPTORS
+	 * 
 	 * @return List of SaneOptions
 	 * @throws IOException
 	 */
 	public List<SaneOption> listOptions() throws IOException {
-		
-		return SaneOption.optionsFor(this);
-		
+		if (optionTitleMap == null) {
+			optionTitleMap = Maps.uniqueIndex(SaneOption.optionsFor(this),
+					new Function<SaneOption, String>() {
+						@Override
+						public String apply(SaneOption input) {
+							return input.getName();
+						}
+					});
+		}
+
+		// Maps.uniqueIndex guarantees the order of optionTitleMap.values()
+		return ImmutableList.copyOf(optionTitleMap.values());
+	}
+
+	public SaneOption getOption(String title) throws IOException {
+		listOptions();
+		return optionTitleMap.get(title);
 	}
 
 	public SaneSession getSession() {
 		return session;
 	}
-	
-	
+
 }
