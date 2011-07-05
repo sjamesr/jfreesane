@@ -12,6 +12,7 @@ import au.com.southsky.jfreesane.SaneSession.SaneWord;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 public class SaneOption {
 
@@ -610,28 +611,36 @@ public class SaneOption {
 
 		// write(String) takes care of writing the size for us
 		out.write(value);
-
-		return ControlOptionResult.fromStream(device.getSession()
-				.getInputStream());
+		
+		return handleWriteResponse();
 	}
 
 	private ControlOptionResult writeOption(int value) throws IOException {
 		Preconditions.checkState(valueType == OptionValueType.INT);
 		SaneOutputStream out = device.getSession().getOutputStream();
 		out.write(SaneWord.forInt(5) /* rpc #5 */);
-		out.write(SaneWord
-				.forInt(device.getHandle().getHandle().integerValue()));
+		out.write(device.getHandle().getHandle());
 		out.write(SaneWord.forInt(this.optionNumber));
-		out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
-		out.write(SaneWord.forInt(valueType.getWireValue()));
+		out.write(OptionAction.SET_VALUE);
+		out.write(valueType);
 		out.write(SaneWord.forInt(size));
 		out.write(SaneWord.forInt(1)); // only one value follows
 		out.write(SaneWord.forInt(value));
 
-		return ControlOptionResult.fromStream(device.getSession()
-				.getInputStream());
+		return handleWriteResponse();
 	}
 
+	private ControlOptionResult handleWriteResponse() throws IOException {
+		ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
+				.getInputStream());
+		
+		if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)) {
+			device.invalidateOptions();
+		}
+		
+		return result;
+	}
+	
 	public boolean isActive() {
 		return !optionCapabilities.contains(OptionCapability.INACTIVE);
 	}
@@ -705,7 +714,7 @@ public class SaneOption {
 		}
 
 		public Set<OptionWriteInfo> getInfo() {
-			return EnumSet.copyOf(info);
+			return Sets.immutableEnumSet(info);
 		}
 
 		public OptionValueType getType() {

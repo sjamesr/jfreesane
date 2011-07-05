@@ -122,4 +122,11 @@ public class SaneDevice implements Closeable {
 		return session;
 	}
 
+	/**
+	 * Informs this device that its options are stale (e.g. when the server
+	 * tells us we need to reload options after an option was set).
+	 */
+	void invalidateOptions() {
+		optionTitleMap = null;
+	}
 }
