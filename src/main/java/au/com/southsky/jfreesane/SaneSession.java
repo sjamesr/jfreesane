@@ -8,6 +8,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
@@ -639,9 +640,8 @@ public class SaneSession implements Closeable {
 			if (getFrames().size() == redGreenBlueFrameTypes.size()) {
 				// 3 frames, one or two bytes per sample, 3 samples per pixel
 				WritableRaster raster = Raster.createBandedRaster(buffer,
-						getWidth(), getHeight(), getBytesPerLine(), new int[] {
-								0, 1, 2 }, new int[] { 0, 0, 0 }, new Point(0,
-								0));
+						getWidth(), getHeight(), getBytesPerLine(), new int[]{
+								0, 1, 2}, new int[]{0, 0, 0}, new Point(0, 0));
 
 				ColorModel model = new ComponentColorModel(
 						ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
@@ -652,16 +652,11 @@ public class SaneSession implements Closeable {
 
 			// Otherwise we're in a one-frame situation
 			if (depthPerPixel == 1) {
-				// each bit in the data buffer represents one pixel (black or
-				// white)
-				WritableRaster raster = Raster.createPackedRaster(buffer,
-						width, height, 1, new Point(0, 0));
-
-				BufferedImage image = new BufferedImage(width, height,
-						BufferedImage.TYPE_BYTE_BINARY);
-				
-				image.setData(raster);
-				return image;
+				if (getFrames().get(0).getType() == FrameType.GRAY) {
+					return decodeSingleBitGrayscaleImage();
+				} else {
+					return decodeSingleBitColorImage();
+				}
 			}
 
 			if (getDepthPerPixel() == 8 || getDepthPerPixel() == 16) {
@@ -670,11 +665,11 @@ public class SaneSession implements Closeable {
 
 				if (getFrames().get(0).getType() == FrameType.GRAY) {
 					colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
-					bandOffsets = new int[] { 0 };
+					bandOffsets = new int[]{0};
 				} else /* RGB */{
 					colorSpace = ColorSpace
 							.getInstance(ColorSpace.CS_LINEAR_RGB);
-					bandOffsets = new int[] { 0, 1, 2 };
+					bandOffsets = new int[]{0, 1, 2};
 				}
 
 				int bytesPerPixel = bandOffsets.length * (depthPerPixel / 8);
@@ -691,6 +686,59 @@ public class SaneSession implements Closeable {
 			throw new IllegalStateException("Unsupported SaneImage type");
 		}
 
+		private BufferedImage decodeSingleBitGrayscaleImage() {
+			byte[] data = frames.get(0).getData();
+			BufferedImage image = new BufferedImage(width, height,
+					BufferedImage.TYPE_INT_RGB);
+
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					int lineStartByte = y * bytesPerLine;
+					int offsetWithinLine = x / Byte.SIZE;
+					int offsetWithinByte = 1 << (x % Byte.SIZE);
+
+					// for a GRAY frame of single bit depth, the value is
+					// intensity: 1 is lowest intensity (black), 0 is highest
+					// (white)
+					int rgb = (data[lineStartByte + offsetWithinLine] & offsetWithinByte) == 0
+							? 0xffffff
+							: 0;
+					image.setRGB(x, y, rgb);
+				}
+			}
+
+			return image;
+		}
+
+		private BufferedImage decodeSingleBitColorImage() {
+			byte[] data = frames.get(0).getData();
+			BufferedImage image = new BufferedImage(width, height,
+					BufferedImage.TYPE_INT_RGB);
+
+			int componentCount = 3; // red, green, blue. One bit per sample,
+									// byte interleaved
+
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					int lineStartByte = y * bytesPerLine;
+					int offsetWithinLine = (x / Byte.SIZE) * componentCount;
+					int offsetWithinByte = 1 << (x % Byte.SIZE);
+
+					boolean red = (data[lineStartByte + offsetWithinLine] & offsetWithinByte) != 0;
+					boolean green = (data[lineStartByte + offsetWithinLine + 1] & offsetWithinByte) != 0;
+					boolean blue = (data[lineStartByte + offsetWithinLine + 2] & offsetWithinByte) != 0;
+					
+					int rgb = red ? 0xff0000 : 0;
+					rgb |= green ? 0x00ff00 : 0;
+					rgb |= blue ? 0x0000ff : 0;
+					
+					image.setRGB(x, y, rgb);
+				}
+			}
+
+			return image;
+		}
+
 		private DataBuffer asDataBuffer() {
 			byte[][] buffers = new byte[getFrames().size()][];
 
@@ -698,7 +746,8 @@ public class SaneSession implements Closeable {
 				buffers[i] = getFrames().get(i).getData();
 			}
 
-			return new DataBufferByte(buffers, getFrames().get(0).getData().length);
+			return new DataBufferByte(buffers,
+					getFrames().get(0).getData().length);
 		}
 
 		public static class Builder {
