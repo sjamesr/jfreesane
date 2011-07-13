@@ -684,20 +684,23 @@ public class SaneSession implements Closeable {
 				ColorSpace colorSpace;
 				int[] bandOffsets;
 
+				int bytesPerSample = getDepthPerPixel() / Byte.SIZE;
+
 				if (getFrames().get(0).getType() == FrameType.GRAY) {
 					colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
 					bandOffsets = new int[]{0};
 				} else /* RGB */{
 					colorSpace = ColorSpace
 							.getInstance(ColorSpace.CS_LINEAR_RGB);
-					bandOffsets = new int[]{0, 1, 2};
+					bandOffsets = new int[]{0, 1 * bytesPerSample,
+							2 * bytesPerSample};
 				}
 
-				int bytesPerPixel = bandOffsets.length * (depthPerPixel / 8);
 				WritableRaster raster = Raster.createInterleavedRaster(buffer,
-						width, height, bytesPerLine, bytesPerPixel,
-						bandOffsets, new Point(0, 0));
-				
+						width, height, bytesPerLine, bytesPerSample
+								* bandOffsets.length, bandOffsets, new Point(0,
+								0));
+
 				ColorModel model = new ComponentColorModel(colorSpace, false,
 						false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
