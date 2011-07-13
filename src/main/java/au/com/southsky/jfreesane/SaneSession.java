@@ -8,7 +8,6 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
-import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.ByteArrayInputStream;
@@ -162,7 +161,8 @@ public class SaneSession implements Closeable {
 
 			SaneParameters parameters = inputStream.readSaneParameters();
 			FrameInputStream frameStream = new FrameInputStream(parameters,
-					imageSocket.getInputStream());
+					imageSocket.getInputStream(),
+					0x4321 == byteOrder.integerValue());
 			builder.addFrame(frameStream.readFrame());
 			// imageSocket.close();
 
@@ -489,11 +489,13 @@ public class SaneSession implements Closeable {
 	private static class FrameInputStream extends InputStream {
 		private final SaneParameters parameters;
 		private final InputStream underlyingStream;
+		private final boolean bigEndian;
 
 		public FrameInputStream(SaneParameters parameters,
-				InputStream underlyingStream) {
+				InputStream underlyingStream, boolean bigEndian) {
 			this.parameters = parameters;
 			this.underlyingStream = underlyingStream;
+			this.bigEndian = bigEndian;
 		}
 
 		@Override
@@ -509,6 +511,25 @@ public class SaneSession implements Closeable {
 			int bytesRead = 0;
 			while ((bytesRead = readRecord(bigArray, offset)) > 0) {
 				offset += bytesRead;
+			}
+
+			if (offset != bigArray.length) {
+				throw new IOException("truncated read");
+			}
+
+			// Now, if necessary, put the bytes in the correct order according
+			// to the stream's endianness
+			if (parameters.getDepthPerPixel() == 16 && !bigEndian) {
+				if (bigArray.length % 2 != 0) {
+					throw new IOException(
+							"expected a multiple of 2 frame length");
+				}
+
+				for (int i = 0; i < bigArray.length; i += 2) {
+					byte swap = bigArray[i];
+					bigArray[i] = bigArray[i + 1];
+					bigArray[i + 1] = swap;
+				}
 			}
 
 			return new Frame(parameters, bigArray);
@@ -676,7 +697,7 @@ public class SaneSession implements Closeable {
 				WritableRaster raster = Raster.createInterleavedRaster(buffer,
 						width, height, bytesPerLine, bytesPerPixel,
 						bandOffsets, new Point(0, 0));
-
+				
 				ColorModel model = new ComponentColorModel(colorSpace, false,
 						false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
@@ -727,11 +748,11 @@ public class SaneSession implements Closeable {
 					boolean red = (data[lineStartByte + offsetWithinLine] & offsetWithinByte) != 0;
 					boolean green = (data[lineStartByte + offsetWithinLine + 1] & offsetWithinByte) != 0;
 					boolean blue = (data[lineStartByte + offsetWithinLine + 2] & offsetWithinByte) != 0;
-					
+
 					int rgb = red ? 0xff0000 : 0;
 					rgb |= green ? 0x00ff00 : 0;
 					rgb |= blue ? 0x0000ff : 0;
-					
+
 					image.setRGB(x, y, rgb);
 				}
 			}
