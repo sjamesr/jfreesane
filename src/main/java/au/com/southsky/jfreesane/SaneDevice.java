@@ -58,7 +58,7 @@ public class SaneDevice implements Closeable {
 		return type;
 	}
 
-	private boolean isOpen() {
+	public boolean isOpen() {
 		return handle != null;
 	}
 
@@ -67,7 +67,16 @@ public class SaneDevice implements Closeable {
 		handle = session.openDevice(this);
 	}
 
-	public BufferedImage acquireImage() throws IOException {
+	/**
+	 * Acquires a single image from the Sane daemon.
+	 * 
+	 * @return a {@link BufferedImage} representing the image obtained from Sane
+	 * @throws IOException
+	 *             if an error occurred while talking to the backend
+	 * @throws SaneException
+	 *             if an application-level error was returned by the Sane daemon
+	 */
+	public BufferedImage acquireImage() throws IOException, SaneException {
 		Preconditions.checkState(isOpen(), "device is not open");
 		return session.acquireImage(handle);
 	}

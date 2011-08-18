@@ -125,7 +125,8 @@ public class SaneSession implements Closeable {
 		return new SaneDeviceHandle(status, handle, resource);
 	}
 
-	BufferedImage acquireImage(SaneDeviceHandle handle) throws IOException {
+	BufferedImage acquireImage(SaneDeviceHandle handle) throws IOException,
+			SaneException {
 		SaneImage.Builder builder = new SaneImage.Builder();
 
 		while (true) {
@@ -135,8 +136,7 @@ public class SaneSession implements Closeable {
 			{
 				int status = inputStream.readWord().integerValue();
 				if (status != 0) {
-					throw new IOException("Unexpected status (" + status
-							+ ") on image acquisition");
+					throw new SaneException(SaneStatus.fromWireValue(status));
 				}
 			}
 

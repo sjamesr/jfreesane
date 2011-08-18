@@ -250,7 +250,8 @@ public class SaneOption {
 
 	public static List<SaneOption> optionsFor(SaneDevice device)
 			throws IOException {
-
+		Preconditions.checkState(device.isOpen(),
+				"you must open() the device first");
 		List<SaneOption> options = Lists.newArrayList();
 		SaneSession session = device.getSession();
 
@@ -325,50 +326,50 @@ public class SaneOption {
 		RangeConstraint rangeConstraint = null;
 
 		switch (constraintType) {
-		case NO_CONSTRAINT:
-			// inputStream.readWord(); // discard empty list
-			break;
-		case STRING_LIST_CONSTRAINT:
-			stringConstraints = Lists.newArrayList();
-			int n = inputStream.readWord().integerValue();
-			for (int i = 0; i < n; i++) {
-				stringConstraints.add(inputStream.readString());
-			}
-			// inputStream.readWord();
-			break;
-		case VALUE_LIST_CONSTRAINT:
-			valueConstraints = Lists.newArrayList();
-			n = inputStream.readWord().integerValue();
-			for (int i = 0; i < n; i++) {
-				valueConstraints.add(inputStream.readWord().integerValue());
-			}
-			// inputStream.readWord(); // TODO: Is this necessary?
-			break;
-		case RANGE_CONSTRAINT:
-
-			// TODO: still don't understand the 6 values
-
-			int w0 = inputStream.readWord().integerValue();
-			int w1 = inputStream.readWord().integerValue();
-			int w2 = inputStream.readWord().integerValue();
-			int w3 = inputStream.readWord().integerValue();
-			// int w4 = inputStream.readWord().integerValue();
-
-			switch (valueType) {
-
-			case INT:
-				rangeConstraint = new IntegerRangeContraint(w1, w2, w3);
+			case NO_CONSTRAINT :
+				// inputStream.readWord(); // discard empty list
 				break;
-			case FIXED:
-				rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
+			case STRING_LIST_CONSTRAINT :
+				stringConstraints = Lists.newArrayList();
+				int n = inputStream.readWord().integerValue();
+				for (int i = 0; i < n; i++) {
+					stringConstraints.add(inputStream.readString());
+				}
+				// inputStream.readWord();
 				break;
-			default:
-				throw new IllegalStateException(
-						"Integer or Fixed type expected for range constraint");
-			}
-			break;
-		default:
-			throw new IllegalStateException("Unknow constrint type");
+			case VALUE_LIST_CONSTRAINT :
+				valueConstraints = Lists.newArrayList();
+				n = inputStream.readWord().integerValue();
+				for (int i = 0; i < n; i++) {
+					valueConstraints.add(inputStream.readWord().integerValue());
+				}
+				// inputStream.readWord(); // TODO: Is this necessary?
+				break;
+			case RANGE_CONSTRAINT :
+
+				// TODO: still don't understand the 6 values
+
+				int w0 = inputStream.readWord().integerValue();
+				int w1 = inputStream.readWord().integerValue();
+				int w2 = inputStream.readWord().integerValue();
+				int w3 = inputStream.readWord().integerValue();
+				// int w4 = inputStream.readWord().integerValue();
+
+				switch (valueType) {
+
+					case INT :
+						rangeConstraint = new IntegerRangeContraint(w1, w2, w3);
+						break;
+					case FIXED :
+						rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
+						break;
+					default :
+						throw new IllegalStateException(
+								"Integer or Fixed type expected for range constraint");
+				}
+				break;
+			default :
+				throw new IllegalStateException("Unknow constrint type");
 		}
 
 		// handle a change of group
@@ -443,19 +444,19 @@ public class SaneOption {
 
 	public int getValueCount() {
 		switch (valueType) {
-		case BOOLEAN:
-		case STRING:
-			return 1;
-		case INT:
-		case FIXED:
-			return size / SaneWord.SIZE_IN_BYTES;
-		case BUTTON:
-		case GROUP:
-			throw new IllegalStateException("Option type '" + valueType
-					+ "' has no value count");
-		default:
-			throw new IllegalStateException("Option type '" + valueType
-					+ "' unknown");
+			case BOOLEAN :
+			case STRING :
+				return 1;
+			case INT :
+			case FIXED :
+				return size / SaneWord.SIZE_IN_BYTES;
+			case BUTTON :
+			case GROUP :
+				throw new IllegalStateException("Option type '" + valueType
+						+ "' has no value count");
+			default :
+				throw new IllegalStateException("Option type '" + valueType
+						+ "' unknown");
 		}
 	}
 
@@ -525,13 +526,17 @@ public class SaneOption {
 		// buffer in an RPC call ???
 
 		// read result
-		ControlOptionResult result = ControlOptionResult.fromStream(device.getSession().getInputStream());
-		Preconditions.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES, "unexpected value count");
+		ControlOptionResult result = ControlOptionResult.fromStream(device
+				.getSession().getInputStream());
+		Preconditions.checkState(
+				result.getValueSize() == SaneWord.SIZE_IN_BYTES,
+				"unexpected value count");
 		Preconditions.checkState(result.getType() == OptionValueType.INT);
-		
+
 		// TODO: handle resource authorisation
 		// TODO: check status -- may have to reload options!!
-		return SaneWord.fromBytes(result.getValue()).integerValue(); // the value
+		return SaneWord.fromBytes(result.getValue()).integerValue(); // the
+																		// value
 	}
 
 	public String setStringValue(String newValue) throws IOException {
@@ -611,7 +616,7 @@ public class SaneOption {
 
 		// write(String) takes care of writing the size for us
 		out.write(value);
-		
+
 		return handleWriteResponse();
 	}
 
@@ -631,20 +636,20 @@ public class SaneOption {
 	}
 
 	private ControlOptionResult handleWriteResponse() throws IOException {
-		ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
-				.getInputStream());
-		
+		ControlOptionResult result = ControlOptionResult.fromStream(device
+				.getSession().getInputStream());
+
 		if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)) {
 			device.invalidateOptions();
 		}
-		
+
 		return result;
 	}
-	
+
 	public boolean isActive() {
 		return !optionCapabilities.contains(OptionCapability.INACTIVE);
 	}
-	
+
 	public boolean isReadable() {
 		return optionCapabilities.contains(OptionCapability.SOFT_DETECT);
 	}

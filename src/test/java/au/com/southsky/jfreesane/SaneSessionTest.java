@@ -12,6 +12,11 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -19,6 +24,7 @@ import org.junit.Test;
 
 import au.com.southsky.jfreesane.SaneOption.OptionValueType;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGImageEncoder;
@@ -138,6 +144,29 @@ public class SaneSessionTest {
 	}
 
 	@Test
+	public void adfAcquisitionSucceeds() throws Exception {
+		SaneDevice device = session.getDevice("test");
+		device.open();
+
+		Assert.assertTrue(device.getOption("source").getStringContraints()
+				.contains("Automatic Document Feeder"));
+		device.getOption("source").setStringValue("Automatic Document Feeder");
+
+    for (int i = 0; i < 20; i++) {
+      try {
+        device.acquireImage();
+      } catch (SaneException e) {
+        if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
+          // out of documents to read, that's fine
+          break;
+        } else {
+          throw e;
+        }
+      }
+    }
+	}
+
+	@Test
 	public void acquireMonoImage() throws Exception {
 		SaneDevice device = session.getDevice("test");
 		FileOutputStream stream = null;
@@ -174,32 +203,38 @@ public class SaneSessionTest {
 		try {
 			device.open();
 
-			assertProducesCorrectImage(device, "Gray", 1, "Solid white");
-			assertProducesCorrectImage(device, "Gray", 8, "Solid white");
-			assertProducesCorrectImage(device, "Gray", 16, "Solid white");
-			assertProducesCorrectImage(device, "Gray", 1, "Solid black");
-			assertProducesCorrectImage(device, "Gray", 8, "Solid black");
-			assertProducesCorrectImage(device, "Gray", 16, "Solid black");
+      /*
+       * assertProducesCorrectImage(device, "Gray", 1, "Solid white");
+       * assertProducesCorrectImage(device, "Gray", 8, "Solid white");
+       * assertProducesCorrectImage(device, "Gray", 16, "Solid white");
+       * assertProducesCorrectImage(device, "Gray", 1, "Solid black");
+       * assertProducesCorrectImage(device, "Gray", 8, "Solid black");
+       * assertProducesCorrectImage(device, "Gray", 16, "Solid black");
+       * 
+       * assertProducesCorrectImage(device, "Color", 1, "Solid white");
+       * assertProducesCorrectImage(device, "Color", 8, "Solid white");
+       * assertProducesCorrectImage(device, "Color", 16, "Solid white");
+       * assertProducesCorrectImage(device, "Color", 1, "Solid black");
+       * assertProducesCorrectImage(device, "Color", 8, "Solid black");
+       * assertProducesCorrectImage(device, "Color", 16, "Solid black");
+       * 
+       * assertProducesCorrectImage(device, "Gray", 1, "Color pattern");
+       * assertProducesCorrectImage(device, "Color", 1, "Color pattern");
+       * 
+       * assertProducesCorrectImage(device, "Gray", 8, "Color pattern");
+       * assertProducesCorrectImage(device, "Color", 8, "Color pattern");
+       */
 
-			assertProducesCorrectImage(device, "Color", 1, "Solid white");
-			assertProducesCorrectImage(device, "Color", 8, "Solid white");
-			assertProducesCorrectImage(device, "Color", 16, "Solid white");
-			assertProducesCorrectImage(device, "Color", 1, "Solid black");
-			assertProducesCorrectImage(device, "Color", 8, "Solid black");
-			assertProducesCorrectImage(device, "Color", 16, "Solid black");
-			
-/*			assertProducesCorrectImage(device, "Gray", 1, "Color pattern");
-			assertProducesCorrectImage(device, "Color", 1, "Color pattern");
-			
-			assertProducesCorrectImage(device, "Gray", 8, "Color pattern");
-			assertProducesCorrectImage(device, "Color", 8, "Color pattern"); */
+			assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
+			assertProducesCorrectImage(device, "Color", 16, "Color pattern");
 		} finally {
 			Closeables.closeQuietly(device);
 		}
 	}
 
 	private void assertProducesCorrectImage(SaneDevice device, String mode,
-			int sampleDepth, String testPicture) throws IOException {
+			int sampleDepth, String testPicture) throws IOException,
+			SaneException {
 		BufferedImage actualImage = acquireImage(device, mode, sampleDepth,
 				testPicture);
 
@@ -237,7 +272,8 @@ public class SaneSessionTest {
 	}
 
 	private BufferedImage acquireImage(SaneDevice device, String mode,
-			int sampleDepth, String testPicture) throws IOException {
+			int sampleDepth, String testPicture) throws IOException,
+			SaneException {
 		device.getOption("mode").setStringValue(mode);
 		device.getOption("depth").setIntegerValue(sampleDepth);
 		device.getOption("test-picture").setStringValue(testPicture);
