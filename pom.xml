@@ -37,6 +37,13 @@
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
 	</parent>
+        <distributionManagement>
+                <repository>
+                        <id>sonatype-nexus-staging</id>
+                        <name>Nexus Staging Repository</name>
+                        <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+        </distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
