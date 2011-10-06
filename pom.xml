@@ -4,11 +4,65 @@
 	<groupId>au.com.southsky</groupId>
 	<artifactId>jfreesane</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.1</version>
 	<name>jfreesane</name>
-	<url>http://maven.apache.org</url>
+	<url>http://jfreesane.googlecode.com</url>
+	<description>A Java client for the SANE daemon</description>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>scm:hg:https://code.google.com/p/jfreesane/</url>
+		<connection>scm:hg:https://code.google.com/p/jfreesane/</connection>
+		<developerConnection>scm:hg:https://code.google.com/p/jfreesane/</developerConnection>
+	</scm>
+	<developers>
+		<developer>
+			<id>sjr</id>
+			<name>James Ring</name>
+			<email>sjr@jdns.org</email>
+		</developer>
+		<developer>
+			<id>smr</id>
+			<name>Steven Ring</name>
+			<email>smr@southsky.com.au</email>
+		</developer>
+	</developers>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
