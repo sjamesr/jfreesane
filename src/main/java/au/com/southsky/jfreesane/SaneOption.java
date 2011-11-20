@@ -7,7 +7,6 @@ import java.util.Set;
 
 import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
 import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
-import au.com.southsky.jfreesane.SaneSession.SaneWord;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -539,6 +538,20 @@ public class SaneOption {
 																		// value
 	}
 
+  /**
+   * Sets the value of the current option to the supplied fixed-precision value. Option value must
+   * be of fixed-precision type.
+   */
+  public double setFixedValue(double value) throws IOException {
+    Preconditions.checkArgument(value >= -32768 && value <= 32767.9999, "value " + value
+        + " is out of range");
+    SaneWord wordValue = SaneWord.forInt((int) value * (1 << 16));
+    ControlOptionResult result = writeOption(wordValue);
+    Preconditions.checkState(result.getType() == OptionValueType.FIXED);
+
+    return SaneWord.fromBytes(result.getValue()).integerValue() * 1.0f / (1 << 16);
+  }
+  
 	public String setStringValue(String newValue) throws IOException {
 		// check for type agreement
 		Preconditions.checkState(valueType == OptionValueType.STRING);
@@ -600,6 +613,24 @@ public class SaneOption {
 		return SaneWord.fromBytes(result.getValue()).integerValue();
 	}
 
+  private ControlOptionResult writeOption(SaneWord value) throws IOException {
+    SaneOutputStream out = device.getSession().getOutputStream();
+    out.write(SaneWord.forInt(5));
+    out.write(device.getHandle().getHandle());
+    out.write(SaneWord.forInt(optionNumber));
+    out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
+    out.write(valueType);
+
+    out.write(SaneWord.forInt(SaneWord.SIZE_IN_BYTES));
+
+    // Write the pointer to the word
+    out.write(SaneWord.forInt(1));
+    // and the word itself
+    out.write(value);
+
+    return handleWriteResponse();
+  }
+	
 	private ControlOptionResult writeOption(String value) throws IOException {
 		Preconditions.checkState(valueType == OptionValueType.STRING);
 		SaneOutputStream out = device.getSession().getOutputStream();
