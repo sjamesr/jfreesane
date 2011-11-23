@@ -1,6 +1,7 @@
 package au.com.southsky.jfreesane;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -473,23 +474,19 @@ public class SaneOption {
   }
 
   /**
-   * Read the current Integer value option. We do not cache value from previous get or set
+   * Reads the current Integer value option. We do not cache value from previous get or set
    * operations so each get involves a round trip to the server.
    * 
    * TODO: consider caching the returned value for "fast read" later
    * 
-   * @return
+   * @return the value of the option
    * @throws IOException
+   *           if a problem occurred while talking to SANE
    */
   public int getIntegerValue() throws IOException {
     // check for type agreement
-
     Preconditions.checkState(valueType == OptionValueType.INT, "option is not an integer");
     Preconditions.checkState(getValueCount() == 1, "option is an integer array, not integer");
-
-    // check that this option is readable
-
-    Preconditions.checkState(isReadable());
 
     // Send RCP corresponding to:
     //
@@ -497,28 +494,81 @@ public class SaneOption {
     // SANE_Action a, void *v,
     // SANE_Int * i);
 
-    SaneOutputStream out = this.device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5));
-    out.write(SaneWord.forInt(device.getHandle().getHandle().integerValue()));
-    out.write(SaneWord.forInt(this.optionNumber));
-    out.write(OptionAction.GET_VALUE);
-    out.write(SaneWord.forInt(valueType.getWireValue()));
-    out.write(SaneWord.forInt(size));
-    out.write(SaneWord.forInt(1));
-    out.write(SaneWord.forInt(0));// why do we need to provide a value
-    // buffer in an RPC call ???
-
-    // read result
-    ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
-        .getInputStream());
-    Preconditions.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES,
-        "unexpected value count");
+    ControlOptionResult result = readOption();
     Preconditions.checkState(result.getType() == OptionValueType.INT);
+    Preconditions.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES,
+        "unexpected value size " + result.getValueSize() + ", expecting " + SaneWord.SIZE_IN_BYTES);
 
     // TODO: handle resource authorisation
     // TODO: check status -- may have to reload options!!
     return SaneWord.fromBytes(result.getValue()).integerValue(); // the
     // value
+  }
+
+  public String getStringValue(Charset encoding) throws IOException {
+    Preconditions.checkState(valueType == OptionValueType.STRING, "option is not a string");
+
+    ControlOptionResult result = readOption();
+
+    byte[] value = result.getValue();
+
+    // string is null terminated
+    int length;
+    for (length = 0; length < value.length && value[length] != 0; length++)
+      ;
+
+    // trim the trailing null character
+    return new String(result.getValue(), 0, length, encoding);
+  }
+
+  public double getFixedValue() throws IOException {
+    Preconditions.checkState(valueType == OptionValueType.FIXED, "option is not of fixed precision type");
+    
+    ControlOptionResult result = readOption();
+    return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
+  }
+
+  
+  private ControlOptionResult readOption() throws IOException {
+    // check that this option is readable
+    Preconditions.checkState(isReadable(), "option is not readable");
+    Preconditions.checkState(isActive(), "option is not active");
+
+    SaneOutputStream out = device.getSession().getOutputStream();
+    out.write(SaneWord.forInt(5));
+    out.write(device.getHandle().getHandle());
+    out.write(SaneWord.forInt(optionNumber));
+    out.write(OptionAction.GET_VALUE);
+
+    out.write(valueType);
+    out.write(SaneWord.forInt(size));
+
+    int elementCount;
+
+    switch (valueType) {
+    case BOOLEAN:
+    case FIXED:
+    case INT:
+      elementCount = 1;
+      break;
+    case STRING:
+      elementCount = size;
+      break;
+    default:
+      throw new IllegalStateException("Unsupported type " + valueType);
+    }
+
+    out.write(SaneWord.forInt(elementCount));
+
+    for (int i = 0; i < size; i++) {
+      out.write(0);// why do we need to provide a value
+      // buffer in an RPC call ???
+    }
+
+    // read result
+    ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
+        .getInputStream());
+    return result;
   }
 
   /**
@@ -528,11 +578,11 @@ public class SaneOption {
   public double setFixedValue(double value) throws IOException {
     Preconditions.checkArgument(value >= -32768 && value <= 32767.9999, "value " + value
         + " is out of range");
-    SaneWord wordValue = SaneWord.forInt((int) value * (1 << 16));
+    SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
     Preconditions.checkState(result.getType() == OptionValueType.FIXED);
 
-    return SaneWord.fromBytes(result.getValue()).integerValue() * 1.0f / (1 << 16);
+    return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
 
   public String setStringValue(String newValue) throws IOException {
@@ -693,7 +743,9 @@ public class SaneOption {
       int status = stream.readWord().integerValue();
 
       if (status != 0) {
-        throw new IOException("unexpected status " + status);
+        SaneStatus statusEnum = SaneStatus.fromWireValue(status);
+        throw new IOException(String.format("unexpected status %d%s", status,
+            statusEnum != null ? " (" + statusEnum + ")" : ""));
       }
 
       int info = stream.readWord().integerValue();
