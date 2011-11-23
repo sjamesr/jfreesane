@@ -63,8 +63,21 @@ public class SaneWord {
     }
   }
 
+  public double fixedPrecisionValue() {
+    return (double) integerValue() / (1 << 16);
+  }
+  
   public static SaneWord fromBytes(byte[] byteValue) {
     Preconditions.checkArgument(byteValue.length == SIZE_IN_BYTES);
     return new SaneWord(Arrays.copyOf(byteValue, SIZE_IN_BYTES));
+  }
+  
+  @Override
+  public String toString() {
+    return Arrays.toString(value);
+  }
+
+  public static SaneWord forFixedPrecision(double value) {
+    return SaneWord.forInt((int) (value * (1 << 16)));
   }
 }
