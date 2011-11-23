@@ -12,6 +12,8 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javax.imageio.ImageIO;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,8 +24,6 @@ import au.com.southsky.jfreesane.SaneOption.OptionValueType;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Closeables;
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGImageEncoder;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -75,12 +75,8 @@ public class SaneSessionTest {
     try {
       device.open();
       BufferedImage image = device.acquireImage();
-      File file = File.createTempFile("image", ".jpg");
-      stream = new FileOutputStream(file);
-      JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(stream);
-      encoder.encode(image);
-      stream.flush();
-
+      File file = File.createTempFile("image", ".png");
+      ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
       Closeables.closeQuietly(stream);
@@ -189,14 +185,9 @@ public class SaneSessionTest {
       assertEquals("Gray", modeOption.setStringValue("Gray"));
       BufferedImage image = device.acquireImage();
 
-      File file = File.createTempFile("mono-image", ".jpg");
-      stream = new FileOutputStream(file);
-      JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(stream);
-      encoder.encode(image);
-      stream.flush();
-
+      File file = File.createTempFile("mono-image", ".png");
+      ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
-
     } finally {
       Closeables.closeQuietly(stream);
       Closeables.closeQuietly(device);
@@ -213,6 +204,8 @@ public class SaneSessionTest {
     // Solid black and white
     try {
       device.open();
+      device.getOption("br-x").setFixedValue(200);
+      device.getOption("br-y").setFixedValue(200);
 
       /*
        * assertProducesCorrectImage(device, "Gray", 1, "Solid white");
@@ -237,6 +230,7 @@ public class SaneSessionTest {
        */
 
       assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
+      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
       assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
       Closeables.closeQuietly(device);
@@ -288,13 +282,8 @@ public class SaneSessionTest {
   private void writeImage(String mode, int sampleDepth, String testPicture,
       BufferedImage actualImage) throws IOException {
     File file = File.createTempFile(
-        String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')), ".jpg");
-
-    FileOutputStream stream = new FileOutputStream(file);
-    JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(stream);
-    encoder.encode(actualImage);
-    stream.flush();
-
+        String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')), ".png");
+    ImageIO.write(actualImage, "png", file);
     System.out.println("Successfully wrote " + file);
   }
 
