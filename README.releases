@@ -19,7 +19,7 @@ $ mvn release:clean
 
 $ mvn release:prepare \
   -DconnectionUrl=scm:hg:https://code.google.com/p/jfreesane \
-  -Dusername=GoogleCodeUsername \
+  -Dusername=GoogleCodeUsername%40domain.com \ # '@' must be written as '%40'
   -Dpassword=GoogleCodePassword
 
 $ mvn release:perform
