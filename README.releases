@@ -1,0 +1,33 @@
+Introduction
+############
+
+This document describes how to create a Maven release of JFreeSane.
+
+Author: James Ring (sjr@jdns.org)
+
+Making the release
+##################
+
+For general instructions about how to push releases to Sonatype so they can be
+sync'd to Maven central repositories:
+
+https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide
+
+Distilled version:
+
+$ mvn release:clean
+
+$ mvn release:prepare \
+  -DconnectionUrl=scm:hg:https://code.google.com/p/jfreesane \
+  -Dusername=GoogleCodeUsername \
+  -Dpassword=GoogleCodePassword
+
+$ mvn release:perform
+
+* go to https://oss.sonatype.org/ and log in
+* click "Staging Repositories"
+* select the checkbox next to the newly created staging repository
+* click "Close", optionally leave a comment
+* select the checkbox again
+* click "Release", optionally leave a comment
+* wait patiently while your JARs go out to the world
