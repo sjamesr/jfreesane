@@ -370,7 +370,7 @@ public class SaneSession implements Closeable {
     }
   }
 
-  public class SaneParameters {
+  public static class SaneParameters {
     private final FrameType frame;
     private final boolean lastFrame;
     private final int bytesPerLine;
