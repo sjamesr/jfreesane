@@ -1,6 +1,8 @@
 package au.com.southsky.jfreesane;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -31,7 +33,7 @@ import com.google.common.io.Closeables;
  * <p>
  * This test is ignored right now because it requires a real SANE backend to talk to. If you remove
  * the {@code "@Ignore"} annotation and point this test at a real SANE backend, it should pass.
-
+ * 
  * @author James Ring (sjr@jdns.org)
  */
 @Ignore
@@ -42,7 +44,7 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    this.session = SaneSession.withRemoteSane(InetAddress.getByName("siriusii.localdomain"));
+    this.session = SaneSession.withRemoteSane(InetAddress.getByName("sirius.localdomain"));
   }
 
   @After
@@ -238,11 +240,13 @@ public class SaneSessionTest {
   }
 
   @Test
-  public void readsStringsCorrectly() throws Exception {
+  public void readsAndSetsStringsCorrectly() throws Exception {
     SaneDevice device = session.getDevice("test");
 
     try {
       device.open();
+      assertEquals("Color", device.getOption("mode").getStringValue(Charsets.US_ASCII));
+      assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
       assertEquals("Gray", device.getOption("mode").getStringValue(Charsets.US_ASCII));
       assertEquals("Default",
           device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
@@ -261,6 +265,23 @@ public class SaneSessionTest {
       // this option gets rounded to the nearest whole number by the backend
       assertEquals(123, device.getOption("br-x").setFixedValue(123.456), 0.0001);
       assertEquals(123, device.getOption("br-x").getFixedValue(), 0.0001);
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void readsBooleanOptionsCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("hand-scanner");
+      assertTrue(option.setBooleanValue(true));
+      assertTrue(option.getBooleanValue());
+      assertFalse(option.setBooleanValue(false));
+      assertFalse(option.getBooleanValue());
     } finally {
       Closeables.closeQuietly(device);
     }

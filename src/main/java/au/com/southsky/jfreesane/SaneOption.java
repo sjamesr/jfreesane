@@ -474,6 +474,21 @@ public class SaneOption {
   }
 
   /**
+   * Reads the current boolean value option. This option must be of type
+   * {@link OptionValueType#BOOLEAN}.
+   * 
+   * @throws IOException
+   *           if a problem occurred while talking to SANE
+   */
+  public boolean getBooleanValue() throws IOException {
+    Preconditions.checkState(valueType == OptionValueType.BOOLEAN, "option is not a boolean");
+    Preconditions.checkState(getValueCount() == 1, "option is a boolean array, not boolean");
+
+    ControlOptionResult result = readOption();
+    return SaneWord.fromBytes(result.getValue()).integerValue() != 0;
+  }
+
+  /**
    * Reads the current Integer value option. We do not cache value from previous get or set
    * operations so each get involves a round trip to the server.
    * 
@@ -522,13 +537,13 @@ public class SaneOption {
   }
 
   public double getFixedValue() throws IOException {
-    Preconditions.checkState(valueType == OptionValueType.FIXED, "option is not of fixed precision type");
-    
+    Preconditions.checkState(valueType == OptionValueType.FIXED,
+        "option is not of fixed precision type");
+
     ControlOptionResult result = readOption();
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
 
-  
   private ControlOptionResult readOption() throws IOException {
     // check that this option is readable
     Preconditions.checkState(isReadable(), "option is not readable");
@@ -569,6 +584,20 @@ public class SaneOption {
     ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
         .getInputStream());
     return result;
+  }
+
+  /**
+   * Sets the value of the current option to the supplied boolean value. Option value must be of
+   * boolean type. SANE may ignore your preference, so if you need to ensure the value has been set
+   * correctly, you should examine the return value of this method.
+   * 
+   * @return the value that the option now has according to SANE
+   */
+  public boolean setBooleanValue(boolean value) throws IOException {
+    ControlOptionResult result = writeOption(SaneWord.forInt(value ? 1 : 0));
+    Preconditions.checkState(result.getType() == OptionValueType.BOOLEAN);
+
+    return SaneWord.fromBytes(result.getValue()).integerValue() != 0;
   }
 
   /**
@@ -644,6 +673,9 @@ public class SaneOption {
   }
 
   private ControlOptionResult writeOption(SaneWord value) throws IOException {
+    Preconditions.checkState(isWriteable(), "option is not writeable");
+    Preconditions.checkState(isActive(), "option is not active");
+
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5));
     out.write(device.getHandle().getHandle());
@@ -658,7 +690,13 @@ public class SaneOption {
     // and the word itself
     out.write(value);
 
-    return handleWriteResponse();
+    ControlOptionResult result = handleWriteResponse();
+    if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)
+        || result.getInfo().contains(OptionWriteInfo.RELOAD_PARAMETERS)) {
+      device.listOptions();
+    }
+
+    return result;
   }
 
   private ControlOptionResult writeOption(String value) throws IOException {
