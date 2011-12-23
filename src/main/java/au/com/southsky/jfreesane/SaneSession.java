@@ -435,7 +435,7 @@ public class SaneSession implements Closeable {
 
       int offset = 0;
       int bytesRead = 0;
-      while ((bytesRead = readRecord(bigArray, offset)) > 0) {
+      while ((bytesRead = readRecord(bigArray, offset)) >= 0) {
         offset += bytesRead;
       }
 
