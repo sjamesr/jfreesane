@@ -10,6 +10,7 @@ import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
 import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -273,9 +274,14 @@ public class SaneOption {
 
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
-      if (option != null) {
-        options.add(option);
+
+      // We expect the first option to have an empty name. Subsequent options with empty names are
+      // invalid
+      if (option == null || (i > 0 && Strings.isNullOrEmpty(option.getName()))) {
+        continue;
       }
+
+      options.add(option);
     }
 
     return options;
@@ -693,6 +699,7 @@ public class SaneOption {
     ControlOptionResult result = handleWriteResponse();
     if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)
         || result.getInfo().contains(OptionWriteInfo.RELOAD_PARAMETERS)) {
+      device.invalidateOptions();
       device.listOptions();
     }
 
