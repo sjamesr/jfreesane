@@ -25,6 +25,7 @@ import org.junit.Test;
 import au.com.southsky.jfreesane.SaneOption.OptionValueType;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;
 
 /**
@@ -44,7 +45,7 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    this.session = SaneSession.withRemoteSane(InetAddress.getByName("sirius.localdomain"));
+    this.session = SaneSession.withRemoteSane(InetAddress.getByName("localhost"));
   }
 
   @After
@@ -71,7 +72,6 @@ public class SaneSessionTest {
 
   @Test
   public void imageAcquisitionSucceeds() throws Exception {
-    // open the first device we get
     SaneDevice device = session.getDevice("test");
     FileOutputStream stream = null;
     try {
@@ -245,7 +245,8 @@ public class SaneSessionTest {
 
     try {
       device.open();
-      assertEquals("Color", device.getOption("mode").getStringValue(Charsets.US_ASCII));
+      assertTrue(ImmutableSet.of("Color", "Gray").contains(
+          device.getOption("mode").getStringValue(Charsets.US_ASCII)));
       assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
       assertEquals("Gray", device.getOption("mode").getStringValue(Charsets.US_ASCII));
       assertEquals("Default",
