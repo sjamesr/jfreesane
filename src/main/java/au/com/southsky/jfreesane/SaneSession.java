@@ -20,6 +20,7 @@ import java.net.Socket;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -37,6 +38,8 @@ import com.google.common.io.Closeables;
  */
 public class SaneSession implements Closeable {
 
+  private static final Logger log = Logger.getLogger(SaneSession.class.getName());
+  
   private enum FrameType implements SaneEnum {
     GRAY(0), RGB(1), RED(2), GREEN(3), BLUE(4);
 
@@ -137,8 +140,7 @@ public class SaneSession implements Closeable {
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
 
-      // TODO(sjr): use the correct byte order, also need to maybe
-      // authenticate to the resource
+      // TODO(sjr): maybe authenticate to the resource
 
       // Ask the server for the parameters of this scan
       outputStream.write(SaneWord.forInt(6));
@@ -465,7 +467,7 @@ public class SaneSession implements Closeable {
       long length = inputStream.readInt();
 
       if (length == 0xffffffff) {
-        System.out.println("Reached end of records");
+        log.fine("Reached end of records");
         return -1;
       }
 
@@ -479,7 +481,7 @@ public class SaneSession implements Closeable {
             + length);
       }
 
-      System.out.println("Read a record of " + result + " bytes");
+      log.fine("Read a record of " + result + " bytes");
       return result;
     }
   }
