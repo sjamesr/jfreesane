@@ -165,9 +165,9 @@ public class SaneOption {
 
   }
 
-  public static class IntegerRangeContraint extends RangeConstraint {
+  public static class IntegerRangeConstraint extends RangeConstraint {
 
-    IntegerRangeContraint(int min, int max, int quantum) {
+    IntegerRangeConstraint(int min, int max, int quantum) {
       super(min, max, quantum);
     }
 
@@ -356,7 +356,7 @@ public class SaneOption {
       switch (valueType) {
 
       case INT:
-        rangeConstraint = new IntegerRangeContraint(w1, w2, w3);
+        rangeConstraint = new IntegerRangeConstraint(w1, w2, w3);
         break;
       case FIXED:
         rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
