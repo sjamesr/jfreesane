@@ -10,7 +10,7 @@ import com.google.common.collect.ImmutableList;
 
 /**
  * Wraps an {@link InputStream} to provide some methods for deserializing SANE-related types.
- * 
+ *
  * @author James Ring (sjr@jdns.org)
  */
 public class SaneInputStream extends InputStream {
