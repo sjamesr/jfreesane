@@ -6,6 +6,7 @@ import java.util.List;
 
 import au.com.southsky.jfreesane.SaneSession.SaneParameters;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -102,7 +103,7 @@ public class SaneInputStream extends InputStream {
     }
 
     // skip the null terminator
-    return new String(input, 0, input.length - 1);
+    return new String(input, 0, input.length - 1, Charsets.ISO_8859_1);
   }
 
   public SaneParameters readSaneParameters() throws IOException {

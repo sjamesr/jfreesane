@@ -1,17 +1,15 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-
-import au.com.southsky.jfreesane.SaneSession.SaneDeviceHandle;
-
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.

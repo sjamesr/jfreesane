@@ -6,7 +6,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -52,8 +52,8 @@ public class SaneOption {
   };
 
   public enum OptionUnits implements SaneEnum {
-    UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(5), UNIT_MICROSECOND(
-        6);
+    UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(
+        5), UNIT_MICROSECOND(6);
 
     private final int wireValue;
 
@@ -68,12 +68,12 @@ public class SaneOption {
   };
 
   public enum OptionCapability implements SaneEnum {
-    SOFT_SELECT(1, "Option value may be set by software"), HARD_SELECT(2,
-        "Option value may be set by user intervention at the scanner"), SOFT_DETECT(4,
-        "Option value may be read by software"), EMULATED(8,
-        "Option value may be detected by software"), AUTOMATIC(16,
-        "Capability is emulated by driver"), INACTIVE(32, "Capability not currently active"), ADVANCED(
-        64, "Advanced user option");
+    SOFT_SELECT(1, "Option value may be set by software"), HARD_SELECT(
+        2, "Option value may be set by user intervention at the scanner"), SOFT_DETECT(
+        4, "Option value may be read by software"), EMULATED(
+        8, "Option value may be detected by software"), AUTOMATIC(
+        16, "Capability is emulated by driver"), INACTIVE(
+        32, "Capability not currently active"), ADVANCED(64, "Advanced user option");
 
     private int capBit;
     private String description;
@@ -129,8 +129,8 @@ public class SaneOption {
   }
 
   public enum OptionValueConstraintType implements SaneEnum {
-    NO_CONSTRAINT(0, "No constraint"), RANGE_CONSTRAINT(1, ""), VALUE_LIST_CONSTRAINT(2, ""), STRING_LIST_CONSTRAINT(
-        3, "");
+    NO_CONSTRAINT(0, "No constraint"), RANGE_CONSTRAINT(1, ""), VALUE_LIST_CONSTRAINT(
+        2, ""), STRING_LIST_CONSTRAINT(3, "");
 
     private final int wireValue;
     private final String description;
@@ -224,7 +224,8 @@ public class SaneOption {
   public SaneOption(SaneDevice device, int optionNumber, String name, String title,
       String description, Group group, OptionValueType type, OptionUnits units, int size,
       int capabilityWord, OptionValueConstraintType constraintType,
-      RangeConstraint rangeConstraints, List<String> stringContraints, List<Integer> wordConstraints) {
+      RangeConstraint rangeConstraints, List<String> stringContraints,
+      List<Integer> wordConstraints) {
     super();
     this.device = device;
     this.optionNumber = optionNumber;
@@ -285,8 +286,8 @@ public class SaneOption {
     return options;
   }
 
-  private static SaneOption fromStream(SaneInputStream inputStream, SaneDevice device,
-      int optionNumber) throws IOException {
+  private static SaneOption fromStream(
+      SaneInputStream inputStream, SaneDevice device, int optionNumber) throws IOException {
 
     SaneOption option = null;
 
@@ -312,8 +313,8 @@ public class SaneOption {
     int capabilityWord = inputStream.readWord().integerValue();
     int constraintTypeInt = inputStream.readWord().integerValue();
     // TODO: range check here
-    OptionValueConstraintType constraintType = SaneEnums.valueOf(OptionValueConstraintType.class,
-        constraintTypeInt);
+    OptionValueConstraintType constraintType = SaneEnums.valueOf(
+        OptionValueConstraintType.class, constraintTypeInt);
 
     // decode the constraint
 
@@ -473,14 +474,14 @@ public class SaneOption {
   }
 
   public String toString() {
-    return String
-        .format("Option: %s, %s, value type: %s, units: %s", name, title, valueType, units);
+    return String.format(
+        "Option: %s, %s, value type: %s, units: %s", name, title, valueType, units);
   }
 
   /**
    * Reads the current boolean value option. This option must be of type
    * {@link OptionValueType#BOOLEAN}.
-   * 
+   *
    * @throws IOException
    *           if a problem occurred while talking to SANE
    */
@@ -495,9 +496,9 @@ public class SaneOption {
   /**
    * Reads the current Integer value option. We do not cache value from previous get or set
    * operations so each get involves a round trip to the server.
-   * 
+   *
    * TODO: consider caching the returned value for "fast read" later
-   * 
+   *
    * @return the value of the option
    * @throws IOException
    *           if a problem occurred while talking to SANE
@@ -541,8 +542,8 @@ public class SaneOption {
   }
 
   public double getFixedValue() throws IOException {
-    Preconditions.checkState(valueType == OptionValueType.FIXED,
-        "option is not of fixed precision type");
+    Preconditions.checkState(
+        valueType == OptionValueType.FIXED, "option is not of fixed precision type");
 
     ControlOptionResult result = readOption();
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
@@ -585,8 +586,8 @@ public class SaneOption {
     }
 
     // read result
-    ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
-        .getInputStream());
+    ControlOptionResult result = ControlOptionResult.fromStream(
+        device.getSession().getInputStream());
     return result;
   }
 
@@ -594,7 +595,7 @@ public class SaneOption {
    * Sets the value of the current option to the supplied boolean value. Option value must be of
    * boolean type. SANE may ignore your preference, so if you need to ensure the value has been set
    * correctly, you should examine the return value of this method.
-   * 
+   *
    * @return the value that the option now has according to SANE
    */
   public boolean setBooleanValue(boolean value) throws IOException {
@@ -609,8 +610,8 @@ public class SaneOption {
    * be of fixed-precision type.
    */
   public double setFixedValue(double value) throws IOException {
-    Preconditions.checkArgument(value >= -32768 && value <= 32767.9999, "value " + value
-        + " is out of range");
+    Preconditions.checkArgument(
+        value >= -32768 && value <= 32767.9999, "value " + value + " is out of range");
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
     Preconditions.checkState(result.getType() == OptionValueType.FIXED);
@@ -633,22 +634,21 @@ public class SaneOption {
     Preconditions.checkState(result.getType() == OptionValueType.STRING);
 
     // TODO(sjr): maybe this should go somewhere common?
-    String optionValueFromServer = new String(result.getValue(), 0, result.getValueSize() - 1);
+    String optionValueFromServer = new String(
+        result.getValue(), 0, result.getValueSize() - 1, Charsets.ISO_8859_1);
 
-    Preconditions
-        .checkState(
-            result.getInfo().contains(OptionWriteInfo.INEXACT)
-                ^ newValue.equals(optionValueFromServer),
-            "new option value does not match when it should");
+    Preconditions.checkState(
+        result.getInfo().contains(OptionWriteInfo.INEXACT) ^ newValue.equals(optionValueFromServer),
+        "new option value does not match when it should");
 
     return optionValueFromServer;
   }
 
   /**
    * Set the value of the current option to the supplied value. Option value must be of integer type
-   * 
+   *
    * TODO: consider caching the returned value for "fast read" later
-   * 
+   *
    * @param newValue
    *          for the option
    * @return the value actually set
@@ -739,8 +739,8 @@ public class SaneOption {
   }
 
   private ControlOptionResult handleWriteResponse() throws IOException {
-    ControlOptionResult result = ControlOptionResult.fromStream(device.getSession()
-        .getInputStream());
+    ControlOptionResult result = ControlOptionResult.fromStream(
+        device.getSession().getInputStream());
 
     if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)) {
       device.invalidateOptions();
@@ -772,8 +772,8 @@ public class SaneOption {
     private final byte[] value;
     private final String resource;
 
-    private ControlOptionResult(int status, int info, OptionValueType type, int valueSize,
-        byte[] value, String resource) {
+    private ControlOptionResult(
+        int status, int info, OptionValueType type, int valueSize, byte[] value, String resource) {
       this.status = status;
       this.info = SaneEnums.enumSet(OptionWriteInfo.class, info);
       this.type = type;
@@ -787,14 +787,14 @@ public class SaneOption {
 
       if (status != 0) {
         SaneStatus statusEnum = SaneStatus.fromWireValue(status);
-        throw new IOException(String.format("unexpected status %d%s", status,
-            statusEnum != null ? " (" + statusEnum + ")" : ""));
+        throw new IOException(String.format(
+            "unexpected status %d%s", status, statusEnum != null ? " (" + statusEnum + ")" : ""));
       }
 
       int info = stream.readWord().integerValue();
 
-      OptionValueType type = SaneEnums.valueOf(OptionValueType.class, stream.readWord()
-          .integerValue());
+      OptionValueType type = SaneEnums.valueOf(
+          OptionValueType.class, stream.readWord().integerValue());
 
       int valueSize = stream.readWord().integerValue();
 

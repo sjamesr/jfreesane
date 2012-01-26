@@ -23,7 +23,6 @@ import java.util.logging.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -69,11 +68,21 @@ public class SaneSession implements Closeable {
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port.
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress) throws IOException {
+    return withRemoteSane(saneAddress, DEFAULT_PORT);
+  }
+
+  /**
+   * Establishes a connection to the SANE daemon running on the given host at the given port.
+   */
+  public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
     Socket socket = new Socket(saneAddress, DEFAULT_PORT);
 
     return new SaneSession(socket);
   }
 
+  /**
+   * Returns the device with the give name, or {@code null} if the device does not exist.
+   */
   public SaneDevice getDevice(String name) throws IOException {
     initSane();
 
@@ -110,8 +119,8 @@ public class SaneSession implements Closeable {
     SaneWord status = inputStream.readWord();
 
     if (status.integerValue() != 0) {
-      throw new IOException("unexpected status (" + status.integerValue()
-          + ") while opening device");
+      throw new IOException(
+          "unexpected status (" + status.integerValue() + ") while opening device");
     }
 
     SaneWord handle = inputStream.readWord();
@@ -152,8 +161,8 @@ public class SaneSession implements Closeable {
       }
 
       SaneParameters parameters = inputStream.readSaneParameters();
-      FrameInputStream frameStream = new FrameInputStream(parameters, imageSocket.getInputStream(),
-          0x4321 == byteOrder.integerValue());
+      FrameInputStream frameStream = new FrameInputStream(
+          parameters, imageSocket.getInputStream(), 0x4321 == byteOrder.integerValue());
       builder.addFrame(frameStream.readFrame());
       // imageSocket.close();
 
@@ -190,34 +199,6 @@ public class SaneSession implements Closeable {
     inputStream.readWord();
   }
 
-  static class SaneDeviceHandle {
-    private final SaneWord status;
-    private final SaneWord handle;
-    private final String resource;
-
-    private SaneDeviceHandle(SaneWord status, SaneWord handle, String resource) {
-      this.status = status;
-      this.handle = handle;
-      this.resource = resource;
-    }
-
-    public SaneWord getStatus() {
-      return status;
-    }
-
-    public SaneWord getHandle() {
-      return handle;
-    }
-
-    public String getResource() {
-      return resource;
-    }
-
-    public boolean isAuthorizationRequired() {
-      return !Strings.isNullOrEmpty(resource);
-    }
-  }
-
   public static class SaneParameters {
     private final FrameType frame;
     private final boolean lastFrame;
@@ -226,8 +207,8 @@ public class SaneSession implements Closeable {
     private final int lineCount;
     private final int depthPerPixel;
 
-    public SaneParameters(int frame, boolean lastFrame, int bytesPerLine, int pixelsPerLine,
-        int lines, int depth) {
+    public SaneParameters(
+        int frame, boolean lastFrame, int bytesPerLine, int pixelsPerLine, int lines, int depth) {
       this.frame = SaneEnums.valueOf(FrameType.class, frame);
       this.lastFrame = lastFrame;
       this.bytesPerLine = bytesPerLine;
@@ -266,8 +247,8 @@ public class SaneSession implements Closeable {
     private final InputStream underlyingStream;
     private final boolean bigEndian;
 
-    public FrameInputStream(SaneParameters parameters, InputStream underlyingStream,
-        boolean bigEndian) {
+    public FrameInputStream(
+        SaneParameters parameters, InputStream underlyingStream, boolean bigEndian) {
       this.parameters = parameters;
       this.underlyingStream = underlyingStream;
       this.bigEndian = bigEndian;
@@ -323,8 +304,8 @@ public class SaneSession implements Closeable {
 
       int result = read(destination, offset, (int) length);
       if (result != length) {
-        throw new IllegalStateException("read too few bytes (" + result + "), was expecting "
-            + length);
+        throw new IllegalStateException(
+            "read too few bytes (" + result + "), was expecting " + length);
       }
 
       log.fine("Read a record of " + result + " bytes");
@@ -375,8 +356,8 @@ public class SaneSession implements Closeable {
   }
 
   private static class SaneImage {
-    private static final Set<FrameType> singletonFrameTypes = Sets.immutableEnumSet(FrameType.GRAY,
-        FrameType.RGB);
+    private static final Set<FrameType> singletonFrameTypes = Sets.immutableEnumSet(
+        FrameType.GRAY, FrameType.RGB);
 
     private static final Set<FrameType> redGreenBlueFrameTypes = Sets.immutableEnumSet(
         FrameType.RED, FrameType.GREEN, FrameType.BLUE);
@@ -387,12 +368,13 @@ public class SaneSession implements Closeable {
     private final int height;
     private final int bytesPerLine;
 
-    private SaneImage(List<Frame> frames, int depthPerPixel, int width, int height, int bytesPerLine) {
+    private SaneImage(
+        List<Frame> frames, int depthPerPixel, int width, int height, int bytesPerLine) {
       // this ensures that in the 3-frame situation, they are always
       // arranged in the following order: red, green, blue
-      this.frames = Ordering
-          .explicit(FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY)
-          .onResultOf(new Function<Frame, FrameType>() {
+      this.frames = Ordering.explicit(
+          FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY).onResultOf(
+          new Function<Frame, FrameType>() {
             @Override
             public FrameType apply(Frame input) {
               return input.getType();
@@ -432,9 +414,8 @@ public class SaneSession implements Closeable {
         WritableRaster raster = Raster.createBandedRaster(buffer, getWidth(), getHeight(),
             getBytesPerLine(), new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, new Point(0, 0));
 
-        ColorModel model = new ComponentColorModel(
-            ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB), false, false, Transparency.OPAQUE,
-            DataBuffer.TYPE_BYTE);
+        ColorModel model = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
+            false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
         return new BufferedImage(model, raster, false, null);
       }
@@ -465,8 +446,8 @@ public class SaneSession implements Closeable {
         WritableRaster raster = Raster.createInterleavedRaster(buffer, width, height, bytesPerLine,
             bytesPerSample * bandOffsets.length, bandOffsets, new Point(0, 0));
 
-        ColorModel model = new ComponentColorModel(colorSpace, false, false, Transparency.OPAQUE,
-            DataBuffer.TYPE_BYTE);
+        ColorModel model = new ComponentColorModel(
+            colorSpace, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
         return new BufferedImage(model, raster, false, null);
       }
@@ -543,8 +524,8 @@ public class SaneSession implements Closeable {
       private final WriteOnce<Integer> bytesPerLine = new WriteOnce<Integer>();
 
       public void addFrame(Frame frame) {
-        Preconditions.checkArgument(!frameTypes.contains(frame.getType()),
-            "Image already contains a frame of this type");
+        Preconditions.checkArgument(
+            !frameTypes.contains(frame.getType()), "Image already contains a frame of this type");
         Preconditions.checkArgument(
             frameTypes.isEmpty() || !singletonFrameTypes.contains(frame.getType()),
             "The frame type is singleton but this image " + "contains another frame");
@@ -586,19 +567,19 @@ public class SaneSession implements Closeable {
         // does the image contains a single instance of a singleton
         // frame?
         if (frames.size() == 1 && singletonFrameTypes.contains(frames.get(0).getType())) {
-          return new SaneImage(frames, depthPerPixel.get(), width.get(), height.get(),
-              bytesPerLine.get());
+          return new SaneImage(
+              frames, depthPerPixel.get(), width.get(), height.get(), bytesPerLine.get());
         }
 
         // otherwise, does it contain a red, green and blue frame?
         if (frames.size() == redGreenBlueFrameTypes.size()
             && redGreenBlueFrameTypes.containsAll(frameTypes)) {
-          return new SaneImage(frames, depthPerPixel.get(), width.get(), height.get(),
-              bytesPerLine.get());
+          return new SaneImage(
+              frames, depthPerPixel.get(), width.get(), height.get(), bytesPerLine.get());
         }
 
-        throw new IllegalStateException("Image is not fully constructed. Frame types present: "
-            + frameTypes);
+        throw new IllegalStateException(
+            "Image is not fully constructed. Frame types present: " + frameTypes);
       }
     }
   }

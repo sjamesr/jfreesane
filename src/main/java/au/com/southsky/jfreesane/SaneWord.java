@@ -11,9 +11,12 @@ import java.util.Arrays;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents a SANE word type. For a thorough discussion about the SANE word type, see
- * {@link "http://www.sane-project.org/html/doc011.html#s4.2.1"}. JFreeSane chooses to represent the
- * SANE word type as an array of {@link #SIZE_IN_BYTES} bytes.
+ * Represents a SANE word type. JFreeSane chooses to represent the SANE word type as an array of
+ * {@link #SIZE_IN_BYTES} bytes.
+ *
+ * <p>
+ * See <a href="http://www.sane-project.org/html/doc011.html#s4.2.1">the SANE specification</a> for
+ * a thorough discussion about the SANE word type.
  *
  * @author James Ring (sjr@jdns.org)
  */
