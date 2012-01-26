@@ -11,11 +11,13 @@ import java.util.Arrays;
 import com.google.common.base.Preconditions;
 
 /**
- * Represents a SANE word type.
- * 
+ * Represents a SANE word type. For a thorough discussion about the SANE word type, see
+ * {@link "http://www.sane-project.org/html/doc011.html#s4.2.1"}. JFreeSane chooses to represent the
+ * SANE word type as an array of {@link #SIZE_IN_BYTES} bytes.
+ *
  * @author James Ring (sjr@jdns.org)
  */
-public class SaneWord {
+public final class SaneWord {
   public static final int SIZE_IN_BYTES = 4;
 
   private final byte[] value;
@@ -24,6 +26,10 @@ public class SaneWord {
     this.value = value;
   }
 
+  /**
+   * Returns a new {@code SaneWord} by consuming {@link #SIZE_IN_BYTES} bytes from the given
+   * {@link InputStream}.
+   */
   public static SaneWord fromStream(InputStream input) throws IOException {
     byte[] newValue = new byte[SIZE_IN_BYTES];
     if (input.read(newValue) != newValue.length) {
@@ -33,6 +39,9 @@ public class SaneWord {
     return new SaneWord(newValue);
   }
 
+  /**
+   * Returns a new {@code SaneWord} representing the given integer value.
+   */
   public static SaneWord forInt(int value) {
     ByteArrayOutputStream byteStream = new ByteArrayOutputStream(SIZE_IN_BYTES);
     DataOutputStream stream = new DataOutputStream(byteStream);
@@ -44,6 +53,16 @@ public class SaneWord {
     return new SaneWord(byteStream.toByteArray());
   }
 
+  /**
+   * Returns a new {@code SaneWord} representing the given SANE version.
+   *
+   * @param major
+   *          the SANE major version
+   * @param minor
+   *          the SANE minor version
+   * @param build
+   *          the SANE build identifier
+   */
   public static SaneWord forSaneVersion(int major, int minor, int build) {
     int result = (major & 0xff) << 24;
     result |= (minor & 0xff) << 16;
@@ -51,10 +70,17 @@ public class SaneWord {
     return forInt(result);
   }
 
+  /**
+   * Returns a copy of the underlying byte array representing this {@link SaneWord}. The length of
+   * the array is {@link #SIZE_IN_BYTES} bytes.
+   */
   public byte[] getValue() {
     return Arrays.copyOf(value, value.length);
   }
 
+  /**
+   * Treats this {@link SaneWord} as an integer and returns the represented value.
+   */
   public int integerValue() {
     try {
       return new DataInputStream(new ByteArrayInputStream(value)).readInt();
@@ -63,20 +89,33 @@ public class SaneWord {
     }
   }
 
+  /**
+   * Returns the value of this {@link SaneWord} treated as a SANE fixed precision value.
+   */
   public double fixedPrecisionValue() {
     return (double) integerValue() / (1 << 16);
   }
-  
+
+  /**
+   * Creates a new {@link SaneWord} from a copy of the given byte array. The array must be of length
+   * {@link #SIZE_IN_BYTES}, anything else will cause a runtime exception to be thrown.
+   */
   public static SaneWord fromBytes(byte[] byteValue) {
     Preconditions.checkArgument(byteValue.length == SIZE_IN_BYTES);
     return new SaneWord(Arrays.copyOf(byteValue, SIZE_IN_BYTES));
   }
-  
+
   @Override
   public String toString() {
     return Arrays.toString(value);
   }
 
+  /**
+   * Creates a new {@link SaneWord} from the given double. If {@code value} cannot be exactly
+   * represented in SANE's fixed precision scheme, then {@code
+   * SaneWord.forFixedPrecision(someValue).fixedPrecisionValue()} will not necessarily yield {@code
+   * someValue}.
+   */
   public static SaneWord forFixedPrecision(double value) {
     return SaneWord.forInt((int) (value * (1 << 16)));
   }
