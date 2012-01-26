@@ -14,7 +14,6 @@ import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.EnumSet;
@@ -25,7 +24,6 @@ import java.util.logging.Logger;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -33,13 +31,13 @@ import com.google.common.io.Closeables;
 
 /**
  * Represents a conversation taking place with a SANE daemon.
- * 
+ *
  * @author James Ring (sjr@jdns.org)
  */
 public class SaneSession implements Closeable {
 
   private static final Logger log = Logger.getLogger(SaneSession.class.getName());
-  
+
   private enum FrameType implements SaneEnum {
     GRAY(0), RGB(1), RED(2), GREEN(3), BLUE(4);
 
@@ -64,7 +62,7 @@ public class SaneSession implements Closeable {
   private SaneSession(Socket socket) throws IOException {
     this.socket = socket;
     this.outputStream = new SaneOutputStream(socket.getOutputStream());
-    this.inputStream = new SaneInputStream(socket.getInputStream());
+    this.inputStream = new SaneInputStream(this, socket.getInputStream());
   }
 
   /**
@@ -190,158 +188,6 @@ public class SaneSession implements Closeable {
 
     inputStream.readWord();
     inputStream.readWord();
-  }
-
-  public class SaneInputStream extends InputStream {
-    private InputStream wrappedStream;
-
-    public SaneInputStream(InputStream wrappedStream) {
-      this.wrappedStream = wrappedStream;
-    }
-
-    @Override
-    public int read() throws IOException {
-      return wrappedStream.read();
-    }
-
-    public List<SaneDevice> readDeviceList() throws IOException {
-      // Status first
-      readWord().integerValue();
-
-      // now we're reading an array, decode the length of the array (which
-      // includes the null if the array is non-empty)
-      int length = readWord().integerValue() - 1;
-
-      if (length <= 0) {
-        return ImmutableList.of();
-      }
-
-      ImmutableList.Builder<SaneDevice> result = ImmutableList.builder();
-
-      for (int i = 0; i < length; i++) {
-        SaneDevice device = readSaneDevicePointer();
-        if (device == null) {
-          throw new IllegalStateException("null pointer encountered when not expected");
-        }
-
-        result.add(device);
-      }
-
-      // read past a trailing byte in the response that I haven't figured
-      // out yet...
-      inputStream.readWord();
-
-      return result.build();
-    }
-
-    /**
-     * Reads a single {@link SaneDevice} definition pointed to by the pointer at the current
-     * location in the stream. Returns {@code null} if the pointer is a null pointer.
-     */
-    private SaneDevice readSaneDevicePointer() throws IOException {
-      if (!readPointer()) {
-        // TODO(sjr): why is there always a null pointer here?
-        // return null;
-      }
-
-      // now we assume that there's a sane device ready to parse
-      return readSaneDevice();
-    }
-
-    /**
-     * Reads a single pointer and returns {@code true} if it was non-null.
-     */
-    private boolean readPointer() throws IOException {
-      return readWord().integerValue() != 0;
-    }
-
-    private SaneDevice readSaneDevice() throws IOException {
-      String deviceName = readString();
-      String deviceVendor = readString();
-      String deviceModel = readString();
-      String deviceType = readString();
-
-      return new SaneDevice(SaneSession.this, deviceName, deviceVendor, deviceModel, deviceType);
-    }
-
-    public String readString() throws IOException {
-      // read the length
-      int length = readWord().integerValue();
-
-      if (length == 0) {
-        return "";
-      }
-
-      // now read all the bytes
-      byte[] input = new byte[length];
-      if (read(input) != input.length) {
-        throw new IllegalStateException("truncated input while reading string");
-      }
-
-      // skip the null terminator
-      return new String(input, 0, input.length - 1);
-    }
-
-    public SaneParameters readSaneParameters() throws IOException {
-      int frame = readWord().integerValue();
-      boolean lastFrame = readWord().integerValue() == 1;
-      int bytesPerLine = readWord().integerValue();
-      int pixelsPerLine = readWord().integerValue();
-      int lines = readWord().integerValue();
-      int depth = readWord().integerValue();
-
-      return new SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines, depth);
-    }
-
-    public SaneWord readWord() throws IOException {
-      return SaneWord.fromStream(this);
-    }
-  }
-
-  public static class SaneOutputStream extends OutputStream {
-    private OutputStream wrappedStream;
-
-    public SaneOutputStream(OutputStream wrappedStream) {
-      this.wrappedStream = wrappedStream;
-    }
-
-    @Override
-    public void close() throws IOException {
-      wrappedStream.close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-      wrappedStream.flush();
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-      wrappedStream.write(b);
-    }
-
-    public void write(String string) throws IOException {
-      if (string.length() > 0) {
-        write(SaneWord.forInt(string.length() + 1));
-        for (char c : string.toCharArray()) {
-          if (c == 0) {
-            throw new IllegalArgumentException("null characters not allowed");
-          }
-
-          write(c);
-        }
-      }
-
-      write(0);
-    }
-
-    public void write(SaneWord word) throws IOException {
-      write(word.getValue());
-    }
-
-    public void write(SaneEnum someEnum) throws IOException {
-      write(SaneWord.forInt(someEnum.getWireValue()));
-    }
   }
 
   static class SaneDeviceHandle {

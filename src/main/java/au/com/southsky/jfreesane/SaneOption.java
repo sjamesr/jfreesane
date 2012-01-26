@@ -6,8 +6,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import au.com.southsky.jfreesane.SaneSession.SaneInputStream;
-import au.com.southsky.jfreesane.SaneSession.SaneOutputStream;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
