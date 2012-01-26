@@ -72,10 +72,18 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <module name="JavadocMethod"/>
-        <module name="JavadocType"/>
-        <module name="JavadocVariable"/>
-        <module name="JavadocStyle"/>
+        <module name="JavadocMethod">
+          <property name="excludeScope" value="private"/>
+        </module>
+        <module name="JavadocType">
+          <property name="excludeScope" value="private"/>
+        </module>
+        <module name="JavadocVariable">
+          <property name="excludeScope" value="private"/>
+        </module>
+        <module name="JavadocStyle">
+          <property name="excludeScope" value="private"/>
+        </module>
 
 
         <!-- Checks for Naming Conventions.                  -->
