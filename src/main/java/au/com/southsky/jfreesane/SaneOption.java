@@ -53,29 +53,6 @@ public class SaneOption {
     }
   }
 
-  /**
-   * Instances of this enum are returned by
-   *
-   */
-  public enum OptionValueType implements SaneEnum {
-    BOOLEAN(0), INT(1), FIXED(2), STRING(3), BUTTON(4), GROUP(5);
-
-    private int typeNo;
-
-    OptionValueType(int typeNo) {
-      this.typeNo = typeNo;
-    }
-
-    public int typeNo() {
-      return typeNo;
-    }
-
-    @Override
-    public int getWireValue() {
-      return typeNo;
-    }
-  }
-
   public enum OptionUnits implements SaneEnum {
     UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(
         5), UNIT_MICROSECOND(6);
@@ -151,64 +128,6 @@ public class SaneOption {
       return wireValue;
     }
 
-  }
-
-  public enum OptionValueConstraintType implements SaneEnum {
-    NO_CONSTRAINT(0, "No constraint"), RANGE_CONSTRAINT(1, ""), VALUE_LIST_CONSTRAINT(
-        2, ""), STRING_LIST_CONSTRAINT(3, "");
-
-    private final int wireValue;
-    private final String description;
-
-    OptionValueConstraintType(int wireValue, String description) {
-      this.wireValue = wireValue;
-      this.description = description;
-    }
-
-    public String description() {
-      return description;
-    }
-
-    @Override
-    public int getWireValue() {
-      return wireValue;
-    }
-  }
-
-  public static class RangeConstraint {
-    private final SaneWord min;
-    private final SaneWord max;
-    private final SaneWord quantum;
-
-    RangeConstraint(SaneWord min, SaneWord max, SaneWord quantum) {
-      this.min = min;
-      this.max = max;
-      this.quantum = quantum;
-    }
-
-    public int getMinimumInteger() {
-      return min.integerValue();
-    }
-
-    public int getMaximumInteger() {
-      return max.integerValue();
-    }
-    
-    public int getQuantumInteger() {
-      return quantum.integerValue();
-    }
-    
-    public double getMinimumFixed() {
-      return min.fixedPrecisionValue();
-    }
-
-    public double getMaximumFixed() {
-      return max.fixedPrecisionValue();
-    }
-    
-    public double getQuantumFixed() {
-      return quantum.fixedPrecisionValue();
-    }
   }
 
   private final SaneDevice device;
@@ -352,7 +271,7 @@ public class SaneOption {
       for (int i = 0; i < n; i++) {
         // first element is list length, don't add that
         SaneWord value = inputStream.readWord();
-        
+
         if (i != 0) {
           valueConstraints.add(value);
         }
@@ -466,6 +385,14 @@ public class SaneOption {
     }
   }
 
+  /**
+   * Returns {@code true} if this option has a constraint other than
+   * {@link OptionValueConstraintType#NO_CONSTRAINT}.
+   */
+  public boolean isConstrained() {
+    return !OptionValueConstraintType.NO_CONSTRAINT.equals(constraintType);
+  }
+
   public Set<OptionCapability> getCapabilities() {
     return EnumSet.copyOf(optionCapabilities);
   }
@@ -489,7 +416,7 @@ public class SaneOption {
   public List<Integer> getIntegerValueListConstraint() {
     return Lists.transform(wordConstraints, SaneWord.TO_INTEGER_FUNCTION);
   }
-  
+
   public List<Double> getFixedValueListConstraint() {
     return Lists.transform(wordConstraints, SaneWord.TO_FIXED_FUNCTION);
   }

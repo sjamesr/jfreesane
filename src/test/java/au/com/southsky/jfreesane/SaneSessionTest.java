@@ -10,9 +10,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;
 
-import au.com.southsky.jfreesane.SaneOption.OptionValueConstraintType;
-import au.com.southsky.jfreesane.SaneOption.OptionValueType;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
