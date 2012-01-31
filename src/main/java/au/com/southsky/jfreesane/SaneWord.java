@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 
 /**
@@ -22,6 +23,34 @@ import com.google.common.base.Preconditions;
  */
 public final class SaneWord {
   public static final int SIZE_IN_BYTES = 4;
+
+  /**
+   * A function that, when applied to a {@link SaneWord} instance, returns the integer value of that
+   * SANE word.
+   *
+   * @see SaneWord#integerValue
+   */
+  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION = new Function<
+      SaneWord, Integer>() {
+    @Override
+    public Integer apply(SaneWord word) {
+      return word.integerValue();
+    }
+  };
+
+  /**
+   * A function that, when applied to a {@link SaneWord} instance, returns the SANE fixed precision
+   * value of that SANE word.
+   *
+   * @see SaneWord#fixedPrecisionValue
+   */
+  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION = new Function<
+      SaneWord, Double>() {
+    @Override
+    public Double apply(SaneWord word) {
+      return word.fixedPrecisionValue();
+    }
+  };
 
   private final byte[] value;
 

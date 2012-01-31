@@ -2,7 +2,21 @@ package au.com.southsky.jfreesane;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Closeables;
+
+import au.com.southsky.jfreesane.SaneOption.OptionValueConstraintType;
+import au.com.southsky.jfreesane.SaneOption.OptionValueType;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -16,28 +30,16 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import au.com.southsky.jfreesane.SaneOption.OptionValueType;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
-
 /**
  * Tests JFreeSane's interactions with the backend.
- * 
+ *
  * <p>
  * This test is ignored right now because it requires a real SANE backend to talk to. If you remove
  * the {@code "@Ignore"} annotation and point this test at a real SANE backend, it should pass.
- * 
+ *
  * @author James Ring (sjr@jdns.org)
  */
-@Ignore
+// @Ignore
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
@@ -97,8 +99,8 @@ public class SaneSessionTest {
       for (SaneOption option : options) {
         System.out.println(option.toString());
       }
-      Assert.assertTrue("Expected first option 'Number of options'", options.get(0).getTitle()
-          .equals("Number of options"));
+      Assert.assertTrue("Expected first option 'Number of options'",
+          options.get(0).getTitle().equals("Number of options"));
     } finally {
       Closeables.closeQuietly(device);
     }
@@ -158,8 +160,8 @@ public class SaneSessionTest {
     SaneDevice device = session.getDevice("test");
     device.open();
 
-    Assert.assertTrue(device.getOption("source").getStringContraints()
-        .contains("Automatic Document Feeder"));
+    Assert.assertTrue(
+        device.getOption("source").getStringContraints().contains("Automatic Document Feeder"));
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     for (int i = 0; i < 20; i++) {
@@ -216,22 +218,22 @@ public class SaneSessionTest {
        * assertProducesCorrectImage(device, "Gray", 1, "Solid black");
        * assertProducesCorrectImage(device, "Gray", 8, "Solid black");
        * assertProducesCorrectImage(device, "Gray", 16, "Solid black");
-       * 
+       *
        * assertProducesCorrectImage(device, "Color", 1, "Solid white");
        * assertProducesCorrectImage(device, "Color", 8, "Solid white");
        * assertProducesCorrectImage(device, "Color", 16, "Solid white");
        * assertProducesCorrectImage(device, "Color", 1, "Solid black");
        * assertProducesCorrectImage(device, "Color", 8, "Solid black");
        * assertProducesCorrectImage(device, "Color", 16, "Solid black");
-       * 
+       *
        * assertProducesCorrectImage(device, "Gray", 1, "Color pattern");
        * assertProducesCorrectImage(device, "Color", 1, "Color pattern");
-       * 
+       *
        * assertProducesCorrectImage(device, "Gray", 8, "Color pattern");
        * assertProducesCorrectImage(device, "Color", 8, "Color pattern");
        */
 
-      assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
+assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
       assertProducesCorrectImage(device, "Color", 8, "Color pattern");
       assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
@@ -249,8 +251,8 @@ public class SaneSessionTest {
           device.getOption("mode").getStringValue(Charsets.US_ASCII)));
       assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
       assertEquals("Gray", device.getOption("mode").getStringValue(Charsets.US_ASCII));
-      assertEquals("Default",
-          device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
+      assertEquals(
+          "Default", device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
     } finally {
       Closeables.closeQuietly(device);
     }
@@ -288,8 +290,103 @@ public class SaneSessionTest {
     }
   }
 
-  private void assertProducesCorrectImage(SaneDevice device, String mode, int sampleDepth,
-      String testPicture) throws IOException, SaneException {
+  @Test
+  public void readsStringListConstraintsCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("string-constraint-string-list");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.STRING_LIST_CONSTRAINT, option.getConstraintType());
+      assertEquals(ImmutableList.of("First entry", "Second entry",
+          "This is the very long third entry. Maybe the frontend has an idea how to display it"),
+          option.getStringContraints());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void readIntegerValueListConstraintsCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("int-constraint-word-list");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.VALUE_LIST_CONSTRAINT, option.getConstraintType());
+      assertEquals(ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
+          option.getIntegerValueListConstraint());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void readFixedValueListConstraintsCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("fixed-constraint-word-list");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.VALUE_LIST_CONSTRAINT, option.getConstraintType());
+      List<Double> expected = ImmutableList.of(-32.7d, 12.1d, 42d, 129.5d);
+      List<Double> actual = option.getFixedValueListConstraint();
+      assertEquals(expected.size(), actual.size());
+
+      for (int i = 0; i < expected.size(); i++) {
+        assertEquals(expected.get(i), actual.get(i), 0.00001);
+      }
+      
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void readIntegerConstraintRangeCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("int-constraint-range");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.RANGE_CONSTRAINT, option.getConstraintType());
+      assertEquals(4, option.getRangeConstraints().getMinimumInteger());
+      assertEquals(192, option.getRangeConstraints().getMaximumInteger());
+      assertEquals(2, option.getRangeConstraints().getQuantumInteger());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void readFixedConstraintRangeCorrectly() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("fixed-constraint-range");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.RANGE_CONSTRAINT, option.getConstraintType());
+      assertEquals(-42.17, option.getRangeConstraints().getMinimumFixed(), 0.00001);
+      assertEquals(32767.9999, option.getRangeConstraints().getMaximumFixed(), 0.00001);
+      assertEquals(2.0, option.getRangeConstraints().getQuantumFixed(), 0.00001);
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  private void assertProducesCorrectImage(
+      SaneDevice device, String mode, int sampleDepth, String testPicture)
+      throws IOException, SaneException {
     BufferedImage actualImage = acquireImage(device, mode, sampleDepth, testPicture);
 
     writeImage(mode, sampleDepth, testPicture, actualImage);
@@ -301,8 +398,9 @@ public class SaneSessionTest {
     }
   }
 
-  private void writeImage(String mode, int sampleDepth, String testPicture,
-      BufferedImage actualImage) throws IOException {
+  private void writeImage(
+      String mode, int sampleDepth, String testPicture, BufferedImage actualImage)
+      throws IOException {
     File file = File.createTempFile(
         String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')), ".png");
     ImageIO.write(actualImage, "png", file);
@@ -317,8 +415,9 @@ public class SaneSessionTest {
     }
   }
 
-  private BufferedImage acquireImage(SaneDevice device, String mode, int sampleDepth,
-      String testPicture) throws IOException, SaneException {
+  private BufferedImage acquireImage(
+      SaneDevice device, String mode, int sampleDepth, String testPicture)
+      throws IOException, SaneException {
     device.getOption("mode").setStringValue(mode);
     device.getOption("depth").setIntegerValue(sampleDepth);
     device.getOption("test-picture").setStringValue(testPicture);

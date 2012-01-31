@@ -1,11 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -13,6 +7,33 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * This class represents a SANE device option. An option may be active or inactive (see
+ * {@link #isActive}). Active options may be read (see {@link #isReadable}) and modified (see
+ * {@link #isWriteable}).
+ *
+ * <p>
+ * Options have a type (see {@link #getType}), in order to read or write an option's value, you must
+ * call the getter or setter method corresponding to the option's type. For example, for an option
+ * of type {@link OptionValueType#STRING}, you will call {@link #setStringValue} or
+ * {@link #getStringValue}.
+ *
+ * <p>
+ * Options may have constraints that impose restrictions on the range of values the option may take.
+ * Constraints have a type which may be obtained using {@link #getConstraintType}. You may read the
+ * actual constraints by calling the constraint getter method corresponding to the constraint type.
+ * For example, an option of type {@link OptionValueType#INT} may have a constraint of type
+ * {@link OptionValueConstraintType#VALUE_LIST_CONSTRAINT}, which you may obtain by calling
+ * {@link #getIntegerValueListConstraint}.
+ *
+ * @author James Ring (sjr@jdns.org)
+ */
 public class SaneOption {
 
   private static Group currentGroup = null;
@@ -32,6 +53,10 @@ public class SaneOption {
     }
   }
 
+  /**
+   * Instances of this enum are returned by
+   *
+   */
   public enum OptionValueType implements SaneEnum {
     BOOLEAN(0), INT(1), FIXED(2), STRING(3), BUTTON(4), GROUP(5);
 
@@ -49,7 +74,7 @@ public class SaneOption {
     public int getWireValue() {
       return typeNo;
     }
-  };
+  }
 
   public enum OptionUnits implements SaneEnum {
     UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(
@@ -65,7 +90,7 @@ public class SaneOption {
     public int getWireValue() {
       return wireValue;
     }
-  };
+  }
 
   public enum OptionCapability implements SaneEnum {
     SOFT_SELECT(1, "Option value may be set by software"), HARD_SELECT(
@@ -150,59 +175,40 @@ public class SaneOption {
     }
   }
 
-  public static abstract class RangeConstraint {
-    protected final int min;
-    protected final int max;
-    protected final int quantum;
+  public static class RangeConstraint {
+    private final SaneWord min;
+    private final SaneWord max;
+    private final SaneWord quantum;
 
-    RangeConstraint(int min, int max, int quantum) {
+    RangeConstraint(SaneWord min, SaneWord max, SaneWord quantum) {
       this.min = min;
       this.max = max;
       this.quantum = quantum;
     }
 
-  }
-
-  public static class IntegerRangeConstraint extends RangeConstraint {
-
-    IntegerRangeConstraint(int min, int max, int quantum) {
-      super(min, max, quantum);
+    public int getMinimumInteger() {
+      return min.integerValue();
     }
 
-    public int getMin() {
-      return min;
+    public int getMaximumInteger() {
+      return max.integerValue();
+    }
+    
+    public int getQuantumInteger() {
+      return quantum.integerValue();
+    }
+    
+    public double getMinimumFixed() {
+      return min.fixedPrecisionValue();
     }
 
-    public int getMax() {
-      return max;
+    public double getMaximumFixed() {
+      return max.fixedPrecisionValue();
     }
-
-    public int getQuantum() {
-      return quantum;
+    
+    public double getQuantumFixed() {
+      return quantum.fixedPrecisionValue();
     }
-
-  }
-
-  public static class FixedRangeConstraint extends RangeConstraint {
-
-    private static final float DIVISOR = 65536.0f;
-
-    FixedRangeConstraint(int min, int max, int quantum) {
-      super(min, max, quantum);
-    }
-
-    public float getMin() {
-      return min / DIVISOR;
-    }
-
-    public float getMax() {
-      return max / DIVISOR;
-    }
-
-    public float getQuantum() {
-      return quantum / DIVISOR;
-    }
-
   }
 
   private final SaneDevice device;
@@ -219,13 +225,13 @@ public class SaneOption {
   private final RangeConstraint rangeConstraints;
   private final List<String> stringContraints;
   // TODO: wrong level of abstraction
-  private final List<Integer> wordConstraints;
+  private final List<SaneWord> wordConstraints;
 
   public SaneOption(SaneDevice device, int optionNumber, String name, String title,
       String description, Group group, OptionValueType type, OptionUnits units, int size,
       int capabilityWord, OptionValueConstraintType constraintType,
       RangeConstraint rangeConstraints, List<String> stringContraints,
-      List<Integer> wordConstraints) {
+      List<SaneWord> wordConstraints) {
     super();
     this.device = device;
     this.optionNumber = optionNumber;
@@ -319,7 +325,7 @@ public class SaneOption {
     // decode the constraint
 
     List<String> stringConstraints = null;
-    List<Integer> valueConstraints = null;
+    List<SaneWord> valueConstraints = null;
     RangeConstraint rangeConstraint = null;
 
     switch (constraintType) {
@@ -328,37 +334,44 @@ public class SaneOption {
       break;
     case STRING_LIST_CONSTRAINT:
       stringConstraints = Lists.newArrayList();
+
       int n = inputStream.readWord().integerValue();
       for (int i = 0; i < n; i++) {
-        stringConstraints.add(inputStream.readString());
+        String stringConstraint = inputStream.readString();
+
+        // the last element is a null terminator, don't add that
+        if (i < n - 1) {
+          stringConstraints.add(stringConstraint);
+        }
       }
-      // inputStream.readWord();
+
       break;
     case VALUE_LIST_CONSTRAINT:
       valueConstraints = Lists.newArrayList();
       n = inputStream.readWord().integerValue();
       for (int i = 0; i < n; i++) {
-        valueConstraints.add(inputStream.readWord().integerValue());
+        // first element is list length, don't add that
+        SaneWord value = inputStream.readWord();
+        
+        if (i != 0) {
+          valueConstraints.add(value);
+        }
       }
-      // inputStream.readWord(); // TODO: Is this necessary?
+
       break;
     case RANGE_CONSTRAINT:
-
       // TODO: still don't understand the 6 values
 
-      int w0 = inputStream.readWord().integerValue();
-      int w1 = inputStream.readWord().integerValue();
-      int w2 = inputStream.readWord().integerValue();
-      int w3 = inputStream.readWord().integerValue();
+      SaneWord w0 = inputStream.readWord();
+      SaneWord w1 = inputStream.readWord();
+      SaneWord w2 = inputStream.readWord();
+      SaneWord w3 = inputStream.readWord();
       // int w4 = inputStream.readWord().integerValue();
 
       switch (valueType) {
-
       case INT:
-        rangeConstraint = new IntegerRangeConstraint(w1, w2, w3);
-        break;
       case FIXED:
-        rangeConstraint = new FixedRangeConstraint(w1, w2, w3);
+        rangeConstraint = new RangeConstraint(w1, w2, w3);
         break;
       default:
         throw new IllegalStateException("Integer or Fixed type expected for range constraint");
@@ -469,10 +482,19 @@ public class SaneOption {
     return stringContraints;
   }
 
-  public List<Integer> getWordConstraints() {
+  public List<SaneWord> getWordConstraints() {
     return wordConstraints;
   }
 
+  public List<Integer> getIntegerValueListConstraint() {
+    return Lists.transform(wordConstraints, SaneWord.TO_INTEGER_FUNCTION);
+  }
+  
+  public List<Double> getFixedValueListConstraint() {
+    return Lists.transform(wordConstraints, SaneWord.TO_FIXED_FUNCTION);
+  }
+
+  @Override
   public String toString() {
     return String.format(
         "Option: %s, %s, value type: %s, units: %s", name, title, valueType, units);
@@ -527,7 +549,6 @@ public class SaneOption {
 
   public String getStringValue(Charset encoding) throws IOException {
     Preconditions.checkState(valueType == OptionValueType.STRING, "option is not a string");
-
     ControlOptionResult result = readOption();
 
     byte[] value = result.getValue();

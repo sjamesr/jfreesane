@@ -81,14 +81,26 @@ public class SaneSession implements Closeable {
   }
 
   /**
-   * Returns the device with the give name, or {@code null} if the device does not exist.
+   * Returns the device with the give name. Opening the device will fail if the named device does
+   * not exist.
+   *
+   * @return a new {@link SaneDevice} with the given name associated with the current session, never
+   *         {@code null}
+   * @throws IOException
+   *           if an error occurs while communicating with the SANE daemon
    */
   public SaneDevice getDevice(String name) throws IOException {
     initSane();
-
     return new SaneDevice(this, name, "", "", "");
   }
 
+  /**
+   * Lists the devices known to the SANE daemon.
+   *
+   * @return a list of devices that may be opened, see {@link SaneDevice#open}
+   * @throws IOException
+   *           if an error occurs while communicating with the SANE daemon
+   */
   public List<SaneDevice> listDevices() throws IOException {
     initSane();
 
