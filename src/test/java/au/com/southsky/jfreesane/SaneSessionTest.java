@@ -343,7 +343,7 @@ assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
       for (int i = 0; i < expected.size(); i++) {
         assertEquals(expected.get(i), actual.get(i), 0.00001);
       }
-      
+
     } finally {
       Closeables.closeQuietly(device);
     }
