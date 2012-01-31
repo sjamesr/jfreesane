@@ -16,6 +16,7 @@ import au.com.southsky.jfreesane.SaneOption.OptionValueType;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.awt.Color;
@@ -39,7 +40,7 @@ import javax.imageio.ImageIO;
  *
  * @author James Ring (sjr@jdns.org)
  */
-// @Ignore
+@Ignore
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
