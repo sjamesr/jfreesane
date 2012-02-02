@@ -22,7 +22,13 @@ import com.google.common.base.Preconditions;
  * @author James Ring (sjr@jdns.org)
  */
 public final class SaneWord {
+
+  /**
+   * The number of bytes used to represent a SANE word.
+   */
   public static final int SIZE_IN_BYTES = 4;
+
+  private static final int PRECISION = 1 << 16;
 
   /**
    * A function that, when applied to a {@link SaneWord} instance, returns the integer value of that
@@ -125,7 +131,7 @@ public final class SaneWord {
    * Returns the value of this {@link SaneWord} treated as a SANE fixed precision value.
    */
   public double fixedPrecisionValue() {
-    return (double) integerValue() / (1 << 16);
+    return (double) integerValue() / PRECISION;
   }
 
   /**
@@ -149,6 +155,6 @@ public final class SaneWord {
    * someValue}.
    */
   public static SaneWord forFixedPrecision(double value) {
-    return SaneWord.forInt((int) (value * (1 << 16)));
+    return SaneWord.forInt((int) (value * PRECISION));
   }
 }
