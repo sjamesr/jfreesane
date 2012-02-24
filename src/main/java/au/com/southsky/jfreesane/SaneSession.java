@@ -76,8 +76,9 @@ public class SaneSession implements Closeable {
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
     Socket socket = new Socket(saneAddress, DEFAULT_PORT);
-
-    return new SaneSession(socket);
+    SaneSession session = new SaneSession(socket);
+    session.initSane();
+    return session;
   }
 
   /**
@@ -90,7 +91,6 @@ public class SaneSession implements Closeable {
    *           if an error occurs while communicating with the SANE daemon
    */
   public SaneDevice getDevice(String name) throws IOException {
-    initSane();
     return new SaneDevice(this, name, "", "", "");
   }
 
@@ -100,10 +100,10 @@ public class SaneSession implements Closeable {
    * @return a list of devices that may be opened, see {@link SaneDevice#open}
    * @throws IOException
    *           if an error occurs while communicating with the SANE daemon
+   * @throws SaneException
+   *           if the SANE backend returns an error in response to this request
    */
-  public List<SaneDevice> listDevices() throws IOException {
-    initSane();
-
+  public List<SaneDevice> listDevices() throws IOException, SaneException {
     outputStream.write(SaneWord.forInt(1));
     return inputStream.readDeviceList();
   }
