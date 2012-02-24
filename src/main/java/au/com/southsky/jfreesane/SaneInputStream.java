@@ -28,9 +28,13 @@ public class SaneInputStream extends InputStream {
     return wrappedStream.read();
   }
 
-  public List<SaneDevice> readDeviceList() throws IOException {
+  public List<SaneDevice> readDeviceList() throws IOException, SaneException {
     // Status first
-    readWord().integerValue();
+    SaneStatus status = readStatus();
+
+    if (!SaneStatus.STATUS_GOOD.equals(status)) {
+      throw new SaneException(status);
+    }
 
     // now we're reading an array, decode the length of the array (which
     // includes the null if the array is non-empty)
@@ -116,6 +120,10 @@ public class SaneInputStream extends InputStream {
 
     return new SaneSession.SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines,
         depth);
+  }
+
+  public SaneStatus readStatus() throws IOException {
+    return SaneStatus.fromWireValue(readWord().integerValue());
   }
 
   public SaneWord readWord() throws IOException {
