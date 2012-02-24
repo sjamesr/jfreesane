@@ -54,10 +54,19 @@ public class SaneDevice implements Closeable {
     return type;
   }
 
+  /**
+   * Returns {@code true} if the device is open.
+   */
   public boolean isOpen() {
     return handle != null;
   }
 
+  /**
+   * Opens the device.
+   *
+   * @throws IOException if a problem occurred while talking to SANE
+   * @throws IllegalStateException if the device is already open
+   */
   public void open() throws IOException {
     Preconditions.checkState(!isOpen(), "device is already open");
     handle = session.openDevice(this);
@@ -77,6 +86,12 @@ public class SaneDevice implements Closeable {
     return session.acquireImage(handle);
   }
 
+  /**
+   * Closes the device.
+   *
+   * @throws IOException if an error occurrs talking to the SANE backend
+   * @throws IllegalStateException if the device is already closed
+   */
   @Override
   public void close() throws IOException {
     if (!isOpen()) {
@@ -93,15 +108,19 @@ public class SaneDevice implements Closeable {
         + type + "]";
   }
 
+  /**
+   * Returns the handle by which this device is known to the SANE backend, or {@code null} if
+   * if the device is not open (see {@link #isOpen}).
+   */
   public SaneDeviceHandle getHandle() {
     return handle;
   }
 
   /**
-   * Implements SANE_NET_GET_OPTION_DESCRIPTORS
+   * Returns the list of options applicable to this device.
    *
-   * @return List of SaneOptions
-   * @throws IOException
+   * @return a list of {@link SaneOption} instances
+   * @throws IOException if a problem occurred talking to the SANE backend
    */
   public List<SaneOption> listOptions() throws IOException {
     if (optionTitleMap == null) {
