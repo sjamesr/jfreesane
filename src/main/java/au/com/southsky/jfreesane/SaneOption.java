@@ -474,6 +474,16 @@ public class SaneOption {
     // value
   }
 
+  /**
+   * Returns the value of this option interpreted as a LATIN-1 (SANE's default encoding)
+   * encoded string.
+   *
+   * @throws IOException if a problem occurs reading the value from the SANE backend
+   */
+  public String getStringValue() throws IOException {
+    return getStringValue(Charsets.ISO_8859_1);
+  }
+
   public String getStringValue(Charset encoding) throws IOException {
     Preconditions.checkState(valueType == OptionValueType.STRING, "option is not a string");
     ControlOptionResult result = readOption();
