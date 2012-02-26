@@ -131,8 +131,15 @@ public class SaneSession implements Closeable {
     SaneWord status = inputStream.readWord();
 
     if (status.integerValue() != 0) {
-      throw new IOException(
-          "unexpected status (" + status.integerValue() + ") while opening device");
+      SaneStatus statusEnum = SaneEnums.valueOf(SaneStatus.class, status);
+      if (statusEnum == null) {
+        throw new IOException(
+            "unexpected status " + status.integerValue() + " while opening device");
+      } else {
+        throw new IOException(
+            "unexpected status " + status.integerValue() + " (" + statusEnum
+                + ") while opening device");
+      }
     }
 
     SaneWord handle = inputStream.readWord();

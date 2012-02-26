@@ -75,4 +75,8 @@ public final class SaneEnums {
   public static <T extends Enum<T> & SaneEnum> T valueOf(Class<T> enumType, int valueType) {
     return mapForType(enumType).get(valueType);
   }
+
+  public static <T extends Enum<T> & SaneEnum> T valueOf(Class<T> enumType, SaneWord value) {
+    return valueOf(enumType, value.integerValue());
+  }
 }
