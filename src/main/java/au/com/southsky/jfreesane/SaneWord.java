@@ -36,8 +36,7 @@ public final class SaneWord {
    *
    * @see SaneWord#integerValue
    */
-  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION = new Function<
-      SaneWord, Integer>() {
+  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION = new Function<SaneWord, Integer>() {
     @Override
     public Integer apply(SaneWord word) {
       return word.integerValue();
@@ -50,8 +49,7 @@ public final class SaneWord {
    *
    * @see SaneWord#fixedPrecisionValue
    */
-  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION = new Function<
-      SaneWord, Double>() {
+  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION = new Function<SaneWord, Double>() {
     @Override
     public Double apply(SaneWord word) {
       return word.fixedPrecisionValue();
@@ -139,8 +137,18 @@ public final class SaneWord {
    * {@link #SIZE_IN_BYTES}, anything else will cause a runtime exception to be thrown.
    */
   public static SaneWord fromBytes(byte[] byteValue) {
-    Preconditions.checkArgument(byteValue.length == SIZE_IN_BYTES);
-    return new SaneWord(Arrays.copyOf(byteValue, SIZE_IN_BYTES));
+    return fromBytes(byteValue, 0);
+  }
+
+  /**
+   * Creates a new {@link SaneWord} from a copy of the given bytes within the array.
+   * {@code offset + SIZE_IN_BYTES} must be a valid index (i.e. there must be enough bytes in the
+   * array at the given offset), otherwise a runtime exception is thrown.
+   */
+  public static SaneWord fromBytes(byte[] byteValue, int offset) {
+    Preconditions.checkArgument(offset >= 0, "offset must be positive or zero");
+    Preconditions.checkArgument(offset + SIZE_IN_BYTES <= byteValue.length);
+    return new SaneWord(Arrays.copyOfRange(byteValue, offset, offset + SIZE_IN_BYTES));
   }
 
   @Override
@@ -150,9 +158,9 @@ public final class SaneWord {
 
   /**
    * Creates a new {@link SaneWord} from the given double. If {@code value} cannot be exactly
-   * represented in SANE's fixed precision scheme, then {@code
-   * SaneWord.forFixedPrecision(someValue).fixedPrecisionValue()} will not necessarily yield {@code
-   * someValue}.
+   * represented in SANE's fixed precision scheme, then
+   * {@code SaneWord.forFixedPrecision(someValue).fixedPrecisionValue()} will not necessarily yield
+   * {@code someValue}.
    */
   public static SaneWord forFixedPrecision(double value) {
     return SaneWord.forInt((int) (value * PRECISION));
