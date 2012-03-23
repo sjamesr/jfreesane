@@ -482,7 +482,7 @@ public class SaneSession implements Closeable {
         for (int x = 0; x < width; x++) {
           int lineStartByte = y * bytesPerLine;
           int offsetWithinLine = x / Byte.SIZE;
-          int offsetWithinByte = 1 << (x % Byte.SIZE);
+          int offsetWithinByte = 1 << (Byte.SIZE - (x % Byte.SIZE) - 1);
 
           // for a GRAY frame of single bit depth, the value is
           // intensity: 1 is lowest intensity (black), 0 is highest
@@ -506,7 +506,7 @@ public class SaneSession implements Closeable {
         for (int x = 0; x < width; x++) {
           int lineStartByte = y * bytesPerLine;
           int offsetWithinLine = (x / Byte.SIZE) * componentCount;
-          int offsetWithinByte = 1 << (x % Byte.SIZE);
+          int offsetWithinByte = 1 << (Byte.SIZE - (x % Byte.SIZE) - 1);
 
           boolean red = (data[lineStartByte + offsetWithinLine] & offsetWithinByte) != 0;
           boolean green = (data[lineStartByte + offsetWithinLine + 1] & offsetWithinByte) != 0;
