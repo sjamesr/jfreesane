@@ -165,7 +165,7 @@ public class SaneSession implements Closeable {
       int port = inputStream.readWord().integerValue();
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
-
+      
       // TODO(sjr): maybe authenticate to the resource
 
       // Ask the server for the parameters of this scan
@@ -278,7 +278,7 @@ public class SaneSession implements Closeable {
       return underlyingStream.read();
     }
 
-    public Frame readFrame() throws IOException {
+    public Frame readFrame() throws IOException, SaneException {
       byte[] bigArray = new byte[parameters.getBytesPerLine() * parameters.getLineCount()];
 
       int offset = 0;
@@ -308,12 +308,26 @@ public class SaneSession implements Closeable {
       return new Frame(parameters, bigArray);
     }
 
-    private int readRecord(byte[] destination, int offset) throws IOException {
+    private int readRecord(byte[] destination, int offset) throws IOException, SaneException {
       DataInputStream inputStream = new DataInputStream(this);
       long length = inputStream.readInt();
 
       if (length == 0xffffffff) {
         log.fine("Reached end of records");
+
+        // Hack: saned may actually write a status record here, even
+        // though the sane specification says that no more bytes should
+        // be read in an end-of-records situation
+        int status = read();
+        if (status != -1) {
+          SaneStatus saneStatus = SaneStatus.fromWireValue(status);
+          
+          // An EOF condition is expected: that is what SANE told us!
+          if (saneStatus != null && saneStatus != SaneStatus.STATUS_EOF) {
+            throw new SaneException(saneStatus);
+          }
+        }
+
         return -1;
       }
 
