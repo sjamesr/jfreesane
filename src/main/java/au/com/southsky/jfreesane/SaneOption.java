@@ -37,6 +37,8 @@ import java.util.Set;
  */
 public class SaneOption {
 
+  private static Group currentGroup = null;
+
   private enum OptionAction implements SaneEnum {
     GET_VALUE(0), SET_VALUE(1), SET_AUTO(2);
 
@@ -52,45 +54,9 @@ public class SaneOption {
     }
   }
 
-  /**
-   * Instances of this enum are returned by {@link SaneOption#getUnits} indicating what units, if
-   * any, the value has.
-   */
   public enum OptionUnits implements SaneEnum {
-    /**
-     * The option has no units.
-     */
-    UNIT_NONE(0),
-
-    /**
-     * The option unit is pixels.
-     */
-    UNIT_PIXEL(1),
-
-    /**
-     * The option unit is bits.
-     */
-    UNIT_BIT(2),
-
-    /**
-     * The option unit is millimeters.
-     */
-    UNIT_MM(3),
-
-    /**
-     * The option unit is dots per inch.
-     */
-    UNIT_DPI(4),
-
-    /**
-     * The option unit is a percentage.
-     */
-    UNIT_PERCENT(5),
-
-    /**
-     * The option unit is microseconds.
-     */
-    UNIT_MICROSECOND(6);
+    UNIT_NONE(0), UNIT_PIXEL(1), UNIT_BIT(2), UNIT_MM(3), UNIT_DPI(4), UNIT_PERCENT(
+        5), UNIT_MICROSECOND(6);
 
     private final int wireValue;
 
@@ -101,6 +67,32 @@ public class SaneOption {
     @Override
     public int getWireValue() {
       return wireValue;
+    }
+  }
+
+  public enum OptionCapability implements SaneEnum {
+    SOFT_SELECT(1, "Option value may be set by software"), HARD_SELECT(
+        2, "Option value may be set by user intervention at the scanner"), SOFT_DETECT(
+        4, "Option value may be read by software"), EMULATED(
+        8, "Option value may be detected by software"), AUTOMATIC(
+        16, "Capability is emulated by driver"), INACTIVE(
+        32, "Capability not currently active"), ADVANCED(64, "Advanced user option");
+
+    private int capBit;
+    private String description;
+
+    OptionCapability(int capBit, String description) {
+      this.capBit = capBit;
+      this.description = description;
+    }
+
+    public String description() {
+      return description;
+    }
+
+    @Override
+    public int getWireValue() {
+      return capBit;
     }
   }
 
@@ -141,25 +133,53 @@ public class SaneOption {
 
   private final SaneDevice device;
   private final int optionNumber;
-  private final SaneOptionDescriptor descriptor;
+  private final String name;
+  private final String title;
+  private final String description;
+  private final Group group;
+  private final OptionValueType valueType;
+  private final OptionUnits units;
+  private final int size;
+  private final Set<OptionCapability> optionCapabilities;
+  private final OptionValueConstraintType constraintType;
+  private final RangeConstraint rangeConstraints;
+  private final List<String> stringContraints;
+  // TODO: wrong level of abstraction
+  private final List<SaneWord> wordConstraints;
 
-  SaneOption(SaneDevice device, int optionNumber, SaneOptionDescriptor descriptor) {
+  public SaneOption(SaneDevice device, int optionNumber, String name, String title,
+      String description, Group group, OptionValueType type, OptionUnits units, int size,
+      int capabilityWord, OptionValueConstraintType constraintType,
+      RangeConstraint rangeConstraints, List<String> stringContraints,
+      List<SaneWord> wordConstraints) {
+    super();
     this.device = device;
     this.optionNumber = optionNumber;
-    this.descriptor = descriptor;
-
-    if (descriptor.getGroup() != null && getValueType() != OptionValueType.GROUP) {
-      descriptor.getGroup().addOption(this);
-    }
+    this.name = name;
+    this.title = title;
+    this.description = description;
+    this.group = group;
+    this.valueType = type;
+    this.units = units;
+    this.size = size;
+    this.optionCapabilities = SaneEnums.enumSet(OptionCapability.class, capabilityWord);
+    this.constraintType = constraintType;
+    this.rangeConstraints = rangeConstraints;
+    this.stringContraints = stringContraints;
+    this.wordConstraints = wordConstraints;
   }
 
-  static List<SaneOption> optionsFor(SaneDevice device) throws IOException {
+  public static List<SaneOption> optionsFor(SaneDevice device) throws IOException {
     Preconditions.checkState(device.isOpen(), "you must open() the device first");
     List<SaneOption> options = Lists.newArrayList();
     SaneSession session = device.getSession();
 
     SaneInputStream inputStream = session.getInputStream();
     SaneOutputStream outputStream = session.getOutputStream();
+
+    // initialise the current group
+
+    currentGroup = null;
 
     // send RPC 4
 
@@ -180,20 +200,142 @@ public class SaneOption {
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
-
-      if (option.getValueType() == OptionValueType.GROUP) {
-        device.addOptionGroup(option.getGroup());
-      } else {
-        options.add(option);
+      // We expect the first option to have an empty name. Subsequent options with empty names are
+      // invalid
+      if (option == null || (i > 0 && Strings.isNullOrEmpty(option.getName()))) {
+        continue;
       }
+
+      options.add(option);
     }
 
     return options;
   }
 
-  private static SaneOption fromStream(SaneInputStream inputStream, SaneDevice device,
-      int optionNumber) throws IOException {
-    return new SaneOption(device, optionNumber, inputStream.readOptionDescriptor());
+  private static SaneOption fromStream(
+      SaneInputStream inputStream, SaneDevice device, int optionNumber) throws IOException {
+
+    SaneOption option = null;
+
+    // discard pointer
+
+    inputStream.readWord();
+
+    String optionName = inputStream.readString();
+    String optionTitle = inputStream.readString();
+    String optionDescription = inputStream.readString();
+    int typeInt = inputStream.readWord().integerValue();
+    // TODO: range check here
+    OptionValueType valueType = SaneEnums.valueOf(OptionValueType.class, typeInt);
+
+    int unitsInt = inputStream.readWord().integerValue();
+    // TODO: range check here
+    OptionUnits units = SaneEnums.valueOf(OptionUnits.class, unitsInt);
+
+    int size = inputStream.readWord().integerValue();
+
+    // constraint type
+
+    int capabilityWord = inputStream.readWord().integerValue();
+    int constraintTypeInt = inputStream.readWord().integerValue();
+    // TODO: range check here
+    OptionValueConstraintType constraintType = SaneEnums.valueOf(
+        OptionValueConstraintType.class, constraintTypeInt);
+
+    // decode the constraint
+
+    List<String> stringConstraints = null;
+    List<SaneWord> valueConstraints = null;
+    RangeConstraint rangeConstraint = null;
+
+    switch (constraintType) {
+    case NO_CONSTRAINT:
+      // inputStream.readWord(); // discard empty list
+      break;
+    case STRING_LIST_CONSTRAINT:
+      stringConstraints = Lists.newArrayList();
+
+      int n = inputStream.readWord().integerValue();
+      for (int i = 0; i < n; i++) {
+        String stringConstraint = inputStream.readString();
+
+        // the last element is a null terminator, don't add that
+        if (i < n - 1) {
+          stringConstraints.add(stringConstraint);
+        }
+      }
+
+      break;
+    case VALUE_LIST_CONSTRAINT:
+      valueConstraints = Lists.newArrayList();
+      n = inputStream.readWord().integerValue();
+      for (int i = 0; i < n; i++) {
+        // first element is list length, don't add that
+        SaneWord value = inputStream.readWord();
+
+        if (i != 0) {
+          valueConstraints.add(value);
+        }
+      }
+
+      break;
+    case RANGE_CONSTRAINT:
+      // TODO: still don't understand the 6 values
+
+      SaneWord w0 = inputStream.readWord();
+      SaneWord w1 = inputStream.readWord();
+      SaneWord w2 = inputStream.readWord();
+      SaneWord w3 = inputStream.readWord();
+      // int w4 = inputStream.readWord().integerValue();
+
+      switch (valueType) {
+      case INT:
+      case FIXED:
+        rangeConstraint = new RangeConstraint(w1, w2, w3);
+        break;
+      default:
+        throw new IllegalStateException("Integer or Fixed type expected for range constraint");
+      }
+      break;
+    default:
+      throw new IllegalStateException("Unknow constrint type");
+    }
+
+    // handle a change of group
+
+    if (valueType == OptionValueType.GROUP) {
+      currentGroup = new Group(optionTitle, valueType);
+    } else {
+
+      // TODO: lots
+
+      option = new SaneOption(device, optionNumber, optionName, optionTitle, optionDescription,
+          currentGroup, valueType, units, size, capabilityWord, constraintType, rangeConstraint,
+          stringConstraints, valueConstraints);
+    }
+
+    return option;
+  }
+
+  public static class Group {
+
+    private final String title;
+    private final OptionValueType valueType;
+
+    public Group(String title, OptionValueType valueType) {
+      super();
+      this.title = title;
+      this.valueType = valueType;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    public OptionValueType getValueType() {
+      return valueType;
+    }
+
   }
 
   public SaneDevice getDevice() {
@@ -201,47 +343,46 @@ public class SaneOption {
   }
 
   public String getName() {
-    return descriptor.getName();
+    return name;
   }
 
   public String getTitle() {
-    return descriptor.getTitle();
+    return title;
   }
 
   public String getDescription() {
-    return descriptor.getDescription();
+    return description;
   }
 
-  public OptionGroup getGroup() {
-    return descriptor.getGroup();
+  public Group getGroup() {
+    return group;
   }
 
   public OptionValueType getType() {
-    return descriptor.getValueType();
+    return valueType;
   }
 
   public OptionUnits getUnits() {
-    return descriptor.getUnits();
+    return units;
   }
 
   public int getSize() {
-    return descriptor.getSize();
+    return size;
   }
 
   public int getValueCount() {
-    switch (descriptor.getValueType()) {
+    switch (valueType) {
     case BOOLEAN:
     case STRING:
       return 1;
     case INT:
     case FIXED:
-      return getSize() / SaneWord.SIZE_IN_BYTES;
+      return size / SaneWord.SIZE_IN_BYTES;
     case BUTTON:
     case GROUP:
-      throw new IllegalStateException("Option type '" + descriptor.getValueType()
-          + "' has no value count");
+      throw new IllegalStateException("Option type '" + valueType + "' has no value count");
     default:
-      throw new IllegalStateException("Option type '" + descriptor.getValueType() + "' unknown");
+      throw new IllegalStateException("Option type '" + valueType + "' unknown");
     }
   }
 
@@ -250,41 +391,41 @@ public class SaneOption {
    * {@link OptionValueConstraintType#NO_CONSTRAINT}.
    */
   public boolean isConstrained() {
-    return !OptionValueConstraintType.NO_CONSTRAINT.equals(descriptor.getConstraintType());
+    return !OptionValueConstraintType.NO_CONSTRAINT.equals(constraintType);
+  }
+
+  public Set<OptionCapability> getCapabilities() {
+    return EnumSet.copyOf(optionCapabilities);
   }
 
   public OptionValueConstraintType getConstraintType() {
-    return descriptor.getConstraintType();
+    return constraintType;
   }
 
   public RangeConstraint getRangeConstraints() {
-    return descriptor.getRangeConstraints();
+    return rangeConstraints;
   }
 
   public List<String> getStringContraints() {
-    return descriptor.getStringContraints();
+    return stringContraints;
   }
 
   public List<SaneWord> getWordConstraints() {
-    return descriptor.getWordConstraints();
+    return wordConstraints;
   }
 
   public List<Integer> getIntegerValueListConstraint() {
-    return Lists.transform(descriptor.getWordConstraints(), SaneWord.TO_INTEGER_FUNCTION);
+    return Lists.transform(wordConstraints, SaneWord.TO_INTEGER_FUNCTION);
   }
 
   public List<Double> getFixedValueListConstraint() {
-    return Lists.transform(descriptor.getWordConstraints(), SaneWord.TO_FIXED_FUNCTION);
+    return Lists.transform(wordConstraints, SaneWord.TO_FIXED_FUNCTION);
   }
 
   @Override
   public String toString() {
-    return String.format("Option: %s, %s, value type: %s, units: %s", descriptor.getName(),
-        descriptor.getTitle(), descriptor.getValueType(), descriptor.getUnits());
-  }
-
-  private OptionValueType getValueType() {
-    return descriptor.getValueType();
+    return String.format(
+        "Option: %s, %s, value type: %s, units: %s", name, title, valueType, units);
   }
 
   /**
@@ -295,7 +436,7 @@ public class SaneOption {
    *           if a problem occurred while talking to SANE
    */
   public boolean getBooleanValue() throws IOException {
-    Preconditions.checkState(getValueType() == OptionValueType.BOOLEAN, "option is not a boolean");
+    Preconditions.checkState(valueType == OptionValueType.BOOLEAN, "option is not a boolean");
     Preconditions.checkState(getValueCount() == 1, "option is a boolean array, not boolean");
 
     ControlOptionResult result = readOption();
@@ -314,7 +455,7 @@ public class SaneOption {
    */
   public int getIntegerValue() throws IOException {
     // check for type agreement
-    Preconditions.checkState(getValueType() == OptionValueType.INT, "option is not an integer");
+    Preconditions.checkState(valueType == OptionValueType.INT, "option is not an integer");
     Preconditions.checkState(getValueCount() == 1, "option is an integer array, not integer");
 
     // Send RCP corresponding to:
@@ -357,7 +498,7 @@ public class SaneOption {
   }
 
   public String getStringValue(Charset encoding) throws IOException {
-    Preconditions.checkState(getValueType() == OptionValueType.STRING, "option is not a string");
+    Preconditions.checkState(valueType == OptionValueType.STRING, "option is not a string");
     ControlOptionResult result = readOption();
 
     byte[] value = result.getValue();
@@ -372,8 +513,8 @@ public class SaneOption {
   }
 
   public double getFixedValue() throws IOException {
-    Preconditions.checkState(getValueType() == OptionValueType.FIXED,
-        "option is not of fixed precision type");
+    Preconditions.checkState(
+        valueType == OptionValueType.FIXED, "option is not of fixed precision type");
 
     ControlOptionResult result = readOption();
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
@@ -402,27 +543,27 @@ public class SaneOption {
     out.write(SaneWord.forInt(optionNumber));
     out.write(OptionAction.GET_VALUE);
 
-    out.write(getValueType());
-    out.write(SaneWord.forInt(getSize()));
+    out.write(valueType);
+    out.write(SaneWord.forInt(size));
 
     int elementCount;
 
-    switch (getValueType()) {
+    switch (valueType) {
     case BOOLEAN:
     case FIXED:
     case INT:
-      elementCount = getSize() / SaneWord.SIZE_IN_BYTES;
+      elementCount = size / SaneWord.SIZE_IN_BYTES;
       break;
     case STRING:
-      elementCount = getSize();
+      elementCount = size;
       break;
     default:
-      throw new IllegalStateException("Unsupported type " + getValueType());
+      throw new IllegalStateException("Unsupported type " + valueType);
     }
 
     out.write(SaneWord.forInt(elementCount));
 
-    for (int i = 0; i < getSize(); i++) {
+    for (int i = 0; i < size; i++) {
       out.write(0);// why do we need to provide a value
       // buffer in an RPC call ???
     }
@@ -491,7 +632,7 @@ public class SaneOption {
 
   public String setStringValue(String newValue) throws IOException {
     // check for type agreement
-    Preconditions.checkState(getValueType() == OptionValueType.STRING);
+    Preconditions.checkState(valueType == OptionValueType.STRING);
     Preconditions.checkState(getValueCount() == 1);
     Preconditions.checkState(isWriteable());
 
@@ -563,7 +704,7 @@ public class SaneOption {
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(optionNumber));
     out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
-    out.write(getValueType());
+    out.write(valueType);
 
     out.write(SaneWord.forInt(value.size() * SaneWord.SIZE_IN_BYTES));
 
@@ -586,13 +727,13 @@ public class SaneOption {
   }
 
   private ControlOptionResult writeOption(String value) throws IOException {
-    Preconditions.checkState(getValueType() == OptionValueType.STRING);
+    Preconditions.checkState(valueType == OptionValueType.STRING);
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5) /* rpc #5 */);
     out.write(SaneWord.forInt(device.getHandle().getHandle().integerValue()));
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
-    out.write(getValueType());
+    out.write(valueType);
 
     // even if the string is empty, we still write out at least 1 byte (null
     // terminator)
@@ -611,14 +752,14 @@ public class SaneOption {
   private ControlOptionResult writeOption(List<Integer> value) throws IOException {
     Preconditions.checkState(isActive(), "option " + getName() + " is not active");
     Preconditions.checkState(isWriteable(), "option " + getName() + " is not writeable");
-    Preconditions.checkState(getValueType() == OptionValueType.INT);
+    Preconditions.checkState(valueType == OptionValueType.INT);
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5) /* rpc #5 */);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(OptionAction.SET_VALUE);
-    out.write(getValueType());
-    out.write(SaneWord.forInt(getSize()));
+    out.write(valueType);
+    out.write(SaneWord.forInt(size));
     out.write(SaneWord.forInt(value.size()));
     for (Integer element : value) {
       out.write(SaneWord.forInt(element));
@@ -628,13 +769,13 @@ public class SaneOption {
   }
 
   private ControlOptionResult writeButtonOption() throws IOException {
-    Preconditions.checkState(getValueType() == OptionValueType.BUTTON);
+    Preconditions.checkState(valueType == OptionValueType.BUTTON);
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5) /* rpc #5 */);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(OptionAction.SET_VALUE);
-    out.write(getValueType());
+    out.write(valueType);
     out.write(SaneWord.forInt(0));
     out.write(SaneWord.forInt(0)); // only one value follows
 
@@ -653,15 +794,15 @@ public class SaneOption {
   }
 
   public boolean isActive() {
-    return !descriptor.getOptionCapabilities().contains(OptionCapability.INACTIVE);
+    return !optionCapabilities.contains(OptionCapability.INACTIVE);
   }
 
   public boolean isReadable() {
-    return descriptor.getOptionCapabilities().contains(OptionCapability.SOFT_DETECT);
+    return optionCapabilities.contains(OptionCapability.SOFT_DETECT);
   }
 
   public boolean isWriteable() {
-    return descriptor.getOptionCapabilities().contains(OptionCapability.SOFT_SELECT);
+    return optionCapabilities.contains(OptionCapability.SOFT_SELECT);
   }
 
   /**

@@ -4,12 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 import au.com.southsky.jfreesane.SaneSession.SaneParameters;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 /**
  * Wraps an {@link InputStream} to provide some methods for deserializing SANE-related types.
@@ -19,7 +17,6 @@ import com.google.common.collect.Lists;
 public class SaneInputStream extends InputStream {
   private final SaneSession saneSession;
   private InputStream wrappedStream;
-  private OptionGroup currentGroup;
 
   public SaneInputStream(SaneSession saneSession, InputStream wrappedStream) {
     this.saneSession = saneSession;
@@ -131,99 +128,5 @@ public class SaneInputStream extends InputStream {
 
   public SaneWord readWord() throws IOException {
     return SaneWord.fromStream(this);
-  }
-
-  public SaneOptionDescriptor readOptionDescriptor() throws IOException {
-    // discard pointer
-    readWord();
-
-    String optionName = readString();
-    String optionTitle = readString();
-    String optionDescription = readString();
-    int typeInt = readWord().integerValue();
-    // TODO: range check here
-    OptionValueType valueType = SaneEnums.valueOf(OptionValueType.class, typeInt);
-
-    if (valueType == OptionValueType.GROUP) {
-      // a new group applies!
-      currentGroup = new OptionGroup(optionTitle);
-    }
-
-    int unitsInt = readWord().integerValue();
-    // TODO: range check here
-    OptionUnits units = SaneEnums.valueOf(OptionUnits.class, unitsInt);
-
-    int size = readWord().integerValue();
-
-    // constraint type
-
-    int capabilityWord = readWord().integerValue();
-    int constraintTypeInt = readWord().integerValue();
-    // TODO: range check here
-    OptionValueConstraintType constraintType = SaneEnums.valueOf(
-        OptionValueConstraintType.class, constraintTypeInt);
-
-    // decode the constraint
-
-    List<String> stringConstraints = null;
-    List<SaneWord> valueConstraints = null;
-    RangeConstraint rangeConstraint = null;
-
-    switch (constraintType) {
-    case NO_CONSTRAINT:
-      // inputStream.readWord(); // discard empty list
-      break;
-    case STRING_LIST_CONSTRAINT:
-      stringConstraints = Lists.newArrayList();
-
-      int n = readWord().integerValue();
-      for (int i = 0; i < n; i++) {
-        String stringConstraint = readString();
-
-        // the last element is a null terminator, don't add that
-        if (i < n - 1) {
-          stringConstraints.add(stringConstraint);
-        }
-      }
-
-      break;
-    case VALUE_LIST_CONSTRAINT:
-      valueConstraints = Lists.newArrayList();
-      n = readWord().integerValue();
-      for (int i = 0; i < n; i++) {
-        // first element is list length, don't add that
-        SaneWord value = readWord();
-
-        if (i != 0) {
-          valueConstraints.add(value);
-        }
-      }
-
-      break;
-    case RANGE_CONSTRAINT:
-      // TODO: still don't understand the 6 values
-
-      SaneWord w0 = readWord();
-      SaneWord w1 = readWord();
-      SaneWord w2 = readWord();
-      SaneWord w3 = readWord();
-      // int w4 = inputStream.readWord().integerValue();
-
-      switch (valueType) {
-      case INT:
-      case FIXED:
-        rangeConstraint = new RangeConstraint(w1, w2, w3);
-        break;
-      default:
-        throw new IllegalStateException("Integer or Fixed type expected for range constraint");
-      }
-      break;
-    default:
-      throw new IllegalStateException("Unknow constrint type");
-    }
-
-    return new SaneOptionDescriptor(optionName, optionTitle, optionDescription, currentGroup,
-        valueType, units, size, SaneEnums.enumSet(OptionCapability.class, capabilityWord),
-        constraintType, rangeConstraint, stringConstraints, valueConstraints);
   }
 }

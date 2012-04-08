@@ -1,24 +1,21 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.
  *
  * <p>
- * Definitely not thread-safe. If you're going to use this object from multiple threads, you must do
- * your own synchronization. Even performing read operations (like getting an option's value) must
- * be synchronized.
+ * Not thread-safe.
  *
  * @author James Ring (sjr@jdns.org)
  */
@@ -32,7 +29,6 @@ public class SaneDevice implements Closeable {
   private SaneDeviceHandle handle;
 
   private Map<String, SaneOption> optionTitleMap = null;
-  private final List<OptionGroup> groups = Lists.newArrayList();
 
   SaneDevice(SaneSession session, String name, String vendor, String model, String type) {
     this.session = session;
@@ -128,7 +124,6 @@ public class SaneDevice implements Closeable {
    */
   public List<SaneOption> listOptions() throws IOException {
     if (optionTitleMap == null) {
-      groups.clear();
       optionTitleMap = Maps.uniqueIndex(SaneOption.optionsFor(this),
           new Function<SaneOption, String>() {
             @Override
@@ -140,18 +135,6 @@ public class SaneDevice implements Closeable {
 
     // Maps.uniqueIndex guarantees the order of optionTitleMap.values()
     return ImmutableList.copyOf(optionTitleMap.values());
-  }
-
-  void addOptionGroup(OptionGroup group) {
-    groups.add(group);
-  }
-
-  /**
-   * Returns the list of option groups for this device.
-   */
-  public List<OptionGroup> getOptionGroups() throws IOException {
-    listOptions();
-    return ImmutableList.copyOf(groups);
   }
 
   public SaneOption getOption(String title) throws IOException {
