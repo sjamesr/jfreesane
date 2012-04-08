@@ -5,17 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.Closeables;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
@@ -28,6 +17,17 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
+
 /**
  * Tests JFreeSane's interactions with the backend.
  *
@@ -37,7 +37,6 @@ import javax.imageio.ImageIO;
  *
  * @author James Ring (sjr@jdns.org)
  */
-@Ignore
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
@@ -45,7 +44,7 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    this.session = SaneSession.withRemoteSane(InetAddress.getByName("localhost"));
+    this.session = SaneSession.withRemoteSane(InetAddress.getByName("sirius"));
   }
 
   @After
@@ -71,9 +70,20 @@ public class SaneSessionTest {
   }
 
   @Test
+  public void optionGroupsArePopulated() throws Exception {
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+      assertTrue(!device.getOptionGroups().isEmpty());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
   public void imageAcquisitionSucceeds() throws Exception {
     SaneDevice device = session.getDevice("test");
-    FileOutputStream stream = null;
     try {
       device.open();
       BufferedImage image = device.acquireImage();
@@ -81,7 +91,6 @@ public class SaneSessionTest {
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
-      Closeables.closeQuietly(stream);
       Closeables.closeQuietly(device);
     }
   }
@@ -96,9 +105,10 @@ public class SaneSessionTest {
       System.out.println("We found " + options.size() + " options");
       for (SaneOption option : options) {
         System.out.println(option.toString());
+        if (option.getType() != OptionValueType.BUTTON) {
+          System.out.println(option.getValueCount());
+        }
       }
-      Assert.assertTrue("Expected first option 'Number of options'",
-          options.get(0).getTitle().equals("Number of options"));
     } finally {
       Closeables.closeQuietly(device);
     }
@@ -231,9 +241,11 @@ public class SaneSessionTest {
        * assertProducesCorrectImage(device, "Color", 8, "Color pattern");
        */
 
-assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
-      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
-      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
+      assertProducesCorrectImage(device, "Gray", 1, "Grid");
+      assertProducesCorrectImage(device, "Color", 1, "Color pattern");
+
+//      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
+//      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
       Closeables.closeQuietly(device);
     }
@@ -377,6 +389,100 @@ assertProducesCorrectImage(device, "Gray", 16, "Color pattern");
       assertEquals(-42.17, option.getRangeConstraints().getMinimumFixed(), 0.00001);
       assertEquals(32767.9999, option.getRangeConstraints().getMaximumFixed(), 0.00001);
       assertEquals(2.0, option.getRangeConstraints().getQuantumFixed(), 0.00001);
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void arrayOption() throws Exception {
+    SaneDevice device = session.getDevice("pixma");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("gamma-table");
+      assertNotNull(option);
+//      assertFalse(option.isConstrained());
+      assertEquals(OptionValueType.INT, option.getType());
+      List<Integer> values = Lists.newArrayList();
+
+      for (int i = 0; i < option.getValueCount(); i++) {
+        values.add(i % 256);
+      }
+
+      assertEquals(values, option.setIntegerValue(values));
+      assertEquals(values, option.getIntegerArrayValue());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void pixmaConstraints() throws Exception {
+    SaneDevice device = session.getDevice("pixma");
+
+    try {
+      device.open();
+
+      SaneOption option = device.getOption("tl-x");
+      assertNotNull(option);
+      assertEquals(OptionValueConstraintType.RANGE_CONSTRAINT, option.getConstraintType());
+      assertEquals(OptionValueType.FIXED, option.getType());
+      RangeConstraint constraint = option.getRangeConstraints();
+
+      System.out.println(constraint.getMinimumFixed());
+      System.out.println(constraint.getMaximumFixed());
+      System.out.println(option.getUnits());
+      System.out.println(option.setFixedValue(-4));
+      System.out.println(option.setFixedValue(97.5));
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  @Test
+  public void multipleListDevicesCalls() throws Exception {
+    session.listDevices();
+    session.listDevices();
+  }
+
+  @Test
+  public void multipleGetDeviceCalls() throws Exception {
+    session.getDevice("test");
+    session.getDevice("test");
+  }
+
+  @Test
+  public void multipleOpenDeviceCalls() throws Exception {
+    {
+      SaneDevice device = session.getDevice("test");
+      openAndCloseDevice(device);
+    }
+
+    {
+      SaneDevice device = session.getDevice("test");
+      openAndCloseDevice(device);
+    }
+  }
+
+  @Test
+  public void canSetButtonOption() throws Exception {
+    SaneDevice device = session.getDevice("pixma");
+    try {
+      device.open();
+      device.getOption("button-update").setButtonValue();
+      assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
+      assertEquals("Gray", device.getOption("mode").getStringValue());
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
+  private void openAndCloseDevice(SaneDevice device) throws Exception {
+    try {
+      device.open();
+      device.listOptions();
     } finally {
       Closeables.closeQuietly(device);
     }
