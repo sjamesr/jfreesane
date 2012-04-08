@@ -20,6 +20,7 @@ import javax.imageio.ImageIO;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -37,6 +38,7 @@ import com.google.common.io.Closeables;
  *
  * @author James Ring (sjr@jdns.org)
  */
+@Ignore
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
