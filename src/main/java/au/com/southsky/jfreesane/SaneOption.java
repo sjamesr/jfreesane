@@ -1,5 +1,11 @@
 package au.com.southsky.jfreesane;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Logger;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -7,12 +13,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * This class represents a SANE device option. An option may be active or inactive (see
@@ -36,6 +36,8 @@ import java.util.Set;
  * @author James Ring (sjr@jdns.org)
  */
 public class SaneOption {
+
+  private final static Logger logger = Logger.getLogger(SaneOption.class.getName());
 
   private enum OptionAction implements SaneEnum {
     GET_VALUE(0), SET_VALUE(1), SET_AUTO(2);
@@ -180,6 +182,14 @@ public class SaneOption {
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
+      // http://code.google.com/p/jfreesane/issues/detail?id=1
+      // The first option always has an empty name. Sometimes we see options after the first option
+      // that have empty names. Elsewhere we assume that option names are unique, so this option is
+      // omitted
+      if (option == null || (i > 0 && Strings.isNullOrEmpty(option.getName()))) {
+        logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
+        continue;
+      }
 
       if (option.getValueType() == OptionValueType.GROUP) {
         device.addOptionGroup(option.getGroup());
