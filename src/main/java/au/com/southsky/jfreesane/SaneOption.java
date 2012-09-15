@@ -182,18 +182,22 @@ public class SaneOption {
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
-      // http://code.google.com/p/jfreesane/issues/detail?id=1
-      // The first option always has an empty name. Sometimes we see options after the first option
-      // that have empty names. Elsewhere we assume that option names are unique, so this option is
-      // omitted
-      if (option == null || (i > 0 && Strings.isNullOrEmpty(option.getName()))) {
-        logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
+      if (option == null) {
         continue;
       }
 
       if (option.getValueType() == OptionValueType.GROUP) {
         device.addOptionGroup(option.getGroup());
       } else {
+        // http://code.google.com/p/jfreesane/issues/detail?id=1
+        // The first option always has an empty name. Sometimes we see options after the first option
+        // that have empty names. Elsewhere we assume that option names are unique, so this option is
+        // omitted
+        if (i > 0 && Strings.isNullOrEmpty(option.getName())) {
+          logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
+          continue;
+        }
+
         options.add(option);
       }
     }
