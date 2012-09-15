@@ -3,7 +3,7 @@
   <groupId>com.googlecode.jfreesane</groupId>
   <artifactId>jfreesane</artifactId>
   <packaging>jar</packaging>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.8</version>
   <name>jfreesane</name>
   <url>http://jfreesane.googlecode.com</url>
   <description>A Java client for the SANE daemon</description>
