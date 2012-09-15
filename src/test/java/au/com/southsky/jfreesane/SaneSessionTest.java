@@ -171,7 +171,7 @@ public class SaneSessionTest {
     device.open();
 
     Assert.assertTrue(
-        device.getOption("source").getStringContraints().contains("Automatic Document Feeder"));
+        device.getOption("source").getStringConstraints().contains("Automatic Document Feeder"));
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     for (int i = 0; i < 20; i++) {
@@ -314,7 +314,7 @@ public class SaneSessionTest {
       assertEquals(OptionValueConstraintType.STRING_LIST_CONSTRAINT, option.getConstraintType());
       assertEquals(ImmutableList.of("First entry", "Second entry",
           "This is the very long third entry. Maybe the frontend has an idea how to display it"),
-          option.getStringContraints());
+          option.getStringConstraints());
     } finally {
       Closeables.closeQuietly(device);
     }

@@ -271,8 +271,8 @@ public class SaneOption {
     return descriptor.getRangeConstraints();
   }
 
-  public List<String> getStringContraints() {
-    return descriptor.getStringContraints();
+  public List<String> getStringConstraints() {
+    return descriptor.getStringConstraints();
   }
 
   public List<SaneWord> getWordConstraints() {

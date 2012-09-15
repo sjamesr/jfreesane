@@ -84,7 +84,7 @@ class SaneOptionDescriptor {
     return rangeConstraints;
   }
 
-  public List<String> getStringContraints() {
+  public List<String> getStringConstraints() {
     return stringContraints;
   }
 
