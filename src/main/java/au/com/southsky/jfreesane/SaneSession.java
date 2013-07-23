@@ -186,7 +186,7 @@ public class SaneSession implements Closeable {
       // imageSocket.close();
 
       if (parameters.isLastFrame()) {
-          imageSocket.close();
+        imageSocket.close();
         break;
       }
     }
@@ -197,6 +197,7 @@ public class SaneSession implements Closeable {
   }
 
   void closeDevice(SaneDeviceHandle handle) throws IOException {
+    // RPC code
     outputStream.write(SaneWord.forInt(3));
     outputStream.write(handle.getHandle());
 
@@ -205,17 +206,15 @@ public class SaneSession implements Closeable {
     inputStream.readWord();
   }
 
+  void cancelDevice(SaneDeviceHandle handle) throws IOException {
+    // RPC code
+    outputStream.write(SaneWord.forInt(8));
+    outputStream.write(handle.getHandle());
 
-    void cancelDevice(SaneDeviceHandle handle) throws IOException {
-        // RPC code
-        outputStream.write(SaneWord.forInt(8));
-        outputStream.write(handle.getHandle());
-
-        // read the dummy value from the wire, if it doesn't throw an exception
-        // we assume the cancel was successful
-        inputStream.readWord();
-    }
-
+    // read the dummy value from the wire, if it doesn't throw an exception
+    // we assume the cancel was successful
+    inputStream.readWord();
+  }
 
   private void initSane() throws IOException {
     // RPC code
