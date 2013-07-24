@@ -3,6 +3,8 @@ package au.com.southsky.jfreesane;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 import au.com.southsky.jfreesane.SaneSession.SaneParameters;
@@ -17,6 +19,8 @@ import com.google.common.collect.Lists;
  * @author James Ring (sjr@jdns.org)
  */
 public class SaneInputStream extends InputStream {
+  private static final Logger logger = Logger.getLogger(SaneInputStream.class.getName());
+  
   private final SaneSession saneSession;
   private InputStream wrappedStream;
   private OptionGroup currentGroup;
@@ -215,11 +219,14 @@ public class SaneInputStream extends InputStream {
         rangeConstraint = new RangeConstraint(w1, w2, w3);
         break;
       default:
-        throw new IllegalStateException("Integer or Fixed type expected for range constraint");
+        logger.log(Level.WARNING, "Ignoring invalid option type/constraint combination: "
+            + "value_type=%s,constraint_type=%s for option %s. "
+            + "Option will be treated by jfreesane as unconstrained", new Object[] { valueType,
+            constraintType, optionName });
       }
       break;
     default:
-      throw new IllegalStateException("Unknow constrint type");
+      throw new IllegalStateException("Unknown constraint type");
     }
 
     return new SaneOptionDescriptor(optionName, optionTitle, optionDescription, currentGroup,
