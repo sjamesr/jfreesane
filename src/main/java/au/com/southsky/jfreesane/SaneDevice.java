@@ -91,9 +91,20 @@ public class SaneDevice implements Closeable {
   }
 
   /**
+   * Cancel the current operation of a remote SANE device.
+   *
+   * @throws IOException if an error occurs talking to the SANE backend
+   * @throws IllegalStateException if the device is
+   */
+  public void cancel() throws IOException {
+    Preconditions.checkState(isOpen(), "device is not open");
+    session.cancelDevice(handle);
+  }
+
+  /**
    * Closes the device.
    *
-   * @throws IOException if an error occurrs talking to the SANE backend
+   * @throws IOException if an error occurs talking to the SANE backend
    * @throws IllegalStateException if the device is already closed
    */
   @Override
