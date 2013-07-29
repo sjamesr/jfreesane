@@ -20,7 +20,7 @@ import com.google.common.collect.Lists;
  */
 public class SaneInputStream extends InputStream {
   private static final Logger logger = Logger.getLogger(SaneInputStream.class.getName());
-  
+
   private final SaneSession saneSession;
   private InputStream wrappedStream;
   private OptionGroup currentGroup;
@@ -220,7 +220,7 @@ public class SaneInputStream extends InputStream {
         break;
       default:
         logger.log(Level.WARNING, "Ignoring invalid option type/constraint combination: "
-            + "value_type=%s,constraint_type=%s for option %s. "
+            + "value_type={0},constraint_type={1} for option {2}. "
             + "Option will be treated by jfreesane as unconstrained", new Object[] { valueType,
             constraintType, optionName });
       }
