@@ -10,6 +10,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -165,6 +166,7 @@ public class SaneSession implements Closeable {
       int port = inputStream.readWord().integerValue();
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
+
       
       // TODO(sjr): maybe authenticate to the resource
 
@@ -211,6 +213,7 @@ public class SaneSession implements Closeable {
     outputStream.write(SaneWord.forInt(8));
     outputStream.write(handle.getHandle());
 
+
     // read the dummy value from the wire, if it doesn't throw an exception
     // we assume the cancel was successful
     inputStream.readWord();
@@ -235,7 +238,7 @@ public class SaneSession implements Closeable {
     private final boolean lastFrame;
     private final int bytesPerLine;
     private final int pixelsPerLine;
-    private final int lineCount;
+    private int lineCount;
     private final int depthPerPixel;
 
     public SaneParameters(
@@ -268,6 +271,10 @@ public class SaneSession implements Closeable {
       return lineCount;
     }
 
+    public void setLineCount(int lineCount) {
+        this.lineCount=lineCount;
+    }
+
     public int getDepthPerPixel() {
       return depthPerPixel;
     }
@@ -291,38 +298,48 @@ public class SaneSession implements Closeable {
     }
 
     public Frame readFrame() throws IOException, SaneException {
-      byte[] bigArray = new byte[parameters.getBytesPerLine() * parameters.getLineCount()];
+        ByteArrayOutputStream bigArray;
 
-      int offset = 0;
-      int bytesRead = 0;
-      while ((bytesRead = readRecord(bigArray, offset)) >= 0) {
-        offset += bytesRead;
-      }
+        int imageSize = parameters.getBytesPerLine() * parameters.getLineCount();
 
-      if (offset != bigArray.length) {
+        if (parameters.getLineCount()>0){
+            bigArray = new ByteArrayOutputStream(imageSize);
+        } else {
+            bigArray = new ByteArrayOutputStream(256);
+        }
+
+      while (readRecord(bigArray) >= 0);
+
+      if (imageSize>0 && imageSize != bigArray.size()) {
         throw new IOException("truncated read");
       }
 
       // Now, if necessary, put the bytes in the correct order according
       // to the stream's endianness
+      byte[] outputArray = bigArray.toByteArray();
       if (parameters.getDepthPerPixel() == 16 && !bigEndian) {
-        if (bigArray.length % 2 != 0) {
+        if (outputArray.length % 2 != 0) {
           throw new IOException("expected a multiple of 2 frame length");
         }
 
-        for (int i = 0; i < bigArray.length; i += 2) {
-          byte swap = bigArray[i];
-          bigArray[i] = bigArray[i + 1];
-          bigArray[i + 1] = swap;
+        for (int i = 0; i < outputArray.length; i += 2) {
+          byte swap = outputArray[i];
+            outputArray[i] = outputArray[i + 1];
+            outputArray[i + 1] = swap;
         }
       }
 
-      return new Frame(parameters, bigArray);
+      if (parameters.getLineCount()<=0){
+          //register the real height
+          parameters.setLineCount(outputArray.length/parameters.getBytesPerLine());
+      }
+
+      return new Frame(parameters,outputArray);
     }
 
-    private int readRecord(byte[] destination, int offset) throws IOException, SaneException {
+    private int readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
       DataInputStream inputStream = new DataInputStream(this);
-      long length = inputStream.readInt();
+      int length = inputStream.readInt();
 
       if (length == 0xffffffff) {
         log.fine("Reached end of records");
@@ -333,6 +350,7 @@ public class SaneSession implements Closeable {
         int status = read();
         if (status != -1) {
           SaneStatus saneStatus = SaneStatus.fromWireValue(status);
+
           
           // An EOF condition is expected: that is what SANE told us!
           if (saneStatus != null && saneStatus != SaneStatus.STATUS_EOF) {
@@ -347,11 +365,13 @@ public class SaneSession implements Closeable {
         throw new IllegalStateException("TODO: support massive records");
       }
 
-      int result = read(destination, offset, (int) length);
+      byte[] buffer = new byte[length];
+      int result = read(buffer, 0,length);
       if (result != length) {
         throw new IllegalStateException(
             "read too few bytes (" + result + "), was expecting " + length);
       }
+      destination.write(buffer,0,length);
 
       log.fine("Read a record of " + result + " bytes");
       return result;
