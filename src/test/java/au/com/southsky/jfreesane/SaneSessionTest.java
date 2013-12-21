@@ -481,6 +481,18 @@ public class SaneSessionTest {
     }
   }
 
+  @Test
+  public void handScanning() throws Exception {
+    SaneDevice device = session.getDevice("test");
+    try {
+      device.open();
+      device.getOption("hand-scanner").setBooleanValue(true);
+      device.acquireImage();
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
   private void openAndCloseDevice(SaneDevice device) throws Exception {
     try {
       device.open();
