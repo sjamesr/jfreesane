@@ -151,8 +151,9 @@ public class SaneSession implements Closeable {
 
   BufferedImage acquireImage(SaneDeviceHandle handle) throws IOException, SaneException {
     SaneImage.Builder builder = new SaneImage.Builder();
+    SaneParameters parameters = null;
 
-    while (true) {
+    do {
       outputStream.write(SaneWord.forInt(7));
       outputStream.write(handle.getHandle());
 
@@ -167,31 +168,32 @@ public class SaneSession implements Closeable {
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
 
-      
       // TODO(sjr): maybe authenticate to the resource
 
       // Ask the server for the parameters of this scan
       outputStream.write(SaneWord.forInt(6));
       outputStream.write(handle.getHandle());
 
-      Socket imageSocket = new Socket(socket.getInetAddress(), port);
-      int status = inputStream.readWord().integerValue();
+      Socket imageSocket = null;
 
-      if (status != 0) {
-        throw new IOException("Unexpected status (" + status + ") in get_parameters");
+      try {
+        imageSocket = new Socket(socket.getInetAddress(), port);
+        int status = inputStream.readWord().integerValue();
+
+        if (status != 0) {
+          throw new IOException("Unexpected status (" + status + ") in get_parameters");
+        }
+
+        parameters = inputStream.readSaneParameters();
+        FrameInputStream frameStream = new FrameInputStream(parameters,
+            imageSocket.getInputStream(), 0x4321 == byteOrder.integerValue());
+        builder.addFrame(frameStream.readFrame());
+      } finally {
+        if (imageSocket != null) {
+          imageSocket.close();
+        }
       }
-
-      SaneParameters parameters = inputStream.readSaneParameters();
-      FrameInputStream frameStream = new FrameInputStream(
-          parameters, imageSocket.getInputStream(), 0x4321 == byteOrder.integerValue());
-      builder.addFrame(frameStream.readFrame());
-      // imageSocket.close();
-
-      if (parameters.isLastFrame()) {
-        imageSocket.close();
-        break;
-      }
-    }
+    } while (!parameters.isLastFrame());
 
     SaneImage image = builder.build();
 

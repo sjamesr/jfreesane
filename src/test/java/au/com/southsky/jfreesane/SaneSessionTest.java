@@ -493,6 +493,25 @@ public class SaneSessionTest {
     }
   }
 
+  @Test
+  public void threePassScanning() throws Exception {
+    SaneDevice device = session.getDevice("test");
+    try {
+      device.open();
+      assertEquals("Color pattern", device.getOption("test-picture")
+          .setStringValue("Color pattern"));
+      assertEquals("Color", device.getOption("mode").setStringValue("Color"));
+      assertEquals(true, device.getOption("three-pass").setBooleanValue(true));
+      for (int i = 0; i < 5; i++) {
+        File file = File.createTempFile("three-pass", ".png");
+        ImageIO.write(device.acquireImage(), "png", file);
+        System.out.println("Wrote three-pass test to " + file);
+      }
+    } finally {
+      Closeables.closeQuietly(device);
+    }
+  }
+
   private void openAndCloseDevice(SaneDevice device) throws Exception {
     try {
       device.open();
