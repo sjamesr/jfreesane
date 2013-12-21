@@ -271,8 +271,8 @@ public class SaneSession implements Closeable {
       return lineCount;
     }
 
-    public void setLineCount(int lineCount) {
-        this.lineCount=lineCount;
+    private void setLineCount(int lineCount) {
+      this.lineCount = lineCount;
     }
 
     public int getDepthPerPixel() {
@@ -298,19 +298,18 @@ public class SaneSession implements Closeable {
     }
 
     public Frame readFrame() throws IOException, SaneException {
-        ByteArrayOutputStream bigArray;
+      ByteArrayOutputStream bigArray;
+      int imageSize = parameters.getBytesPerLine() * parameters.getLineCount();
 
-        int imageSize = parameters.getBytesPerLine() * parameters.getLineCount();
-
-        if (parameters.getLineCount()>0){
-            bigArray = new ByteArrayOutputStream(imageSize);
-        } else {
-            bigArray = new ByteArrayOutputStream(256);
-        }
+      if (parameters.getLineCount() > 0) {
+        bigArray = new ByteArrayOutputStream(imageSize);
+      } else {
+        bigArray = new ByteArrayOutputStream(256);
+      }
 
       while (readRecord(bigArray) >= 0);
 
-      if (imageSize>0 && imageSize != bigArray.size()) {
+      if (imageSize > 0 && imageSize != bigArray.size()) {
         throw new IOException("truncated read");
       }
 
@@ -324,14 +323,14 @@ public class SaneSession implements Closeable {
 
         for (int i = 0; i < outputArray.length; i += 2) {
           byte swap = outputArray[i];
-            outputArray[i] = outputArray[i + 1];
-            outputArray[i + 1] = swap;
+          outputArray[i] = outputArray[i + 1];
+          outputArray[i + 1] = swap;
         }
       }
 
-      if (parameters.getLineCount()<=0){
-          //register the real height
-          parameters.setLineCount(outputArray.length/parameters.getBytesPerLine());
+      if (parameters.getLineCount() <= 0) {
+        // register the real height
+        parameters.setLineCount(outputArray.length / parameters.getBytesPerLine());
       }
 
       return new Frame(parameters,outputArray);
@@ -351,7 +350,6 @@ public class SaneSession implements Closeable {
         if (status != -1) {
           SaneStatus saneStatus = SaneStatus.fromWireValue(status);
 
-          
           // An EOF condition is expected: that is what SANE told us!
           if (saneStatus != null && saneStatus != SaneStatus.STATUS_EOF) {
             throw new SaneException(saneStatus);
