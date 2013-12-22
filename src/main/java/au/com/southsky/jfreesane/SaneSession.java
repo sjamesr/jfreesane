@@ -195,8 +195,9 @@ public class SaneSession implements Closeable {
       }
     } while (!parameters.isLastFrame());
 
-    SaneImage image = builder.build();
+    cancelDevice(handle);
 
+    SaneImage image = builder.build();
     return image.toBufferedImage();
   }
 
@@ -214,7 +215,6 @@ public class SaneSession implements Closeable {
     // RPC code
     outputStream.write(SaneWord.forInt(8));
     outputStream.write(handle.getHandle());
-
 
     // read the dummy value from the wire, if it doesn't throw an exception
     // we assume the cancel was successful
