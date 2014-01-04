@@ -15,9 +15,9 @@
     </license>
   </licenses>
   <scm>
-    <url>scm:hg:https://code.google.com/p/jfreesane/</url>
-    <connection>scm:hg:https://code.google.com/p/jfreesane/</connection>
-    <developerConnection>scm:hg:https://code.google.com/p/jfreesane/</developerConnection>
+    <url>scm:git:https://github.com/sjamesr/jfreesane.git</url>
+    <connection>scm:git:https://github.com/sjamesr/jfreesane.git</connection>
+    <developerConnection>scm:git:https://github.com/sjamesr/jfreesane.git</developerConnection>
   </scm>
   <developers>
     <developer>
