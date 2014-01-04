@@ -79,3 +79,8 @@ jfreesane$ mvn eclipse:eclipse
 * run eclipse, import existing project, specify this jfreesane directory 
 as the project root
 * start hacking
+
+If you want to contribute back to JFreeSane, please consider [forking](https://help.github.com/articles/fork-a-repo)
+the project. Once you have some code you'd like to contribute,
+[submit a pull request](https://help.github.com/articles/using-pull-requests). We really appreciate contributions
+and we'll get it checked in as fast as possible.
