@@ -1,7 +1,0 @@
-syntax: regexp
-
-^\.classpath$
-^\.metadata$
-^\.project$
-^target$
-^\.settings$
