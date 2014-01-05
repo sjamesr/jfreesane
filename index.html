@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Jfreesane by sjamesr</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Jfreesane</h1>
+          <h2>Java API to talk to the SANE scanning daemon</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/sjamesr/jfreesane/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/sjamesr/jfreesane/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/sjamesr/jfreesane" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <p>JFreeSane is a pure-Java implementation of a SANE client. See <a href="http://www.sane-project.org/">the SANE project
+page</a> for more information about SANE itself.</p>
+
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#getting-jfreesane">Getting JFreeSane</a></li>
+<li><a href="#limitations">Limitations</a></li>
+<li><a href="#please-contribute">Please contribute</a></li>
+<li>
+<a href="#usage">Usage</a>
+
+<ul>
+<li><a href="#connecting-to-sane">Connecting to SANE</a></li>
+<li><a href="#obtaining-a-device-handle">Obtaining a device handle</a></li>
+<li><a href="#listing-known-devices">Listing known devices</a></li>
+<li><a href="#opening-the-device">Opening the device</a></li>
+<li><a href="#acquiring-an-image">Acquiring an image</a></li>
+<li><a href="#reading-from-an-automatic-document-feeder">Reading from an automatic document feeder</a></li>
+<li>
+<a href="#device-options">Device options</a>
+
+<ul>
+<li><a href="#setting-options">Setting options</a></li>
+<li><a href="#reading-options">Reading options</a></li>
+<li><a href="#option-getters-and-setters">Option getters and setters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul><h1>
+<a name="introduction" class="anchor" href="#introduction"><span class="octicon octicon-link"></span></a>Introduction</h1>
+
+<p>The purpose of this library is to provide a client to the Scanner Access Now Easy (SANE) daemon.
+This allows Java programmers to obtain images from SANE image sources over a network.</p>
+
+<p>For example, you can do the following:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneSession</span> <span class="n">session</span> <span class="o">=</span> <span class="n">SaneSession</span><span class="o">.</span><span class="na">withRemoteSane</span><span class="o">(</span>
+    <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">"my-sane-server.intranet"</span><span class="o">));</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">SaneDevice</span><span class="o">&gt;</span> <span class="n">devices</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">listDevices</span><span class="o">();</span>
+<span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="o">...;</span>  <span class="c1">// determine which device you want to use</span>
+<span class="n">device</span><span class="o">.</span><span class="na">open</span><span class="o">();</span>
+
+<span class="n">BufferedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">acquireImage</span><span class="o">();</span>  <span class="c1">// scan an image</span>
+</pre></div>
+
+<h1>
+<a name="getting-jfreesane" class="anchor" href="#getting-jfreesane"><span class="octicon octicon-link"></span></a>Getting JFreeSane</h1>
+
+<p>The easiest way to get this software is using <a href="http://maven.apache.org/">Maven</a>. Put the following in your <code>pom.xml</code>:</p>
+
+<div class="highlight highlight-xml"><pre><span class="nt">&lt;project&gt;</span>
+  ...
+  <span class="nt">&lt;dependencies&gt;</span>
+     ...
+     <span class="nt">&lt;dependency&gt;</span>
+       <span class="nt">&lt;groupId&gt;</span>com.googlecode.jfreesane<span class="nt">&lt;/groupId&gt;</span>
+       <span class="nt">&lt;artifactId&gt;</span>jfreesane<span class="nt">&lt;/artifactId&gt;</span>
+       <span class="nt">&lt;version&gt;</span>0.9<span class="nt">&lt;/version&gt;</span>
+     <span class="nt">&lt;/dependency&gt;</span>
+   <span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/project&gt;</span>
+</pre></div>
+
+<p>Otherwise, you can <a href="https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-0.9">download the jar file</a>
+and put it in your project's CLASSPATH.
+JFreeSane also depends on <a href="http://code.google.com/p/guava-libraries/">Google Guava</a>, an
+excellent collection of Java libraries that you should be using in your project anyway.
+You will need to download the Guava JAR file and put that in your classpath as well.</p>
+
+<p>Once JFreeSane is available on your classpath, see the CommonOperations wiki page for a tutorial on how to use it.</p>
+
+<p>Also consider joining the
+<a href="http://groups.google.com/group/jfreesane-discuss">jfreesane-discuss</a> mailing list.
+It is a low-volume list where people can discuss JFreeSane, release announcements are
+made and issues are reported.</p>
+
+<h1>
+<a name="limitations" class="anchor" href="#limitations"><span class="octicon octicon-link"></span></a>Limitations</h1>
+
+<ul>
+<li><p><del>JFreeSane currently cannot be used to obtain images from a handheld scanner.</del>
+Fixed in 0.9!</p></li>
+<li><p>JFreeSane currently does not support using SANE authenticated resources
+(i.e. a username and password).</p></li>
+<li><p>JFreeSane must be used with a running SANE daemon. It will not run SANE for you.
+It cannot talk to your scanners without a SANE daemon.</p></li>
+</ul><h1>
+<a name="please-contribute" class="anchor" href="#please-contribute"><span class="octicon octicon-link"></span></a>Please contribute</h1>
+
+<p>If you've been looking for a Java SANE client and you're familiar with SANE, please
+consider contributing documentation or patches. The easiest way to get started with
+Eclipse is to do this:</p>
+
+<pre><code>$ git clone https://github.com/sjamesr/jfreesane.git
+$ cd jfreesane
+~/jfreesane$ mvn eclipse:configure-workspace \
+    -Declipse.workspace=/path/to/eclipse/workspace  # eclipse workspace, not working directory
+jfreesane$ mvn eclipse:eclipse
+</code></pre>
+
+<ul>
+<li>run eclipse, import existing project, specify this jfreesane directory 
+as the project root</li>
+<li>start hacking</li>
+</ul><p>If you want to contribute back to JFreeSane, please consider <a href="https://help.github.com/articles/fork-a-repo">forking</a>
+the project. Once you have some code you'd like to contribute,
+<a href="https://help.github.com/articles/using-pull-requests">submit a pull request</a>. We really appreciate contributions
+and we'll get it checked in as fast as possible.</p>
+
+<h1>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h1>
+
+<p>Here are some ways you can use JFreeSane.</p>
+
+<h2>
+<a name="connecting-to-sane" class="anchor" href="#connecting-to-sane"><span class="octicon octicon-link"></span></a>Connecting to SANE</h2>
+
+<p>JFreeSane is strictly a client of the <a href="http://www.sane-project.org/">SANE</a> network daemon.
+You must have a SANE daemon running first before you can do anything with JFreeSane.
+Discussing how to set up a SANE daemon is beyond the scope of this document, please refer to the <a href="http://www.sane-project.org/">SANE home page</a> for guidance.</p>
+
+<p>Once you have the daemon running on some host, for example <code>saneserver.mydomain.com</code>, you
+can start a SANE session with the following:</p>
+
+<div class="highlight highlight-java"><pre><span class="kn">import</span> <span class="nn">au.com.southsky.jfreesane.SaneSession</span><span class="o">;</span>
+
+<span class="n">InetAddress</span> <span class="n">address</span> <span class="o">=</span> <span class="n">InetAddress</span><span class="o">.</span><span class="na">getByName</span><span class="o">(</span><span class="s">"saneserver.mydomain.com"</span><span class="o">);</span>
+<span class="n">SaneSession</span> <span class="n">session</span> <span class="o">=</span> <span class="n">SaneSession</span><span class="o">.</span><span class="na">withRemoteSane</span><span class="o">(</span><span class="n">address</span><span class="o">);</span>
+</pre></div>
+
+<p>Now you need to obtain a device handle.</p>
+
+<h2>
+<a name="obtaining-a-device-handle" class="anchor" href="#obtaining-a-device-handle"><span class="octicon octicon-link"></span></a>Obtaining a device handle</h2>
+
+<p>If you already know the name of the SANE device, you can open it directly by name. For
+example, SANE servers usually have (but do not advertise) a device whose name is "test".
+This is a "pseudo" device, in that it does not represent any physical hardware. It is
+useful for exercising JFreeSane.</p>
+
+<div class="highlight highlight-java"><pre><span class="c1">// Open the test device by name</span>
+<span class="n">SaneSession</span> <span class="n">session</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">getDevice</span><span class="o">(</span><span class="s">"test"</span><span class="o">);</span>
+</pre></div>
+
+<h2>
+<a name="listing-known-devices" class="anchor" href="#listing-known-devices"><span class="octicon octicon-link"></span></a>Listing known devices</h2>
+
+<p>If you do not know the device name, you can list devices known to the SANE server using the following:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneSession</span> <span class="n">session</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">SaneDevice</span><span class="o">&gt;</span> <span class="n">devices</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">listDevices</span><span class="o">();</span>
+</pre></div>
+
+<h2>
+<a name="opening-the-device" class="anchor" href="#opening-the-device"><span class="octicon octicon-link"></span></a>Opening the device</h2>
+
+<p>Most likely, you now want to interact with the scanning device. Before you do anything, you need to "<code>open</code>" the device.</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">device</span><span class="o">.</span><span class="na">open</span><span class="o">();</span>
+</pre></div>
+
+<p>The device is now open. You can now get and set options and acquire images.</p>
+
+<h2>
+<a name="acquiring-an-image" class="anchor" href="#acquiring-an-image"><span class="octicon octicon-link"></span></a>Acquiring an image</h2>
+
+<p>Now you're ready to acquire an image from the scanner. Call <code>acquireImage</code>:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">device</span><span class="o">.</span><span class="na">open</span><span class="o">();</span>
+<span class="n">BufferedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">acquireImage</span><span class="o">();</span>
+</pre></div>
+
+<p>If the default options are not sufficient, see the "Device options" section below.</p>
+
+<h2>
+<a name="reading-from-an-automatic-document-feeder" class="anchor" href="#reading-from-an-automatic-document-feeder"><span class="octicon octicon-link"></span></a>Reading from an automatic document feeder</h2>
+
+<p>You may have a scanner with an Automatic Document Feeder (ADF). In this case, you may
+want to acquire all the images until the ADF is out of paper. Use the following technique:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="o">...;</span>
+
+<span class="c1">// this value is device-dependent. See the section on "Setting Options" to find out</span>
+<span class="c1">// how to enumerate the valid values</span>
+<span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"source"</span><span class="o">).</span><span class="na">setStringValue</span><span class="o">(</span><span class="s">"Automatic Document Feeder"</span><span class="o">);</span>
+
+<span class="k">while</span> <span class="o">(</span><span class="kc">true</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">try</span> <span class="o">{</span>
+    <span class="n">BufferedImage</span> <span class="n">image</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">acquireImage</span><span class="o">();</span>
+    <span class="n">process</span><span class="o">(</span><span class="n">image</span><span class="o">);</span>
+  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">SaneException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getStatus</span><span class="o">()</span> <span class="o">==</span> <span class="n">SaneStatus</span><span class="o">.</span><span class="na">STATUS_NO_DOCS</span><span class="o">)</span> <span class="o">{</span>
+      <span class="c1">// this is the out of paper condition that we expect</span>
+      <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+      <span class="c1">// some other exception that was not expected</span>
+      <span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+<h2>
+<a name="device-options" class="anchor" href="#device-options"><span class="octicon octicon-link"></span></a>Device options</h2>
+
+<p>Each device has a set of parameters that control aspects of that device's operation.
+There are a handful of SANE 
+<a href="http://www.sane-project.org/html/doc014.html">built-in options</a>:</p>
+
+<ul>
+<li>scan resolution</li>
+<li>preview mode</li>
+<li>scan area</li>
+</ul><p>Different scanners have different capabilities (for example, duplex scan, color, various
+document sources). Each scanner type will expose a set of options in addition to the ones
+described above.</p>
+
+<p>In order to see what options are supported by a device:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneDevice</span> <span class="n">device</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">device</span><span class="o">.</span><span class="na">open</span><span class="o">();</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">SaneOption</span><span class="o">&gt;</span> <span class="n">options</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">listOptions</span><span class="o">();</span>
+</pre></div>
+
+<p>Each option has</p>
+
+<ul>
+<li>a name, used as an identifier by JFreeSane (e.g. mode)</li>
+<li>a title, in English, suitable for display to the user (e.g. Scan Mode)</li>
+<li>description, a brief description of the purpose of the option</li>
+</ul><h3>
+<a name="setting-options" class="anchor" href="#setting-options"><span class="octicon octicon-link"></span></a>Setting options</h3>
+
+<p>You can set the value of an option, so long as 
+<code>SaneOption.isActive()</code> and <code>SaneOption.isWriteable</code> are both true. For example, the
+"mode" option's value can be set by the following:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneOption</span> <span class="n">option</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"mode"</span><span class="o">);</span>
+<span class="n">option</span><span class="o">.</span><span class="na">setStringValue</span><span class="o">(</span><span class="s">"Auto Document Feeder"</span><span class="o">);</span>
+</pre></div>
+
+<p>The string "Auto Document Feeder" may not be correct for your particular device.
+In fact, valid option values differ from device to device. In this case, you may
+need to ask SANE what values are valid for a given option.</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneOption</span> <span class="n">option</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"mode"</span><span class="o">);</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">validValues</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="na">getStringConstraints</span><span class="o">();</span>
+</pre></div>
+
+<p><code>validValues</code> now contains a list of strings, each of which is a valid value for this
+option.</p>
+
+<p>There are some options whose valid values are in some range. For example, the "pixma"
+backend has an option called "tl-x" (the x-ordinate of the top left of the scan area).
+Its valid values are in the range 0 to 216.069 millimeters.
+To determine this programmatically:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneOption</span> <span class="n">option</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"tl-x"</span><span class="o">);</span>
+<span class="k">assert</span> <span class="n">option</span><span class="o">.</span><span class="na">isConstrained</span><span class="o">()</span> 
+    <span class="o">&amp;&amp;</span> <span class="n">option</span><span class="o">.</span><span class="na">getConstraintType</span><span class="o">()</span> <span class="o">==</span> <span class="n">OptionValueConstraintType</span><span class="o">.</span><span class="na">RANGE_CONSTRAINT</span><span class="o">;</span>
+<span class="n">RangeConstraint</span> <span class="n">constraint</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="na">getRangeConstraint</span><span class="o">();</span>
+
+<span class="c1">// this option is in mm, which is a fractional value. SANE uses fixed-point arithmetic,</span>
+<span class="c1">// so JFreeSane calls this a value of type "FIXED"</span>
+<span class="k">assert</span> <span class="n">option</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">OptionValueType</span><span class="o">.</span><span class="na">FIXED</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">option</span><span class="o">.</span><span class="na">getUnits</span><span class="o">()</span> <span class="o">==</span> <span class="n">SaneOption</span><span class="o">.</span><span class="na">OptionUnits</span><span class="o">.</span><span class="na">UNITS_MM</span><span class="o">;</span>
+
+<span class="kt">double</span> <span class="n">min</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="na">getMinimumFixed</span><span class="o">();</span>
+<span class="kt">double</span> <span class="n">max</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="na">getMaximumFixed</span><span class="o">();</span>
+</pre></div>
+
+<p>To set the value of the "tl-x" option, you can do the following:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneOption</span> <span class="n">option</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"tl-x"</span><span class="o">);</span>
+<span class="kt">double</span> <span class="n">actualValue</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="na">setFixedValue</span><span class="o">(</span><span class="mf">97.5</span><span class="o">);</span>
+</pre></div>
+
+<p>JFreeSane will return the value actually set by the backend. For example, the valid
+values for "tl-x" are 0 to 216.069 (see the preceding section to see how this can be
+determined programmatically). If you set the value to something out of range, SANE will
+clamp the value to something in the valid range.</p>
+
+<div class="highlight highlight-java"><pre><span class="n">SaneOption</span> <span class="n">option</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="na">getOption</span><span class="o">(</span><span class="s">"tl-x"</span><span class="o">);</span>
+<span class="kt">double</span> <span class="n">actualValue</span> <span class="o">=</span> <span class="n">option</span><span class="o">.</span><span class="na">setFixedValue</span><span class="o">(-</span><span class="mi">4</span><span class="o">);</span>
+<span class="c1">// actualValue will be set to 0, the minimum value for this option</span>
+</pre></div>
+
+<h3>
+<a name="reading-options" class="anchor" href="#reading-options"><span class="octicon octicon-link"></span></a>Reading options</h3>
+
+<p>The methods for reading option values depend on the option's type. Options are readable
+only if <code>isActive()</code> and <code>isReadable()</code> are true for the option. See the table in the
+following section for the list of option accessors.</p>
+
+<h3>
+<a name="option-getters-and-setters" class="anchor" href="#option-getters-and-setters"><span class="octicon octicon-link"></span></a>Option getters and setters</h3>
+
+<p>The following table lists the <code>SaneOption</code> methods for reading and writing options of a given type:</p>
+
+<table>
+<thead><tr>
+<th><em><code>SaneOption.getType()</code></em></th>
+<th><em>Getter</em></th>
+<th><em>Setter</em></th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>BOOLEAN</code></td>
+<td><code>getBooleanValue</code></td>
+<td><code>setBooleanValue</code></td>
+</tr>
+<tr>
+<td><code>INT</code></td>
+<td><code>getIntegerValue</code></td>
+<td><code>setIntegerValue</code></td>
+</tr>
+<tr>
+<td><code>FIXED</code></td>
+<td><code>getFixedValue</code></td>
+<td><code>setFixedValue</code></td>
+</tr>
+<tr>
+<td><code>STRING</code></td>
+<td><code>getStringValue</code></td>
+<td><code>setStringValue</code></td>
+</tr>
+<tr>
+<td><code>BUTTON</code></td>
+<td>None</td>
+<td><code>setButtonValue</code></td>
+</tr>
+<tr>
+<td><code>GROUP</code></td>
+<td>None</td>
+<td>None</td>
+</tr>
+</tbody>
+</table><p>Additionally, <code>INT</code>- and <code>FIXED</code>-type options may actually be an array of <code>INT</code> or
+<code>FIXED</code>. You can always use <code>SaneOption.getValueCount</code> to know for sure. 
+If the result is more than 1, you have an array.</p>
+
+<ul>
+<li>
+<code>getIntegerArrayValue</code> reads an INT array, <code>setIntegerValue(List&lt;Integer&gt;)</code> writes one</li>
+<li>
+<code>getFixedArrayValue</code> reads a FIXED array, <code>setFixedValue(List&lt;Double&gt;)</code> writes one</li>
+</ul>
+        </section>
+
+        <footer>
+          Jfreesane is maintained by <a href="https://github.com/sjamesr">sjamesr</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
