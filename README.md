@@ -1,6 +1,21 @@
-JFreeSane is a pure-Java implementation of a SANE client. See
+JFreeSane is a pure-Java implementation of a SANE client. See [the SANE project
+page](http://www.sane-project.org/) for more information about SANE itself.
 
-http://www.sane-project.org/
+- [Introduction](#introduction)
+- [Getting JFreeSane](#getting-jfreesane)
+- [Limitations](#limitations)
+- [Please contribute](#please-contribute)
+- [Usage](#usage)
+    - [Connecting to SANE](#connecting-to-sane)
+    - [Obtaining a device handle](#obtaining-a-device-handle)
+    - [Listing known devices](#listing-known-devices)
+    - [Opening the device](#opening-the-device)
+    - [Acquiring an image](#acquiring-an-image)
+    - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
+    - [Device options](#device-options)
+        - [Setting options](#setting-options)
+        - [Reading options](#reading-options)
+        - [Option getters and setters](#option-getters-and-setters)
 
 # Introduction
 
@@ -292,4 +307,3 @@ If the result is more than 1, you have an array.
 
   * `getIntegerArrayValue` reads an INT array, `setIntegerValue(List<Integer>)` writes one
   * `getFixedArrayValue` reads a FIXED array, `setFixedValue(List<Double>)` writes one
-
