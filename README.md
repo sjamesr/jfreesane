@@ -38,7 +38,7 @@ BufferedImage image = device.acquireImage();  // scan an image
 
 The easiest way to get this software is using [Maven](http://maven.apache.org/). Put the following in your `pom.xml`:
 
-```xml
+```
 <project>
   ...
   <dependencies>
