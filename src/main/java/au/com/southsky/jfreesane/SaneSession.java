@@ -76,7 +76,7 @@ public class SaneSession implements Closeable {
    * Establishes a connection to the SANE daemon running on the given host at the given port.
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
-    Socket socket = new Socket(saneAddress, DEFAULT_PORT);
+    Socket socket = new Socket(saneAddress, port);
     SaneSession session = new SaneSession(socket);
     session.initSane();
     return session;
