@@ -69,9 +69,10 @@ public class SaneDevice implements Closeable {
    * Opens the device.
    *
    * @throws IOException if a problem occurred while talking to SANE
+   * @throws au.com.southsky.jfreesane.SaneException
    * @throws IllegalStateException if the device is already open
    */
-  public void open() throws IOException {
+  public void open() throws IOException, SaneException {
     Preconditions.checkState(!isOpen(), "device is already open");
     handle = session.openDevice(this);
   }

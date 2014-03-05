@@ -47,20 +47,31 @@ public class SaneOutputStream extends OutputStream {
    * @throws IOException
    */
   public void write(String string) throws IOException {
-    if (string.length() > 0) {
-      write(SaneWord.forInt(string.length() + 1));
-      for (char c : string.toCharArray()) {
-        if (c == 0) {
-          throw new IllegalArgumentException("null characters not allowed");
-        }
+    write(string.toCharArray());
+  }
 
-        write(c);
-      }
+  /**
+   * Writes the given char[] to the underlying stream in SANE string format. The format is:
+   * 
+   * <ul>
+   * <li>if the char[] is non-empty, a {@link SaneWord} representing the length of the string plus a
+   * null terminator</li>
+   * <li>if the char[] is non-empty, the bytes of the char[]</li>
+   * <li>unconditionally, a null terminator</li>
+   * 
+   * @param charArray character array to be written to the stream
+   * @throws IOException
+   */
+  public void write(char[] charArray) throws IOException {
+    if (charArray.length > 0) {
+      byte[] encoded = Encoder.encodedLatin1(charArray);
+      write(SaneWord.forInt(encoded.length + 1));
+      write(encoded);
     }
 
     write(0);
   }
-
+  
   /**
    * Writes the bytes of the given {@link SaneWord} to the underlying stream. See
    * {@link SaneWord#getValue}.

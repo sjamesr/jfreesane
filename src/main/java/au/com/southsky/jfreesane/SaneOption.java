@@ -308,7 +308,7 @@ public class SaneOption {
    * @throws IOException
    *           if a problem occurred while talking to SANE
    */
-  public boolean getBooleanValue() throws IOException {
+  public boolean getBooleanValue() throws IOException, SaneException {
     Preconditions.checkState(getValueType() == OptionValueType.BOOLEAN, "option is not a boolean");
     Preconditions.checkState(getValueCount() == 1, "option is a boolean array, not boolean");
 
@@ -326,7 +326,7 @@ public class SaneOption {
    * @throws IOException
    *           if a problem occurred while talking to SANE
    */
-  public int getIntegerValue() throws IOException {
+  public int getIntegerValue() throws IOException, SaneException {
     // check for type agreement
     Preconditions.checkState(getValueType() == OptionValueType.INT, "option is not an integer");
     Preconditions.checkState(getValueCount() == 1, "option is an integer array, not integer");
@@ -348,7 +348,7 @@ public class SaneOption {
     // value
   }
 
-  public List<Integer> getIntegerArrayValue() throws IOException {
+  public List<Integer> getIntegerArrayValue() throws IOException, SaneException {
     ControlOptionResult result = readOption();
     Preconditions.checkState(result.getType() == OptionValueType.INT);
 
@@ -366,11 +366,11 @@ public class SaneOption {
    *
    * @throws IOException if a problem occurs reading the value from the SANE backend
    */
-  public String getStringValue() throws IOException {
+  public String getStringValue() throws IOException, SaneException {
     return getStringValue(Charsets.ISO_8859_1);
   }
 
-  public String getStringValue(Charset encoding) throws IOException {
+  public String getStringValue(Charset encoding) throws IOException, SaneException {
     Preconditions.checkState(getValueType() == OptionValueType.STRING, "option is not a string");
     ControlOptionResult result = readOption();
 
@@ -385,7 +385,7 @@ public class SaneOption {
     return new String(result.getValue(), 0, length, encoding);
   }
 
-  public double getFixedValue() throws IOException {
+  public double getFixedValue() throws IOException, SaneException {
     Preconditions.checkState(getValueType() == OptionValueType.FIXED,
         "option is not of fixed precision type");
 
@@ -393,7 +393,7 @@ public class SaneOption {
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
 
-  public List<Double> getFixedArrayValue() throws IOException {
+  public List<Double> getFixedArrayValue() throws IOException, SaneException {
     ControlOptionResult result = readOption();
     Preconditions.checkState(result.getType() == OptionValueType.FIXED);
 
@@ -405,7 +405,7 @@ public class SaneOption {
     return values;
   }
 
-  private ControlOptionResult readOption() throws IOException {
+  private ControlOptionResult readOption() throws IOException, SaneException {
     // check that this option is readable
     Preconditions.checkState(isReadable(), "option is not readable");
     Preconditions.checkState(isActive(), "option is not active");
@@ -443,7 +443,7 @@ public class SaneOption {
 
     // read result
     ControlOptionResult result = ControlOptionResult.fromStream(
-        device.getSession().getInputStream());
+        device.getSession());
     return result;
   }
 
@@ -454,14 +454,14 @@ public class SaneOption {
    *
    * @return the value that the option now has according to SANE
    */
-  public boolean setBooleanValue(boolean value) throws IOException {
+  public boolean setBooleanValue(boolean value) throws IOException, SaneException {
     ControlOptionResult result = writeOption(SaneWord.forInt(value ? 1 : 0));
     Preconditions.checkState(result.getType() == OptionValueType.BOOLEAN);
 
     return SaneWord.fromBytes(result.getValue()).integerValue() != 0;
   }
 
-  public void setButtonValue() throws IOException {
+  public void setButtonValue() throws IOException, SaneException {
     writeButtonOption();
   }
 
@@ -469,7 +469,7 @@ public class SaneOption {
    * Sets the value of the current option to the supplied fixed-precision value. Option value must
    * be of fixed-precision type.
    */
-  public double setFixedValue(double value) throws IOException {
+  public double setFixedValue(double value) throws IOException, SaneException {
     Preconditions.checkArgument(
         value >= -32768 && value <= 32767.9999, "value " + value + " is out of range");
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
@@ -483,7 +483,7 @@ public class SaneOption {
    * Sets the value of the current option to the supplied list of fixed-precision values. Option
    * value must be of fixed-precision type and {@link #getValueCount} must be more than 1.
    */
-  public List<Double> setFixedValue(List<Double> value) throws IOException {
+  public List<Double> setFixedValue(List<Double> value) throws IOException, SaneException {
     List<SaneWord> wordValues = Lists.transform(value, new Function<Double, SaneWord>() {
       @Override
       public SaneWord apply(Double input) {
@@ -503,7 +503,7 @@ public class SaneOption {
     return newValues;
   }
 
-  public String setStringValue(String newValue) throws IOException {
+  public String setStringValue(String newValue) throws IOException, SaneException {
     // check for type agreement
     Preconditions.checkState(getValueType() == OptionValueType.STRING);
     Preconditions.checkState(getValueCount() == 1);
@@ -538,7 +538,7 @@ public class SaneOption {
    * @return the value actually set
    * @throws IOException
    */
-  public int setIntegerValue(int newValue) throws IOException {
+  public int setIntegerValue(int newValue) throws IOException, SaneException {
     Preconditions.checkState(getValueCount() == 1, "option is an array");
 
     // check that this option is readable
@@ -557,7 +557,7 @@ public class SaneOption {
     return SaneWord.fromBytes(result.getValue()).integerValue();
   }
 
-  public List<Integer> setIntegerValue(List<Integer> newValue) throws IOException {
+  public List<Integer> setIntegerValue(List<Integer> newValue) throws IOException, SaneException {
     ControlOptionResult result = writeOption(newValue);
 
     List<Integer> newValues = Lists.newArrayListWithCapacity(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
@@ -568,7 +568,7 @@ public class SaneOption {
     return newValues;
   }
 
-  private ControlOptionResult writeWordListOption(List<SaneWord> value) throws IOException {
+  private ControlOptionResult writeWordListOption(List<SaneWord> value) throws IOException, SaneException {
     Preconditions.checkState(isWriteable(), "option is not writeable");
     Preconditions.checkState(isActive(), "option is not active");
 
@@ -599,7 +599,7 @@ public class SaneOption {
     return result;
   }
 
-  private ControlOptionResult writeOption(String value) throws IOException {
+  private ControlOptionResult writeOption(String value) throws IOException, SaneException {
     Preconditions.checkState(getValueType() == OptionValueType.STRING);
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5) /* rpc #5 */);
@@ -618,11 +618,11 @@ public class SaneOption {
     return handleWriteResponse();
   }
 
-  private ControlOptionResult writeOption(SaneWord word) throws IOException {
+  private ControlOptionResult writeOption(SaneWord word) throws IOException, SaneException {
     return writeWordListOption(ImmutableList.of(word));
   }
 
-  private ControlOptionResult writeOption(List<Integer> value) throws IOException {
+  private ControlOptionResult writeOption(List<Integer> value) throws IOException, SaneException {
     Preconditions.checkState(isActive(), "option " + getName() + " is not active");
     Preconditions.checkState(isWriteable(), "option " + getName() + " is not writeable");
     Preconditions.checkState(getValueType() == OptionValueType.INT);
@@ -641,7 +641,7 @@ public class SaneOption {
     return handleWriteResponse();
   }
 
-  private ControlOptionResult writeButtonOption() throws IOException {
+  private ControlOptionResult writeButtonOption() throws IOException, SaneException{
     Preconditions.checkState(getValueType() == OptionValueType.BUTTON);
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneWord.forInt(5) /* rpc #5 */);
@@ -655,9 +655,9 @@ public class SaneOption {
     return handleWriteResponse();
   }
 
-  private ControlOptionResult handleWriteResponse() throws IOException {
+  private ControlOptionResult handleWriteResponse() throws IOException, SaneException {
     ControlOptionResult result = ControlOptionResult.fromStream(
-        device.getSession().getInputStream());
+        device.getSession());
 
     if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)) {
       device.invalidateOptions();
@@ -699,13 +699,13 @@ public class SaneOption {
       this.resource = resource;
     }
 
-    public static ControlOptionResult fromStream(SaneInputStream stream) throws IOException {
+    public static ControlOptionResult fromStream(SaneSession session) throws IOException, SaneException {
+      SaneInputStream stream = session.getInputStream();
+      
       int status = stream.readWord().integerValue();
 
       if (status != 0) {
-        SaneStatus statusEnum = SaneStatus.fromWireValue(status);
-        throw new IOException(String.format(
-            "unexpected status %d%s", status, statusEnum != null ? " (" + statusEnum + ")" : ""));
+        throw new SaneException(SaneStatus.fromWireValue(status));
       }
 
       int info = stream.readWord().integerValue();
@@ -730,6 +730,35 @@ public class SaneOption {
 
       String resource = stream.readString();
 
+      if (!resource.isEmpty()) {
+        session.authorize(resource);
+        status = stream.readWord().integerValue();
+
+        if (status != 0) {
+          throw new SaneException(SaneStatus.fromWireValue(status));
+        }
+
+        info = stream.readWord().integerValue();
+
+        type = SaneEnums.valueOf(
+                OptionValueType.class, stream.readWord().integerValue());
+
+        valueSize = stream.readWord().integerValue();
+
+        // read the pointer
+        pointer = stream.readWord().integerValue();
+        value = null;
+        if (pointer == 0) {
+          // there is no value
+        } else {
+          value = new byte[valueSize];
+
+          if (stream.read(value) != valueSize) {
+            throw new IOException("truncated read while getting value");
+          }
+        }
+      }
+      
       return new ControlOptionResult(status, info, type, valueSize, value, resource);
     }
 
