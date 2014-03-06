@@ -20,15 +20,20 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Encoder {
+/**
+ * Implements MD5 encoding of SANE passwords as specified by <a
+ * href="http://www.sane-project.org/html/doc017.html#s5.2.10">Section
+ * 5.2.10</a> of the SANE specification.
+ */
+class Encoder {
 
   static final Charset iso8859_1 = Charset.forName("ISO-8859-1");
 
   public static byte[] encodedLatin1(char[] charArray) {
     return iso8859_1.encode(CharBuffer.wrap(charArray)).array();
   }
-  
-  public static String encodeAsHex(byte[] input) {
+
+  private static String encodeAsHex(byte[] input) {
     StringBuilder hexString = new StringBuilder();
     for (int i = 0; i < input.length; i++) {
       String hex = Integer.toHexString(0xff & input[i]);
@@ -39,8 +44,8 @@ public class Encoder {
     }
     return hexString.toString();
   }
-  
-  public static String derivePassword(String salt, char[] password) {
+
+  public static String derivePassword(String salt, String password) {
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
       md.update(iso8859_1.encode(salt));
