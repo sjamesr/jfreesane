@@ -16,7 +16,31 @@
 
 package au.com.southsky.jfreesane;
 
-public interface SanePasswordProvider {
-    public char[] getPassword();
-    public String getUsername();
+/**
+ * Implements a provider of SANE resource credentials. If the SANE server asks
+ * JFreeSane to provide a password, the {@link SaneSession} will consult its
+ * password provider to determine what to send in response. See
+ * {@link SaneSession#getPasswordProvider}.
+ */
+public abstract class SanePasswordProvider {
+  public abstract String getUsername();
+  public abstract String getPassword();
+
+  /**
+   * Returns a {@code SanePasswordProvider} that returns the given username and password.
+   */
+  public static SanePasswordProvider forUsernameAndPassword(final String username,
+      final String password) {
+    return new SanePasswordProvider() {
+      @Override
+      public String getUsername() {
+        return username;
+      }
+
+      @Override
+      public String getPassword() {
+        return password;
+      }
+    };
+  }
 }
