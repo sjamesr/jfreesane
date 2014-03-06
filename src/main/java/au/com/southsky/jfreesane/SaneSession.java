@@ -58,6 +58,7 @@ public class SaneSession implements Closeable {
   private final Socket socket;
   private final SaneOutputStream outputStream;
   private final SaneInputStream inputStream;
+  private SanePasswordProvider passwordProvider;
 
   private SaneSession(Socket socket) throws IOException {
     this.socket = socket;
@@ -65,6 +66,14 @@ public class SaneSession implements Closeable {
     this.inputStream = new SaneInputStream(this, socket.getInputStream());
   }
 
+  public SanePasswordProvider getPasswordProvider() {
+    return passwordProvider;
+  }
+
+  public void setPasswordProvider(SanePasswordProvider passwordProvider) {
+    this.passwordProvider = passwordProvider;
+  }
+  
   /**
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port.
    */
@@ -125,26 +134,28 @@ public class SaneSession implements Closeable {
     }
   }
 
-  SaneDeviceHandle openDevice(SaneDevice device) throws IOException {
+  SaneDeviceHandle openDevice(SaneDevice device) throws IOException, SaneException {
     outputStream.write(SaneWord.forInt(2));
     outputStream.write(device.getName());
 
     SaneWord status = inputStream.readWord();
 
     if (status.integerValue() != 0) {
-      SaneStatus statusEnum = SaneEnums.valueOf(SaneStatus.class, status);
-      if (statusEnum == null) {
-        throw new IOException(
-            "unexpected status " + status.integerValue() + " while opening device");
-      } else {
-        throw new IOException(
-            "unexpected status " + status.integerValue() + " (" + statusEnum
-                + ") while opening device");
-      }
+      throw new SaneException(SaneStatus.fromWireValue(status.integerValue()));
     }
 
     SaneWord handle = inputStream.readWord();
     String resource = inputStream.readString();
+
+    if(!resource.isEmpty()) {
+      authorize(resource);
+      status = inputStream.readWord();
+      if (status.integerValue() != 0) {
+        throw new SaneException(SaneStatus.fromWireValue(status.integerValue()));
+      }
+      handle = inputStream.readWord();
+      resource = inputStream.readString();
+    }
 
     return new SaneDeviceHandle(status, handle, resource);
   }
@@ -167,7 +178,20 @@ public class SaneSession implements Closeable {
       int port = inputStream.readWord().integerValue();
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
-
+      
+      if (!resource.isEmpty()) {
+        this.authorize(resource);
+        {
+          int status = inputStream.readWord().integerValue();
+          if (status != 0) {
+            throw new SaneException(SaneStatus.fromWireValue(status));
+          }
+        }
+        port = inputStream.readWord().integerValue();
+        byteOrder = inputStream.readWord();
+        resource = inputStream.readString();
+      }
+      
       // TODO(sjr): maybe authenticate to the resource
 
       // Ask the server for the parameters of this scan
@@ -235,6 +259,44 @@ public class SaneSession implements Closeable {
     inputStream.readWord();
   }
 
+  /**
+   * Authorize the resource for access.
+   *
+   * @throws IOException
+   *           if an error occurs while communicating with the SANE daemon
+   * @throws SaneException
+   *           if the SANE backend returns an error in response to this request
+   */
+  void authorize(String resource) throws IOException {
+    if(passwordProvider == null) {
+      throw new IOException("Authorization failed - no password provider present");
+    }
+    // RPC code FOR SANE_NET_AUTHORIZE
+    outputStream.write(SaneWord.forInt(9));
+    outputStream.write(resource);
+    outputStream.write(passwordProvider.getUsername());
+    writePassword(resource, passwordProvider.getPassword());
+    // Read reply - from network 
+    inputStream.readWord();
+  }
+
+  /**
+   * Write password to outputstream depending on resource provided by saned.
+   * 
+   * @param resource as provided by sane in authorization request
+   * @param password
+   * @throws IOException 
+   */
+  private void writePassword(String resource, char[] password) throws IOException {
+    String[] resourceParts = resource.split("\\$MD5\\$");
+    if (resourceParts.length == 1) {
+      // Write in clean
+      outputStream.write(password);
+    } else {
+      outputStream.write("$MD5$" + Encoder.derivePassword(resourceParts[1], password));
+    }
+  }
+  
   public static class SaneParameters {
     private final FrameType frame;
     private final boolean lastFrame;
