@@ -147,7 +147,7 @@ public class SaneSession implements Closeable {
     SaneWord handle = inputStream.readWord();
     String resource = inputStream.readString();
 
-    if(!resource.isEmpty()) {
+    if (!resource.isEmpty()) {
       authorize(resource);
       status = inputStream.readWord();
       if (status.integerValue() != 0) {
@@ -178,9 +178,9 @@ public class SaneSession implements Closeable {
       int port = inputStream.readWord().integerValue();
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
-      
+
       if (!resource.isEmpty()) {
-        this.authorize(resource);
+        authorize(resource);
         {
           int status = inputStream.readWord().integerValue();
           if (status != 0) {
@@ -191,8 +191,6 @@ public class SaneSession implements Closeable {
         byteOrder = inputStream.readWord();
         resource = inputStream.readString();
       }
-      
-      // TODO(sjr): maybe authenticate to the resource
 
       // Ask the server for the parameters of this scan
       outputStream.write(SaneWord.forInt(6));
@@ -209,6 +207,7 @@ public class SaneSession implements Closeable {
         }
 
         parameters = inputStream.readSaneParameters();
+        @SuppressWarnings("resource")
         FrameInputStream frameStream = new FrameInputStream(parameters,
             imageSocket.getInputStream(), 0x4321 == byteOrder.integerValue());
         builder.addFrame(frameStream.readFrame());
@@ -268,8 +267,9 @@ public class SaneSession implements Closeable {
    *           if the SANE backend returns an error in response to this request
    */
   void authorize(String resource) throws IOException {
-    if(passwordProvider == null) {
-      throw new IOException("Authorization failed - no password provider present");
+    if (passwordProvider == null) {
+      throw new IOException("Authorization failed - no password provider present "
+          + "(you must call setPasswordProvider)");
     }
     // RPC code FOR SANE_NET_AUTHORIZE
     outputStream.write(SaneWord.forInt(9));
@@ -287,7 +287,7 @@ public class SaneSession implements Closeable {
    * @param password
    * @throws IOException 
    */
-  private void writePassword(String resource, char[] password) throws IOException {
+  private void writePassword(String resource, String password) throws IOException {
     String[] resourceParts = resource.split("\\$MD5\\$");
     if (resourceParts.length == 1) {
       // Write in clean
@@ -296,7 +296,7 @@ public class SaneSession implements Closeable {
       outputStream.write("$MD5$" + Encoder.derivePassword(resourceParts[1], password));
     }
   }
-  
+
   public static class SaneParameters {
     private final FrameType frame;
     private final boolean lastFrame;
