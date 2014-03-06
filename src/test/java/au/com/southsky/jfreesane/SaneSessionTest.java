@@ -46,7 +46,7 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    this.session = SaneSession.withRemoteSane(InetAddress.getByName("sirius"));
+    this.session = SaneSession.withRemoteSane(InetAddress.getByName("localhost"));
   }
 
   @After
@@ -510,6 +510,15 @@ public class SaneSessionTest {
     } finally {
       Closeables.closeQuietly(device);
     }
+  }
+
+  @Test
+  public void passwordAuthentication() throws Exception {
+    // assumes that test is a password-authenticated device
+    session.setPasswordProvider(SanePasswordProvider.forUsernameAndPassword("sjr", "password"));
+    SaneDevice device = session.getDevice("test");
+    device.open();
+    device.acquireImage();
   }
 
   private void openAndCloseDevice(SaneDevice device) throws Exception {
