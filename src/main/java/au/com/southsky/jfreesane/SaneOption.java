@@ -442,7 +442,7 @@ public class SaneOption {
     }
 
     // read result
-    ControlOptionResult result = ControlOptionResult.fromStream(
+    ControlOptionResult result = ControlOptionResult.fromSession(
         device.getSession());
     return result;
   }
@@ -656,7 +656,7 @@ public class SaneOption {
   }
 
   private ControlOptionResult handleWriteResponse() throws IOException, SaneException {
-    ControlOptionResult result = ControlOptionResult.fromStream(
+    ControlOptionResult result = ControlOptionResult.fromSession(
         device.getSession());
 
     if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)) {
@@ -699,9 +699,9 @@ public class SaneOption {
       this.resource = resource;
     }
 
-    public static ControlOptionResult fromStream(SaneSession session) throws IOException, SaneException {
+    private static ControlOptionResult fromSession(SaneSession session) throws IOException, SaneException {
       SaneInputStream stream = session.getInputStream();
-      
+
       int status = stream.readWord().integerValue();
 
       if (status != 0) {
@@ -758,7 +758,7 @@ public class SaneOption {
           }
         }
       }
-      
+
       return new ControlOptionResult(status, info, type, valueSize, value, resource);
     }
 
