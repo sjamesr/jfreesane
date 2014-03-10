@@ -16,6 +16,10 @@
 
 package au.com.southsky.jfreesane;
 
+import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
+
+import com.google.common.base.Strings;
+
 /**
  * Implements a provider of SANE resource credentials. If the SANE server asks
  * JFreeSane to provide a password, the {@link SaneSession} will consult its
@@ -42,5 +46,32 @@ public abstract class SanePasswordProvider {
         return password;
       }
     };
+  }
+  
+  public static SanePasswordProvider forResource(final String resource) {
+	  return forResource(resource,null);
+  }
+  
+  public static SanePasswordProvider forResource(final String resource, String passwordFile) {
+	  SaneClientAuthentication sca = Strings.isNullOrEmpty(passwordFile) ? new SaneClientAuthentication() : new SaneClientAuthentication(passwordFile);
+	  if ( ! sca.canAuthenticate(resource) ) {
+		  return null;
+	  }
+	  final ClientCredential credential = sca.getCredentialsForResource(resource).iterator().next();
+	  
+	  return new SanePasswordProvider() {
+		@Override
+		public String getUsername() {
+			// TODO Auto-generated method stub
+			return credential.username;
+		}
+
+		@Override
+		public String getPassword() {
+			// TODO Auto-generated method stub
+			return credential.password;
+		}
+		  
+	  };
   }
 }

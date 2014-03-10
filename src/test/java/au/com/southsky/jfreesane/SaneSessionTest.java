@@ -520,7 +520,23 @@ public class SaneSessionTest {
     device.open();
     device.acquireImage();
   }
+  
+  @Test
+  public void passwordAuthenticationFromLocalFile() throws Exception {
+    session.setPasswordProvider(SanePasswordProvider.forResource("pixma"));
+    SaneDevice device = session.getDevice("pixma");
+    device.open();
+    device.acquireImage();
+  }
 
+  @Test
+  public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
+	    session.setPasswordProvider(SanePasswordProvider.forResource("pixma","/tmp/sane.pass"));
+	    SaneDevice device = session.getDevice("pixma");
+	    device.open();
+	    device.acquireImage();
+	  }
+  
   private void openAndCloseDevice(SaneDevice device) throws Exception {
     try {
       device.open();
