@@ -97,8 +97,8 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   }
 
   /**
-   * Returns {@code true} if the configuration contains exactly one entry for
-   * the given resource.
+   * Returns {@code true} if the configuration contains an entry for the given
+   * resource.
    */
   @Override
   public boolean canAuthenticate(String resource) {
@@ -106,7 +106,6 @@ public class SaneClientAuthentication extends SanePasswordProvider {
       return false;
     }
 
-    initializeIfRequired();
     ClientCredential credential = getCredentialForResource(resource);
     return credential != null;
   }
