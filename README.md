@@ -16,6 +16,7 @@ page](http://www.sane-project.org/) for more information about SANE itself.
         - [Setting options](#setting-options)
         - [Reading options](#reading-options)
         - [Option getters and setters](#option-getters-and-setters)
+    - [Authentication](#authentication)
 
 # Introduction
 
@@ -70,8 +71,8 @@ made and issues are reported.
 * ~~JFreeSane currently cannot be used to obtain images from a handheld scanner.~~
 Fixed in 0.9!
 
-* JFreeSane currently does not support using SANE authenticated resources
-(i.e. a username and password).
+* ~~JFreeSane currently does not support using SANE authenticated resources
+(i.e. a username and password).~~ Fixed at HEAD, release coming soon, see [the authentication section](#authentication).
 
 * JFreeSane must be used with a running SANE daemon. It will not run SANE for you.
 It cannot talk to your scanners without a SANE daemon.
@@ -307,3 +308,11 @@ If the result is more than 1, you have an array.
 
   * `getIntegerArrayValue` reads an INT array, `setIntegerValue(List<Integer>)` writes one
   * `getFixedArrayValue` reads a FIXED array, `setFixedValue(List<Double>)` writes one
+
+## Authentication
+
+Thanks to generous contributions from Paul and Matthias, JFreeSane now supports connecting to authenticated resources.
+
+By default, JFreeSane will use SANE-style authentication as documented in
+[the `scanimage(1)` man page](http://www.sane-project.org/man/scanimage.1.html). If you want to implement
+an alternative method of supplying usernames and passwords, see the javadoc for `SaneSession.setPasswordProvider`.
