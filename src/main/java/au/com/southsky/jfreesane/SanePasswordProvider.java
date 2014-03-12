@@ -16,8 +16,6 @@
 
 package au.com.southsky.jfreesane;
 
-import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
-
 import com.google.common.base.Strings;
 
 /**
@@ -27,51 +25,62 @@ import com.google.common.base.Strings;
  * {@link SaneSession#getPasswordProvider}.
  */
 public abstract class SanePasswordProvider {
-  public abstract String getUsername();
-  public abstract String getPassword();
+  public abstract String getUsername(String resource);
+
+  public abstract String getPassword(String resource);
 
   /**
-   * Returns a {@code SanePasswordProvider} that returns the given username and password.
+   * Returns {@code true} if this password provider is capable of providing
+   * authentication credentials for the given resource.
+   */
+  public abstract boolean canAuthenticate(String resource);
+
+  /**
+   * Returns a {@code SanePasswordProvider} that returns the given username and
+   * password.
    */
   public static SanePasswordProvider forUsernameAndPassword(final String username,
       final String password) {
     return new SanePasswordProvider() {
       @Override
-      public String getUsername() {
+      public String getUsername(String resource) {
         return username;
       }
 
       @Override
-      public String getPassword() {
+      public String getPassword(String resource) {
         return password;
+      }
+
+      @Override
+      public boolean canAuthenticate(String resource) {
+        return true;
       }
     };
   }
-  
-  public static SanePasswordProvider forResource(final String resource) {
-	  return forResource(resource,null);
-  }
-  
-  public static SanePasswordProvider forResource(final String resource, String passwordFile) {
-	  SaneClientAuthentication sca = Strings.isNullOrEmpty(passwordFile) ? new SaneClientAuthentication() : new SaneClientAuthentication(passwordFile);
-	  if ( ! sca.canAuthenticate(resource) ) {
-		  return null;
-	  }
-	  final ClientCredential credential = sca.getCredentialsForResource(resource).iterator().next();
-	  
-	  return new SanePasswordProvider() {
-		@Override
-		public String getUsername() {
-			// TODO Auto-generated method stub
-			return credential.username;
-		}
 
-		@Override
-		public String getPassword() {
-			// TODO Auto-generated method stub
-			return credential.password;
-		}
-		  
-	  };
+  /**
+   * Returns a password provider that uses the {@code ~/.sane/pass} file to
+   * determine resource credentials. See {@link #usingSanePassFile} for details.
+   */
+  public static SanePasswordProvider usingDotSanePassFile() {
+    return usingSanePassFile(null);
+  }
+
+  /**
+   * Returns a password provider that uses the given file in SANE password file
+   * format. As described in the man page for {@code scanimage(1)}, the file
+   * should contain one entry per line, each entry being in the following
+   * format:
+   *
+   * <pre>
+   *   user:password:resourceName
+   * </pre>
+   *
+   * @param passwordFile the path to the password file
+   */
+  public static SanePasswordProvider usingSanePassFile(String passwordFile) {
+    return Strings.isNullOrEmpty(passwordFile) ? new SaneClientAuthentication()
+        : new SaneClientAuthentication(passwordFile);
   }
 }

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -28,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -520,23 +522,38 @@ public class SaneSessionTest {
     device.open();
     device.acquireImage();
   }
-  
-  @Test
-  public void passwordAuthenticationFromLocalFile() throws Exception {
-    session.setPasswordProvider(SanePasswordProvider.forResource("pixma"));
-    SaneDevice device = session.getDevice("pixma");
-    device.open();
-    device.acquireImage();
-  }
 
   @Test
+  public void invalidPasswordCausesAccessDeniedError() throws Exception {
+    session.setPasswordProvider(SanePasswordProvider.forUsernameAndPassword("sjr", "badpassword"));
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+      fail("Expected a SaneException, didn't get one");
+    } catch (SaneException e) {
+      if (e.getStatus() != SaneStatus.STATUS_ACCESS_DENIED) {
+        throw e;
+      }
+
+      // if we got here, we got the expected exception
+    }
+  }
+  @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
-	    session.setPasswordProvider(SanePasswordProvider.forResource("pixma","/tmp/sane.pass"));
-	    SaneDevice device = session.getDevice("pixma");
-	    device.open();
-	    device.acquireImage();
-	  }
-  
+    File passwordFile = File.createTempFile("sane", ".pass");
+    try {
+      Files.write("sjr:password:test", passwordFile, Charsets.ISO_8859_1);
+      session.setPasswordProvider(SanePasswordProvider.usingSanePassFile(passwordFile
+          .getAbsolutePath()));
+      SaneDevice device = session.getDevice("test");
+      device.open();
+      device.acquireImage();
+    } finally {
+      passwordFile.delete();
+    }
+  }
+
   private void openAndCloseDevice(SaneDevice device) throws Exception {
     try {
       device.open();

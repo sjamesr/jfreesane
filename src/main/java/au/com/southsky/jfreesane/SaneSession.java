@@ -58,7 +58,7 @@ public class SaneSession implements Closeable {
   private final Socket socket;
   private final SaneOutputStream outputStream;
   private final SaneInputStream inputStream;
-  private SanePasswordProvider passwordProvider;
+  private SanePasswordProvider passwordProvider = SanePasswordProvider.usingDotSanePassFile();
 
   private SaneSession(Socket socket) throws IOException {
     this.socket = socket;
@@ -66,6 +66,11 @@ public class SaneSession implements Closeable {
     this.inputStream = new SaneInputStream(this, socket.getInputStream());
   }
 
+  /**
+   * Returns the current password provider. By default, this password provider
+   * will be supplied by {@link SanePasswordProvider#usingDotSanePassFile}, but
+   * you may override that with {@link #setPasswordProvider}.
+   */
   public SanePasswordProvider getPasswordProvider() {
     return passwordProvider;
   }
@@ -73,7 +78,7 @@ public class SaneSession implements Closeable {
   public void setPasswordProvider(SanePasswordProvider passwordProvider) {
     this.passwordProvider = passwordProvider;
   }
-  
+
   /**
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port.
    */
@@ -263,8 +268,6 @@ public class SaneSession implements Closeable {
    *
    * @throws IOException
    *           if an error occurs while communicating with the SANE daemon
-   * @throws SaneException
-   *           if the SANE backend returns an error in response to this request
    */
   void authorize(String resource) throws IOException {
     if (passwordProvider == null) {
@@ -274,9 +277,17 @@ public class SaneSession implements Closeable {
     // RPC code FOR SANE_NET_AUTHORIZE
     outputStream.write(SaneWord.forInt(9));
     outputStream.write(resource);
-    outputStream.write(passwordProvider.getUsername());
-    writePassword(resource, passwordProvider.getPassword());
-    // Read reply - from network 
+
+    if (!passwordProvider.canAuthenticate(resource)) {
+      // the password provider has indicated that there's no way it can provide
+      // credentials for this request.
+      throw new IOException("Authorization failed - the password provider is "
+          + "unable to provide a password for the resource [" + resource + "]");
+    }
+
+    outputStream.write(passwordProvider.getUsername(resource));
+    writePassword(resource, passwordProvider.getPassword(resource));
+    // Read reply - from network
     inputStream.readWord();
   }
 

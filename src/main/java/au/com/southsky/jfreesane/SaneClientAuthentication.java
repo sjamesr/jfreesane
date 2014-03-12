@@ -1,120 +1,161 @@
 package au.com.southsky.jfreesane;
 
 import java.io.File;
-import java.nio.charset.Charset;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+import com.google.common.io.CharSource;
+import com.google.common.io.CharStreams;
+import com.google.common.io.LineProcessor;
 
-public class SaneClientAuthentication {
-	public static final String MARKER_MD5 = "$MD5$";
+/**
+ * Represents the authentication configuration used by SANE clients. The SANE
+ * utilities like {@code scanimage} will read the {@code ~/.sane/pass} directory
+ * (if it exists), this class provides an implementation of that behavior.
+ * 
+ * <p>
+ * Threadsafe.
+ */
+public class SaneClientAuthentication extends SanePasswordProvider {
+  private static final Logger logger = Logger.getLogger(SaneClientAuthentication.class.getName());
 
-	private static final String DEFAULT_CONFIGURATION_PATH = String.format("%s%s%s%s%s",System.getProperty("user.home"),File.separator,".sane",File.separator,"pass");
-	
-	protected List<ClientCredential>credentials;
-	
-	public SaneClientAuthentication() {
-		this(DEFAULT_CONFIGURATION_PATH);
-	}
-	
-	public SaneClientAuthentication(String configurationPath) {
-		if ( Strings.isNullOrEmpty(configurationPath) ) {
-			return;
-		}
-		credentials = initialise(new File(configurationPath));
-	}
-	
-	protected List<ClientCredential> initialise(File configurationFile) {
-		List<ClientCredential>credentials = Lists.newArrayList();
-		if ( configurationFile == null || (! configurationFile.exists()) || (!configurationFile.canRead() ) ) {
-			return credentials;
-		}
-		List<String>lines = Lists.newArrayList();
-		try {
-			lines = Files.readLines(configurationFile, Charset.defaultCharset());
-		} catch (Exception x) {			
-		}
-		for(String line : lines) {
-			credentials.add( ClientCredential.fromAuthString(line) );
-		}
-	
-		return credentials;
-	}
-	
-	
-	public boolean canAuthenticate(String rc) {
-		return canAuthenticate(rc,credentials);
-	}
-	
-	protected boolean canAuthenticate(String rc, List<ClientCredential> credentialList) {
-		return getCredentialsForResource(rc,credentialList).size() == 1;
-	}
-	
-	
-	public List<ClientCredential> getCredentialsForResource(String rc) {
-		return getCredentialsForResource(rc, credentials);
-	}
-	
-	protected List<ClientCredential> getCredentialsForResource(String rc, List<ClientCredential> credentialList) {
-		List<ClientCredential>results = Lists.newArrayList();
-		if ( ! Strings.isNullOrEmpty(rc) ) {
-			String resource = rc.contains( MARKER_MD5 ) ? rc.substring(0, rc.indexOf(MARKER_MD5)) : rc;
-			results.addAll(Collections2.filter(credentialList, ClientCredential.BackendFilter.forBackend(resource)));
-		}
-		
-		if ( results.size() > 1 ) {
-			System.out.println(String.format("Warning: multiple authentication lines for backend %s",rc));
-		}
-		return results;
-	}
-	
-	/** Class to hold Sane client credentials organised by backend
-	 * 
-	 * @author paul
-	 *
-	 */
-	public static class ClientCredential {
-		public final String backend;
-		public final String username;
-		public final String password;
-		
-		protected ClientCredential(String backend,String username, String password) {
-			this.backend = backend;
-			this.username = username;
-			this.password = password;
-		}
-		
-		public static ClientCredential fromAuthString(String authString) {
-			StringTokenizer t = new StringTokenizer(authString,":");
-			String backend = t.hasMoreTokens() ? t.nextToken() : "";
-			String username = t.hasMoreTokens() ? t.nextToken() : "";
-			String password = t.hasMoreTokens() ? t.nextToken() : "";
-			ClientCredential cc = new ClientCredential(backend,username,password);
-			return cc;
-		}
-		
-		static class BackendFilter implements Predicate<ClientCredential> {
-			private String backend;
-			private BackendFilter(String backend) {
-				this.backend = backend;
-			}
-			
-			static BackendFilter forBackend(String backend) {
-				return new BackendFilter(backend);
-			}
-			
-			@Override
-			public boolean apply(ClientCredential credential) {
-				if ( Strings.isNullOrEmpty(backend) || credential == null || Strings.isNullOrEmpty(credential.backend) ) {
-					return false;
-				}
-				return credential.backend.equalsIgnoreCase(backend);
-			}
-		}
-	}
+  public static final String MARKER_MD5 = "$MD5$";
+
+  private static final String DEFAULT_CONFIGURATION_PATH = Joiner.on(File.separator).join(
+      System.getProperty("user.home"), ".sane", "pass");
+
+  private final Table<String, String, String> credentials = HashBasedTable.create();
+  private final CharSource configurationSource;
+  private boolean initialized = false;
+
+  public SaneClientAuthentication() {
+    this(DEFAULT_CONFIGURATION_PATH);
+  }
+
+  public SaneClientAuthentication(final String path) {
+    this(new CharSource() {
+      @Override
+      public Reader openStream() throws IOException {
+        return new FileReader(path);
+      }
+    });
+  }
+
+  /**
+   * Returns a new {@code SaneClientAuthentication} whose configuration is
+   * represented by the characters supplied by the given {@link CharSource}.
+   */
+  public SaneClientAuthentication(CharSource configurationSource) {
+    this.configurationSource = configurationSource;
+  }
+
+  private synchronized void initializeIfRequired() {
+    if (initialized) {
+      return;
+    }
+
+    initialized = true;
+    try {
+      CharStreams.readLines(configurationSource, new LineProcessor<Void>() {
+        private int lineNumber = 0;
+
+        @Override
+        public boolean processLine(String line) throws IOException {
+          lineNumber++;
+          ClientCredential credential = ClientCredential.fromAuthString(line);
+          if (credential == null) {
+            logger.log(Level.WARNING, "ignoring invalid configuration format (line {0}): {1}",
+                new Object[] { lineNumber, line });
+          } else {
+            credentials.put(credential.backend, credential.username, credential.password);
+            if (credentials.row(credential.backend).size() > 1) {
+              logger.log(Level.WARNING,
+                  "ignoring line {0}, we already have a configuration for resource [{1}]",
+                  new Object[] { lineNumber, credential.backend });
+            }
+          }
+          return true;
+        }
+
+        @Override
+        public Void getResult() {
+          return null;
+        }
+      });
+    } catch (IOException e) {
+      logger.log(Level.WARNING, "could not read auth configuration due to IOException", e);
+    }
+  }
+
+  /**
+   * Returns {@code true} if the configuration contains exactly one entry for
+   * the given resource.
+   */
+  @Override
+  public boolean canAuthenticate(String resource) {
+    if (resource == null) {
+      return false;
+    }
+
+    initializeIfRequired();
+    ClientCredential credential = getCredentialForResource(resource);
+    return credential != null;
+  }
+
+  public ClientCredential getCredentialForResource(String rc) {
+    initializeIfRequired();
+    String resource = rc.contains(MARKER_MD5) ? rc.substring(0, rc.indexOf(MARKER_MD5)) : rc;
+
+    Map<String, String> credentialsForResource = credentials.row(resource);
+    for (Map.Entry<String, String> credential : credentialsForResource.entrySet()) {
+      return new ClientCredential(resource, credential.getKey(), credential.getValue());
+    }
+
+    return null;
+  }
+
+  @Override
+  public String getUsername(String resource) {
+    return getCredentialForResource(resource).username;
+  }
+
+  @Override
+  public String getPassword(String resource) {
+    return getCredentialForResource(resource).password;
+  }
+
+  /**
+   * Class to hold Sane client credentials organised by backend.
+   * 
+   * @author paul
+   */
+  public static class ClientCredential {
+    public final String backend;
+    public final String username;
+    public final String password;
+
+    protected ClientCredential(String backend, String username, String password) {
+      this.backend = backend;
+      this.username = username;
+      this.password = password;
+    }
+
+    public static ClientCredential fromAuthString(String authString) {
+      List<String> fields = Splitter.on(":").splitToList(authString);
+      if (fields.size() < 3) {
+        return null;
+      }
+
+      return new ClientCredential(fields.get(2), fields.get(0), fields.get(1));
+    }
+  }
 }
