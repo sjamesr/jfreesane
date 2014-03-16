@@ -722,7 +722,7 @@ public class SaneSession implements Closeable {
       if (this.value == null) {
         this.value = value;
       } else if (!value.equals(this.value)) {
-        throw new IllegalArgumentException("Cannot overwrite with a " + "different value");
+        throw new IllegalArgumentException("Cannot overwrite with a different value");
       }
     }
 
