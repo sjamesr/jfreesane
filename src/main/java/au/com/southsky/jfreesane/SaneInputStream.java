@@ -7,7 +7,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import au.com.southsky.jfreesane.SaneOption.OptionUnits;
-import au.com.southsky.jfreesane.SaneSession.SaneParameters;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -125,7 +124,7 @@ public class SaneInputStream extends InputStream {
     int lines = readWord().integerValue();
     int depth = readWord().integerValue();
 
-    return new SaneSession.SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines,
+    return new SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines,
         depth);
   }
 
