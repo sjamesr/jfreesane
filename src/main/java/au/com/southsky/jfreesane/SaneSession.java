@@ -15,8 +15,6 @@ import java.util.logging.Logger;
  */
 public class SaneSession implements Closeable {
 
-  private static final Logger log = Logger.getLogger(SaneSession.class.getName());
-
   private static final int DEFAULT_PORT = 6566;
 
   private final Socket socket;
