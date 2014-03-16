@@ -8,7 +8,6 @@ package au.com.southsky.jfreesane;
  * {@link OptionValueConstraintType#RANGE_CONSTRAINT} will return an instance of {@code
  * RangeConstraint} from its {@link SaneOption#getRangeConstraints} method.
  *
- *
  * @author James Ring (sjr@jdns.org)
  */
 public class RangeConstraint {

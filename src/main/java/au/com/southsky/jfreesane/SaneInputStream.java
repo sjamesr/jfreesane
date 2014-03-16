@@ -205,18 +205,17 @@ public class SaneInputStream extends InputStream {
 
       break;
     case RANGE_CONSTRAINT:
-      // TODO: still don't understand the 6 values
+      // discard pointer to range
+      readWord();
 
-      SaneWord w0 = readWord();
-      SaneWord w1 = readWord();
-      SaneWord w2 = readWord();
-      SaneWord w3 = readWord();
-      // int w4 = inputStream.readWord().integerValue();
+      SaneWord min = readWord();
+      SaneWord max = readWord();
+      SaneWord quantization = readWord();
 
       switch (valueType) {
       case INT:
       case FIXED:
-        rangeConstraint = new RangeConstraint(w1, w2, w3);
+        rangeConstraint = new RangeConstraint(min, max, quantization);
         break;
       default:
         logger.log(Level.WARNING, "Ignoring invalid option type/constraint combination: "
