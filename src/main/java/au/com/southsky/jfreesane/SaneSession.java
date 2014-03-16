@@ -27,7 +27,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
 
 /**
  * Represents a conversation taking place with a SANE daemon.
@@ -129,13 +128,7 @@ public class SaneSession implements Closeable {
       outputStream.write(SaneRpcCode.SANE_NET_EXIT);
       outputStream.close();
     } finally {
-      // Seems like an oversight that Socket is not Closeable?
-      Closeables.closeQuietly(new Closeable() {
-        @Override
-        public void close() throws IOException {
           socket.close();
-        }
-      });
     }
   }
 
