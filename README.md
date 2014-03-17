@@ -47,7 +47,7 @@ The easiest way to get this software is using [Maven](http://maven.apache.org/).
      <dependency>
        <groupId>com.googlecode.jfreesane</groupId>
        <artifactId>jfreesane</artifactId>
-       <version>0.9</version>
+       <version>0.91</version>
      </dependency>
    </dependencies>
 </project>
