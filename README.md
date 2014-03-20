@@ -163,34 +163,6 @@ BufferedImage image = device.acquireImage();
 
 If the default options are not sufficient, see the "Device options" section below.
 
-## Reading from an automatic document feeder
-
-You may have a scanner with an Automatic Document Feeder (ADF). In this case, you may
-want to acquire all the images until the ADF is out of paper. Use the following technique:
-
-```java
-SaneDevice device = ...;
-
-// this value is device-dependent. See the section on "Setting Options" to find out
-// how to enumerate the valid values
-device.getOption("source").setStringValue("Automatic Document Feeder");
-
-while (true) {
-  try {
-    BufferedImage image = device.acquireImage();
-    process(image);
-  } catch (SaneException e) {
-    if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
-      // this is the out of paper condition that we expect
-      break;
-    } else {
-      // some other exception that was not expected
-      throw e;
-    }
-  }
-}
-```
-
 ## Device options
 
 Each device has a set of parameters that control aspects of that device's operation.
@@ -305,6 +277,34 @@ If the result is more than 1, you have an array.
 
   * `getIntegerArrayValue` reads an INT array, `setIntegerValue(List<Integer>)` writes one
   * `getFixedArrayValue` reads a FIXED array, `setFixedValue(List<Double>)` writes one
+
+## Reading from an automatic document feeder
+
+You may have a scanner with an Automatic Document Feeder (ADF). In this case, you may
+want to acquire all the images until the ADF is out of paper. Use the following technique:
+
+```java
+SaneDevice device = ...;
+
+// this value is device-dependent. See the section on "Setting Options" to find out
+// how to enumerate the valid values
+device.getOption("source").setStringValue("Automatic Document Feeder");
+
+while (true) {
+  try {
+    BufferedImage image = device.acquireImage();
+    process(image);
+  } catch (SaneException e) {
+    if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
+      // this is the out of paper condition that we expect
+      break;
+    } else {
+      // some other exception that was not expected
+      throw e;
+    }
+  }
+}
+```
 
 ## Authentication
 
