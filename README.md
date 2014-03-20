@@ -11,11 +11,11 @@ page](http://www.sane-project.org/) for more information about SANE itself.
     - [Listing known devices](#listing-known-devices)
     - [Opening the device](#opening-the-device)
     - [Acquiring an image](#acquiring-an-image)
-    - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
     - [Device options](#device-options)
         - [Setting options](#setting-options)
         - [Reading options](#reading-options)
         - [Option getters and setters](#option-getters-and-setters)
+    - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
     - [Authentication](#authentication)
 
 # Introduction
