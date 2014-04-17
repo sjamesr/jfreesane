@@ -59,7 +59,7 @@ JFreeSane also depends on [Google Guava](http://code.google.com/p/guava-librarie
 excellent collection of Java libraries that you should be using in your project anyway.
 You will need to download the Guava JAR file and put that in your classpath as well.
 
-Once JFreeSane is available on your classpath, see the CommonOperations wiki page for a tutorial on how to use it.
+Once JFreeSane is available on your classpath, please read on for a tutorial on how to use it.
 
 Also consider joining the
 [jfreesane-discuss](http://groups.google.com/group/jfreesane-discuss) mailing list.
