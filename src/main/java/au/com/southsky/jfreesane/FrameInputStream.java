@@ -1,5 +1,7 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.primitives.UnsignedInteger;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -90,7 +92,7 @@ class FrameInputStream extends InputStream {
       return -1;
     }
 
-    if (length > Integer.MAX_VALUE) {
+    if (UnsignedInteger.fromIntBits(length).longValue() > Integer.MAX_VALUE) {
       throw new IllegalStateException("TODO: support massive records");
     }
 
