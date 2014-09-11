@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Represents a conversation taking place with a SANE daemon.

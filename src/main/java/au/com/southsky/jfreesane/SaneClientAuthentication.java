@@ -63,7 +63,7 @@ public class SaneClientAuthentication extends SanePasswordProvider {
 
     initialized = true;
     try {
-      CharStreams.readLines(configurationSource, new LineProcessor<Void>() {
+      CharStreams.readLines(configurationSource.openStream(), new LineProcessor<Void>() {
         private int lineNumber = 0;
 
         @Override

@@ -2,7 +2,7 @@ package au.com.southsky.jfreesane;
 
 import java.util.List;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -46,6 +46,6 @@ public class OptionGroup {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("title", title).add("options", options).toString();
+    return MoreObjects.toStringHelper(this).add("title", title).add("options", options).toString();
   }
 }

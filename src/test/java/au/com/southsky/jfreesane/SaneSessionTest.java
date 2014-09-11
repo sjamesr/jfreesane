@@ -10,7 +10,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
@@ -69,7 +68,7 @@ public class SaneSessionTest {
     try {
       device.open();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -81,7 +80,7 @@ public class SaneSessionTest {
       device.open();
       assertTrue(!device.getOptionGroups().isEmpty());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -95,7 +94,7 @@ public class SaneSessionTest {
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -114,7 +113,7 @@ public class SaneSessionTest {
         }
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -150,7 +149,7 @@ public class SaneSessionTest {
         System.out.println();
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -163,7 +162,7 @@ public class SaneSessionTest {
       SaneOption modeOption = device.getOption("mode");
       assertEquals("Gray", modeOption.setStringValue("Gray"));
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -193,7 +192,6 @@ public class SaneSessionTest {
   @Test
   public void acquireMonoImage() throws Exception {
     SaneDevice device = session.getDevice("test");
-    FileOutputStream stream = null;
 
     try {
       device.open();
@@ -205,8 +203,7 @@ public class SaneSessionTest {
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
-      Closeables.closeQuietly(stream);
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -251,7 +248,7 @@ public class SaneSessionTest {
 //      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
 //      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -268,7 +265,7 @@ public class SaneSessionTest {
       assertEquals(
           "Default", device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -283,7 +280,7 @@ public class SaneSessionTest {
       assertEquals(123, device.getOption("br-x").setFixedValue(123.456), 0.0001);
       assertEquals(123, device.getOption("br-x").getFixedValue(), 0.0001);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -300,7 +297,7 @@ public class SaneSessionTest {
       assertFalse(option.setBooleanValue(false));
       assertFalse(option.getBooleanValue());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -318,7 +315,7 @@ public class SaneSessionTest {
           "This is the very long third entry. Maybe the frontend has an idea how to display it"),
           option.getStringConstraints());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -335,7 +332,7 @@ public class SaneSessionTest {
       assertEquals(ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
           option.getIntegerValueListConstraint());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -358,7 +355,7 @@ public class SaneSessionTest {
       }
 
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -376,7 +373,7 @@ public class SaneSessionTest {
       assertEquals(192, option.getRangeConstraints().getMaximumInteger());
       assertEquals(2, option.getRangeConstraints().getQuantumInteger());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -394,7 +391,7 @@ public class SaneSessionTest {
       assertEquals(32767.9999, option.getRangeConstraints().getMaximumFixed(), 0.00001);
       assertEquals(2.0, option.getRangeConstraints().getQuantumFixed(), 0.00001);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -418,7 +415,7 @@ public class SaneSessionTest {
       assertEquals(values, option.setIntegerValue(values));
       assertEquals(values, option.getIntegerArrayValue());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -441,7 +438,7 @@ public class SaneSessionTest {
       System.out.println(option.setFixedValue(-4));
       System.out.println(option.setFixedValue(97.5));
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -479,7 +476,7 @@ public class SaneSessionTest {
       assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
       assertEquals("Gray", device.getOption("mode").getStringValue());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -491,7 +488,7 @@ public class SaneSessionTest {
       device.getOption("hand-scanner").setBooleanValue(true);
       device.acquireImage();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -510,7 +507,7 @@ public class SaneSessionTest {
         System.out.println("Wrote three-pass test to " + file);
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -559,7 +556,7 @@ public class SaneSessionTest {
       device.open();
       device.listOptions();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
