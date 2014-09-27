@@ -512,7 +512,9 @@ public class SaneOption {
     // new value must be STRICTLY less than size(), as SANE includes the
     // trailing null
     // that we will add later in its size
-    Preconditions.checkState(newValue.length() < getSize());
+    Preconditions.checkState(newValue.length() < getSize(), "string value '" + newValue
+        + "' (length=" + newValue.length() + ") exceeds maximum size of " + (getSize() - 1)
+        + " byte(s) for option " + getName());
 
     ControlOptionResult result = writeOption(newValue);
     Preconditions.checkState(result.getType() == OptionValueType.STRING);
