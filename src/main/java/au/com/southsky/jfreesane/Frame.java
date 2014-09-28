@@ -14,7 +14,7 @@ class Frame {
   }
 
   public FrameType getType() {
-    return parameters.getFrame();
+    return parameters.getFrameType();
   }
 
   public byte[] getData() {

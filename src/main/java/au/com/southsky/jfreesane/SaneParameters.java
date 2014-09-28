@@ -1,7 +1,9 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.MoreObjects;
+
 public class SaneParameters {
-  private final FrameType frame;
+  private final FrameType frameType;
   private final boolean lastFrame;
   private final int bytesPerLine;
   private final int pixelsPerLine;
@@ -10,7 +12,7 @@ public class SaneParameters {
 
   public SaneParameters(
       int frame, boolean lastFrame, int bytesPerLine, int pixelsPerLine, int lines, int depth) {
-    this.frame = SaneEnums.valueOf(FrameType.class, frame);
+    this.frameType = SaneEnums.valueOf(FrameType.class, frame);
     this.lastFrame = lastFrame;
     this.bytesPerLine = bytesPerLine;
     this.pixelsPerLine = pixelsPerLine;
@@ -18,8 +20,8 @@ public class SaneParameters {
     this.depthPerPixel = depth;
   }
 
-  public FrameType getFrame() {
-    return frame;
+  public FrameType getFrameType() {
+    return frameType;
   }
 
   public boolean isLastFrame() {
@@ -44,5 +46,13 @@ public class SaneParameters {
 
   public int getDepthPerPixel() {
     return depthPerPixel;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(SaneParameters.class).add("frameType", frameType)
+        .add("isLastFrame", lastFrame).add("bytesPerLine", bytesPerLine)
+        .add("pixelsPerLine", pixelsPerLine).add("lineCount", lineCount)
+        .add("depthPerPixel", depthPerPixel).toString();
   }
 }
