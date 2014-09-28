@@ -46,7 +46,8 @@ class FrameInputStream extends InputStream {
     while (readRecord(bigArray) >= 0);
 
     if (imageSize > 0 && imageSize != bigArray.size()) {
-      throw new IOException("truncated read (expected " + bigArray.size() + ", got " + imageSize);
+      throw new IOException("truncated read (got " + bigArray.size() + ", expected " + imageSize
+          + ")");
     }
 
     // Now, if necessary, put the bytes in the correct order according
