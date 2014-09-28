@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
@@ -20,6 +22,7 @@ import javax.imageio.ImageIO;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -44,6 +47,16 @@ public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
   private SaneSession session;
+  private static final Logger jfreesaneLogger = Logger.getLogger("au.com.southsky.jfreesane");
+
+  @BeforeClass
+  public static void setupLogging() {
+    // Turn up logging levels
+    for (Handler handler : Logger.getLogger("").getHandlers()) {
+      handler.setLevel(Level.FINE);
+    }
+    jfreesaneLogger.setLevel(Level.FINE);
+  }
 
   @Before
   public void initSession() throws Exception {
