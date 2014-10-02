@@ -1,9 +1,8 @@
 package au.com.southsky.jfreesane;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.awt.Color;
@@ -25,7 +24,6 @@ import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
@@ -59,7 +57,7 @@ public class SaneSessionTest {
   public void listDevicesSucceeds() throws Exception {
     List<SaneDevice> devices = session.listDevices();
     log.info("Got " + devices.size() + " device(s): " + devices);
-    Assert.assertTrue(devices.size() > 0);
+    assertThat(devices).isNotEmpty();
   }
 
   @Test
@@ -78,7 +76,7 @@ public class SaneSessionTest {
 
     try {
       device.open();
-      assertTrue(!device.getOptionGroups().isEmpty());
+      assertThat(device.getOptionGroups()).isNotEmpty();
     } finally {
       device.close();
     }
@@ -100,7 +98,7 @@ public class SaneSessionTest {
 
   @Test
   public void listOptionsSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = session.getDevice("pixma");
     try {
       device.open();
       List<SaneOption> options = device.listOptions();
@@ -160,7 +158,7 @@ public class SaneSessionTest {
     try {
       device.open();
       SaneOption modeOption = device.getOption("mode");
-      assertEquals("Gray", modeOption.setStringValue("Gray"));
+      assertThat(modeOption.setStringValue("Gray")).isEqualTo("Gray");
     } finally {
       device.close();
     }
@@ -170,9 +168,8 @@ public class SaneSessionTest {
   public void adfAcquisitionSucceeds() throws Exception {
     SaneDevice device = session.getDevice("test");
     device.open();
-
-    Assert.assertTrue(
-        device.getOption("source").getStringConstraints().contains("Automatic Document Feeder"));
+    assertThat(device.getOption("source").getStringConstraints()).has().item(
+        "Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     for (int i = 0; i < 20; i++) {
@@ -258,12 +255,11 @@ public class SaneSessionTest {
 
     try {
       device.open();
-      assertTrue(ImmutableSet.of("Color", "Gray").contains(
-          device.getOption("mode").getStringValue(Charsets.US_ASCII)));
-      assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
-      assertEquals("Gray", device.getOption("mode").getStringValue(Charsets.US_ASCII));
-      assertEquals(
-          "Default", device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
+      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).matches("Gray|Color");
+      assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
+      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).isEqualTo("Gray");
+      assertThat(device.getOption("read-return-value").getStringValue(Charsets.US_ASCII))
+          .isEqualTo("Default");
     } finally {
       device.close();
     }
@@ -292,10 +288,10 @@ public class SaneSessionTest {
       device.open();
 
       SaneOption option = device.getOption("hand-scanner");
-      assertTrue(option.setBooleanValue(true));
-      assertTrue(option.getBooleanValue());
-      assertFalse(option.setBooleanValue(false));
-      assertFalse(option.getBooleanValue());
+      assertThat(option.setBooleanValue(true)).isTrue();
+      assertThat(option.getBooleanValue()).isTrue();
+      assertThat(option.setBooleanValue(false)).isFalse();
+      assertThat(option.getBooleanValue()).isFalse();
     } finally {
       device.close();
     }
@@ -309,11 +305,10 @@ public class SaneSessionTest {
       device.open();
 
       SaneOption option = device.getOption("string-constraint-string-list");
-      assertNotNull(option);
-      assertEquals(OptionValueConstraintType.STRING_LIST_CONSTRAINT, option.getConstraintType());
-      assertEquals(ImmutableList.of("First entry", "Second entry",
-          "This is the very long third entry. Maybe the frontend has an idea how to display it"),
-          option.getStringConstraints());
+      assertThat(option).isNotNull();
+      assertThat(option.getConstraintType()).isEqualTo(OptionValueConstraintType.STRING_LIST_CONSTRAINT);
+      assertThat(option.getStringConstraints()).has().exactly("First entry", "Second entry",
+          "This is the very long third entry. Maybe the frontend has an idea how to display it");
     } finally {
       device.close();
     }
@@ -536,6 +531,7 @@ public class SaneSessionTest {
       // if we got here, we got the expected exception
     }
   }
+
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
     File passwordFile = File.createTempFile("sane", ".pass");
