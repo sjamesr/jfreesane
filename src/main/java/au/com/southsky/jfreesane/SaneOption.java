@@ -474,7 +474,8 @@ public class SaneOption {
         value >= -32768 && value <= 32767.9999, "value " + value + " is out of range");
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
-    Preconditions.checkState(result.getType() == OptionValueType.FIXED);
+    Preconditions.checkState(result.getType() == OptionValueType.FIXED,
+        "setFixedValue is not appropriate for option of type " + result.getType());
 
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
