@@ -1,11 +1,13 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.primitives.UnsignedInteger;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -31,6 +33,7 @@ class FrameInputStream extends InputStream {
   }
 
   public Frame readFrame() throws IOException, SaneException {
+    log.log(Level.FINE, "Reading frame: {0}", this);
     ByteArrayOutputStream bigArray;
     int imageSize = parameters.getBytesPerLine() * parameters.getLineCount();
 
@@ -43,7 +46,8 @@ class FrameInputStream extends InputStream {
     while (readRecord(bigArray) >= 0);
 
     if (imageSize > 0 && imageSize != bigArray.size()) {
-      throw new IOException("truncated read");
+      throw new IOException("truncated read (got " + bigArray.size() + ", expected " + imageSize
+          + ")");
     }
 
     // Now, if necessary, put the bytes in the correct order according
@@ -64,9 +68,10 @@ class FrameInputStream extends InputStream {
     if (parameters.getLineCount() <= 0) {
       // register the real height
       parameters.setLineCount(outputArray.length / parameters.getBytesPerLine());
+      log.log(Level.FINE, "Detected new frame line count: {0}", parameters.getLineCount());
     }
 
-    return new Frame(parameters,outputArray);
+    return new Frame(parameters, outputArray);
   }
 
   private int readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
@@ -106,5 +111,11 @@ class FrameInputStream extends InputStream {
 
     log.fine("Read a record of " + result + " bytes");
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(FrameInputStream.class).add("isBigEndian", bigEndian)
+        .add("parameters", parameters).toString();
   }
 }
