@@ -45,9 +45,12 @@ class FrameInputStream extends InputStream {
 
     while (readRecord(bigArray) >= 0);
 
-    if (imageSize > 0 && imageSize != bigArray.size()) {
-      throw new IOException("truncated read (got " + bigArray.size() + ", expected " + imageSize
-          + ")");
+    if (imageSize > 0 && bigArray.size() < imageSize) {
+      int difference = imageSize - bigArray.size();
+      log.log(Level.WARNING, "truncated read (got {0}, expected {1} bytes)", new Object[] {
+          bigArray.size(), imageSize });
+      bigArray.write(new byte[difference]);
+      log.log(Level.WARNING, "padded image with {0} null bytes", difference);
     }
 
     // Now, if necessary, put the bytes in the correct order according
