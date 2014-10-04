@@ -525,6 +525,23 @@ public class SaneSessionTest {
   }
 
   @Test
+  public void reducedArea() throws Exception {
+    SaneDevice device = session.getDevice("test");
+    try {
+      device.open();
+      device.getOption("mode").setStringValue("Color");
+      device.getOption("resolution").setIntegerValue(200);
+      device.getOption("tl-x").setFixedValue(0.0);
+      device.getOption("tl-y").setFixedValue(0.0);
+      device.getOption("br-x").setFixedValue(105.0);
+      device.getOption("br-y").setFixedValue(149.0);
+      device.acquireImage();
+    } finally {
+      device.close();
+    }
+  }
+
+  @Test
   public void passwordAuthentication() throws Exception {
     // assumes that test is a password-authenticated device
     session.setPasswordProvider(SanePasswordProvider.forUsernameAndPassword("sjr", "password"));
