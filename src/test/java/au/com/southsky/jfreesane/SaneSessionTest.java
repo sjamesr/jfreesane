@@ -528,6 +528,10 @@ public class SaneSessionTest {
     device.acquireImage();
   }
 
+  /**
+   * This test assumes that you have protected the "test" device with a username
+   * of "sjr" and a password other than "badpassword".
+   */
   @Test
   public void invalidPasswordCausesAccessDeniedError() throws Exception {
     session.setPasswordProvider(SanePasswordProvider.forUsernameAndPassword("sjr", "badpassword"));
