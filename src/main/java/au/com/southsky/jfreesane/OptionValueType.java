@@ -29,7 +29,7 @@ public enum OptionValueType implements SaneEnum {
    */
   STRING(3), BUTTON(4), GROUP(5);
 
-  private int typeNo;
+  private final int typeNo;
 
   private OptionValueType(int typeNo) {
     this.typeNo = typeNo;
