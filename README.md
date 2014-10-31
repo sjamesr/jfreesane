@@ -225,10 +225,10 @@ Each option has
 
 You can set the value of an option, so long as 
 `SaneOption.isActive()` and `SaneOption.isWriteable` are both true. For example, the
-"mode" option's value can be set by the following:
+"source" option's value can be set by the following:
 
 ```java
-SaneOption option = device.getOption("mode");
+SaneOption option = device.getOption("source");
 option.setStringValue("Auto Document Feeder");
 ```
 
@@ -237,7 +237,7 @@ In fact, valid option values differ from device to device. In this case, you may
 need to ask SANE what values are valid for a given option.
 
 ```java
-SaneOption option = device.getOption("mode");
+SaneOption option = device.getOption("source");
 List<String> validValues = option.getStringConstraints();
 ```
 
