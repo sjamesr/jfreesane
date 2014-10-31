@@ -166,6 +166,10 @@ public class SaneDevice implements Closeable {
     return ImmutableList.copyOf(groups);
   }
 
+  /**
+   * Returns the option with the given name for this device. If the option does
+   * not exist, {@code null} is returned. Name matching is case-sensitive.
+   */
   public SaneOption getOption(String title) throws IOException {
     listOptions();
     return optionTitleMap.get(title);

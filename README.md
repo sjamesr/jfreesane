@@ -11,11 +11,12 @@ page](http://www.sane-project.org/) for more information about SANE itself.
     - [Listing known devices](#listing-known-devices)
     - [Opening the device](#opening-the-device)
     - [Acquiring an image](#acquiring-an-image)
-    - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
     - [Device options](#device-options)
         - [Setting options](#setting-options)
         - [Reading options](#reading-options)
         - [Option getters and setters](#option-getters-and-setters)
+    - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
+    - [Authentication](#authentication)
 
 # Introduction
 
@@ -46,19 +47,19 @@ The easiest way to get this software is using [Maven](http://maven.apache.org/).
      <dependency>
        <groupId>com.googlecode.jfreesane</groupId>
        <artifactId>jfreesane</artifactId>
-       <version>0.9</version>
+       <version>0.91</version>
      </dependency>
    </dependencies>
 </project>
 ```
 
-Otherwise, you can [download the jar file](https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-0.9)
+Otherwise, you can [download the jar file](https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-0.91)
 and put it in your project's CLASSPATH.
 JFreeSane also depends on [Google Guava](http://code.google.com/p/guava-libraries/), an
 excellent collection of Java libraries that you should be using in your project anyway.
 You will need to download the Guava JAR file and put that in your classpath as well.
 
-Once JFreeSane is available on your classpath, see the CommonOperations wiki page for a tutorial on how to use it.
+Once JFreeSane is available on your classpath, please read on for a tutorial on how to use it.
 
 Also consider joining the
 [jfreesane-discuss](http://groups.google.com/group/jfreesane-discuss) mailing list.
@@ -67,11 +68,8 @@ made and issues are reported.
 
 # Limitations
 
-* ~~JFreeSane currently cannot be used to obtain images from a handheld scanner.~~
-Fixed in 0.9!
-
-* JFreeSane currently does not support using SANE authenticated resources
-(i.e. a username and password).
+* ~~JFreeSane currently does not support using SANE authenticated resources
+(i.e. a username and password).~~ Fixed in 0.91, see [the authentication section](#authentication).
 
 * JFreeSane must be used with a running SANE daemon. It will not run SANE for you.
 It cannot talk to your scanners without a SANE daemon.
@@ -164,34 +162,6 @@ BufferedImage image = device.acquireImage();
 ```
 
 If the default options are not sufficient, see the "Device options" section below.
-
-## Reading from an automatic document feeder
-
-You may have a scanner with an Automatic Document Feeder (ADF). In this case, you may
-want to acquire all the images until the ADF is out of paper. Use the following technique:
-
-```java
-SaneDevice device = ...;
-
-// this value is device-dependent. See the section on "Setting Options" to find out
-// how to enumerate the valid values
-device.getOption("source").setStringValue("Automatic Document Feeder");
-
-while (true) {
-  try {
-    BufferedImage image = device.acquireImage();
-    process(image);
-  } catch (SaneException e) {
-    if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
-      // this is the out of paper condition that we expect
-      break;
-    } else {
-      // some other exception that was not expected
-      throw e;
-    }
-  }
-}
-```
 
 ## Device options
 
@@ -307,3 +277,39 @@ If the result is more than 1, you have an array.
 
   * `getIntegerArrayValue` reads an INT array, `setIntegerValue(List<Integer>)` writes one
   * `getFixedArrayValue` reads a FIXED array, `setFixedValue(List<Double>)` writes one
+
+## Reading from an automatic document feeder
+
+You may have a scanner with an Automatic Document Feeder (ADF). In this case, you may
+want to acquire all the images until the ADF is out of paper. Use the following technique:
+
+```java
+SaneDevice device = ...;
+
+// this value is device-dependent. See the section on "Setting Options" to find out
+// how to enumerate the valid values
+device.getOption("source").setStringValue("Automatic Document Feeder");
+
+while (true) {
+  try {
+    BufferedImage image = device.acquireImage();
+    process(image);
+  } catch (SaneException e) {
+    if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
+      // this is the out of paper condition that we expect
+      break;
+    } else {
+      // some other exception that was not expected
+      throw e;
+    }
+  }
+}
+```
+
+## Authentication
+
+Thanks to generous contributions from Paul and Matthias, JFreeSane now supports connecting to authenticated resources.
+
+By default, JFreeSane will use SANE-style authentication as documented in
+[the `scanimage(1)` man page](http://www.sane-project.org/man/scanimage.1.html). If you want to implement
+an alternative method of supplying usernames and passwords, see the javadoc for `SaneSession.setPasswordProvider`.

@@ -163,9 +163,9 @@ public class SaneOption {
     SaneInputStream inputStream = session.getInputStream();
     SaneOutputStream outputStream = session.getOutputStream();
 
-    // send RPC 4
+    // send SANE_NET_GET_OPTION_DESCRIPTORS
 
-    outputStream.write(SaneWord.forInt(4));
+    outputStream.write(SaneRpcCode.SANE_NET_GET_OPTION_DESCRIPTORS);
 
     // select device
 
@@ -411,7 +411,7 @@ public class SaneOption {
     Preconditions.checkState(isActive(), "option is not active");
 
     SaneOutputStream out = device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5));
+    out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(optionNumber));
     out.write(OptionAction.GET_VALUE);
@@ -474,7 +474,8 @@ public class SaneOption {
         value >= -32768 && value <= 32767.9999, "value " + value + " is out of range");
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
-    Preconditions.checkState(result.getType() == OptionValueType.FIXED);
+    Preconditions.checkState(result.getType() == OptionValueType.FIXED,
+        "setFixedValue is not appropriate for option of type " + result.getType());
 
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
@@ -512,7 +513,9 @@ public class SaneOption {
     // new value must be STRICTLY less than size(), as SANE includes the
     // trailing null
     // that we will add later in its size
-    Preconditions.checkState(newValue.length() < getSize());
+    Preconditions.checkState(newValue.length() < getSize(), "string value '" + newValue
+        + "' (length=" + newValue.length() + ") exceeds maximum size of " + (getSize() - 1)
+        + " byte(s) for option " + getName());
 
     ControlOptionResult result = writeOption(newValue);
     Preconditions.checkState(result.getType() == OptionValueType.STRING);
@@ -573,7 +576,7 @@ public class SaneOption {
     Preconditions.checkState(isActive(), "option is not active");
 
     SaneOutputStream out = device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5));
+    out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(optionNumber));
     out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
@@ -602,7 +605,7 @@ public class SaneOption {
   private ControlOptionResult writeOption(String value) throws IOException, SaneException {
     Preconditions.checkState(getValueType() == OptionValueType.STRING);
     SaneOutputStream out = device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5) /* rpc #5 */);
+    out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(SaneWord.forInt(device.getHandle().getHandle().integerValue()));
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(SaneWord.forInt(OptionAction.SET_VALUE.getWireValue()));
@@ -627,7 +630,7 @@ public class SaneOption {
     Preconditions.checkState(isWriteable(), "option " + getName() + " is not writeable");
     Preconditions.checkState(getValueType() == OptionValueType.INT);
     SaneOutputStream out = device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5) /* rpc #5 */);
+    out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(OptionAction.SET_VALUE);
@@ -644,7 +647,7 @@ public class SaneOption {
   private ControlOptionResult writeButtonOption() throws IOException, SaneException{
     Preconditions.checkState(getValueType() == OptionValueType.BUTTON);
     SaneOutputStream out = device.getSession().getOutputStream();
-    out.write(SaneWord.forInt(5) /* rpc #5 */);
+    out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(device.getHandle().getHandle());
     out.write(SaneWord.forInt(this.optionNumber));
     out.write(OptionAction.SET_VALUE);

@@ -1,18 +1,19 @@
 package au.com.southsky.jfreesane;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
@@ -20,14 +21,15 @@ import javax.imageio.ImageIO;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -43,6 +45,16 @@ public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
   private SaneSession session;
+  private static final Logger jfreesaneLogger = Logger.getLogger("au.com.southsky.jfreesane");
+
+  @BeforeClass
+  public static void setupLogging() {
+    // Turn up logging levels
+    for (Handler handler : Logger.getLogger("").getHandlers()) {
+      handler.setLevel(Level.FINE);
+    }
+    jfreesaneLogger.setLevel(Level.FINE);
+  }
 
   @Before
   public void initSession() throws Exception {
@@ -58,7 +70,7 @@ public class SaneSessionTest {
   public void listDevicesSucceeds() throws Exception {
     List<SaneDevice> devices = session.listDevices();
     log.info("Got " + devices.size() + " device(s): " + devices);
-    Assert.assertTrue(devices.size() > 0);
+    assertThat(devices).isNotEmpty();
   }
 
   @Test
@@ -67,7 +79,7 @@ public class SaneSessionTest {
     try {
       device.open();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -77,9 +89,9 @@ public class SaneSessionTest {
 
     try {
       device.open();
-      assertTrue(!device.getOptionGroups().isEmpty());
+      assertThat(device.getOptionGroups()).isNotEmpty();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -93,13 +105,13 @@ public class SaneSessionTest {
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
   @Test
   public void listOptionsSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = session.getDevice("pixma");
     try {
       device.open();
       List<SaneOption> options = device.listOptions();
@@ -112,7 +124,7 @@ public class SaneSessionTest {
         }
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -148,7 +160,7 @@ public class SaneSessionTest {
         System.out.println();
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -159,9 +171,9 @@ public class SaneSessionTest {
     try {
       device.open();
       SaneOption modeOption = device.getOption("mode");
-      assertEquals("Gray", modeOption.setStringValue("Gray"));
+      assertThat(modeOption.setStringValue("Gray")).isEqualTo("Gray");
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -169,9 +181,8 @@ public class SaneSessionTest {
   public void adfAcquisitionSucceeds() throws Exception {
     SaneDevice device = session.getDevice("test");
     device.open();
-
-    Assert.assertTrue(
-        device.getOption("source").getStringConstraints().contains("Automatic Document Feeder"));
+    assertThat(device.getOption("source").getStringConstraints()).has().item(
+        "Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     for (int i = 0; i < 20; i++) {
@@ -191,7 +202,6 @@ public class SaneSessionTest {
   @Test
   public void acquireMonoImage() throws Exception {
     SaneDevice device = session.getDevice("test");
-    FileOutputStream stream = null;
 
     try {
       device.open();
@@ -203,8 +213,7 @@ public class SaneSessionTest {
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
-      Closeables.closeQuietly(stream);
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -249,7 +258,7 @@ public class SaneSessionTest {
 //      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
 //      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -259,14 +268,13 @@ public class SaneSessionTest {
 
     try {
       device.open();
-      assertTrue(ImmutableSet.of("Color", "Gray").contains(
-          device.getOption("mode").getStringValue(Charsets.US_ASCII)));
-      assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
-      assertEquals("Gray", device.getOption("mode").getStringValue(Charsets.US_ASCII));
-      assertEquals(
-          "Default", device.getOption("read-return-value").getStringValue(Charsets.US_ASCII));
+      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).matches("Gray|Color");
+      assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
+      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).isEqualTo("Gray");
+      assertThat(device.getOption("read-return-value").getStringValue(Charsets.US_ASCII))
+          .isEqualTo("Default");
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -281,7 +289,7 @@ public class SaneSessionTest {
       assertEquals(123, device.getOption("br-x").setFixedValue(123.456), 0.0001);
       assertEquals(123, device.getOption("br-x").getFixedValue(), 0.0001);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -293,12 +301,12 @@ public class SaneSessionTest {
       device.open();
 
       SaneOption option = device.getOption("hand-scanner");
-      assertTrue(option.setBooleanValue(true));
-      assertTrue(option.getBooleanValue());
-      assertFalse(option.setBooleanValue(false));
-      assertFalse(option.getBooleanValue());
+      assertThat(option.setBooleanValue(true)).isTrue();
+      assertThat(option.getBooleanValue()).isTrue();
+      assertThat(option.setBooleanValue(false)).isFalse();
+      assertThat(option.getBooleanValue()).isFalse();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -310,13 +318,12 @@ public class SaneSessionTest {
       device.open();
 
       SaneOption option = device.getOption("string-constraint-string-list");
-      assertNotNull(option);
-      assertEquals(OptionValueConstraintType.STRING_LIST_CONSTRAINT, option.getConstraintType());
-      assertEquals(ImmutableList.of("First entry", "Second entry",
-          "This is the very long third entry. Maybe the frontend has an idea how to display it"),
-          option.getStringConstraints());
+      assertThat(option).isNotNull();
+      assertThat(option.getConstraintType()).isEqualTo(OptionValueConstraintType.STRING_LIST_CONSTRAINT);
+      assertThat(option.getStringConstraints()).has().exactly("First entry", "Second entry",
+          "This is the very long third entry. Maybe the frontend has an idea how to display it");
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -333,7 +340,7 @@ public class SaneSessionTest {
       assertEquals(ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
           option.getIntegerValueListConstraint());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -356,7 +363,7 @@ public class SaneSessionTest {
       }
 
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -374,7 +381,7 @@ public class SaneSessionTest {
       assertEquals(192, option.getRangeConstraints().getMaximumInteger());
       assertEquals(2, option.getRangeConstraints().getQuantumInteger());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -392,7 +399,7 @@ public class SaneSessionTest {
       assertEquals(32767.9999, option.getRangeConstraints().getMaximumFixed(), 0.00001);
       assertEquals(2.0, option.getRangeConstraints().getQuantumFixed(), 0.00001);
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -416,7 +423,7 @@ public class SaneSessionTest {
       assertEquals(values, option.setIntegerValue(values));
       assertEquals(values, option.getIntegerArrayValue());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -439,7 +446,7 @@ public class SaneSessionTest {
       System.out.println(option.setFixedValue(-4));
       System.out.println(option.setFixedValue(97.5));
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -477,7 +484,7 @@ public class SaneSessionTest {
       assertEquals("Gray", device.getOption("mode").setStringValue("Gray"));
       assertEquals("Gray", device.getOption("mode").getStringValue());
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -489,7 +496,7 @@ public class SaneSessionTest {
       device.getOption("hand-scanner").setBooleanValue(true);
       device.acquireImage();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
@@ -508,7 +515,24 @@ public class SaneSessionTest {
         System.out.println("Wrote three-pass test to " + file);
       }
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
+    }
+  }
+
+  @Test
+  public void reducedArea() throws Exception {
+    SaneDevice device = session.getDevice("test");
+    try {
+      device.open();
+      device.getOption("mode").setStringValue("Color");
+      device.getOption("resolution").setIntegerValue(200);
+      device.getOption("tl-x").setFixedValue(0.0);
+      device.getOption("tl-y").setFixedValue(0.0);
+      device.getOption("br-x").setFixedValue(105.0);
+      device.getOption("br-y").setFixedValue(149.0);
+      device.acquireImage();
+    } finally {
+      device.close();
     }
   }
 
@@ -521,12 +545,48 @@ public class SaneSessionTest {
     device.acquireImage();
   }
 
+  /**
+   * This test assumes that you have protected the "test" device with a username
+   * of "sjr" and a password other than "badpassword".
+   */
+  @Test
+  public void invalidPasswordCausesAccessDeniedError() throws Exception {
+    session.setPasswordProvider(SanePasswordProvider.forUsernameAndPassword("sjr", "badpassword"));
+    SaneDevice device = session.getDevice("test");
+
+    try {
+      device.open();
+      fail("Expected a SaneException, didn't get one");
+    } catch (SaneException e) {
+      if (e.getStatus() != SaneStatus.STATUS_ACCESS_DENIED) {
+        throw e;
+      }
+
+      // if we got here, we got the expected exception
+    }
+  }
+
+  @Test
+  public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
+    File passwordFile = File.createTempFile("sane", ".pass");
+    try {
+      Files.write("sjr:password:test", passwordFile, Charsets.ISO_8859_1);
+      session.setPasswordProvider(SanePasswordProvider.usingSanePassFile(passwordFile
+          .getAbsolutePath()));
+      SaneDevice device = session.getDevice("test");
+      device.open();
+      device.acquireImage();
+    } finally {
+      passwordFile.delete();
+    }
+  }
+
   private void openAndCloseDevice(SaneDevice device) throws Exception {
     try {
       device.open();
       device.listOptions();
     } finally {
-      Closeables.closeQuietly(device);
+      device.close();
     }
   }
 
