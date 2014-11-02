@@ -287,7 +287,6 @@ want to acquire all the images until the ADF is out of paper. Use the following 
 SaneDevice device = ...;
 
 // this value is device-dependent. See the section on "Setting Options" to find out
-// how to enumerate the valid values
 device.getOption("source").setStringValue("Automatic Document Feeder");
 
 while (true) {
