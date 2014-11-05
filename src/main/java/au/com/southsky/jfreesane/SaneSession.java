@@ -178,8 +178,6 @@ public class SaneSession implements Closeable {
       }
     } while (!parameters.isLastFrame());
 
-    cancelDevice(handle);
-
     SaneImage image = builder.build();
     return image.toBufferedImage();
   }
