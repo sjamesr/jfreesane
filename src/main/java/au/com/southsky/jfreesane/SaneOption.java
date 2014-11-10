@@ -705,10 +705,10 @@ public class SaneOption {
     private static ControlOptionResult fromSession(SaneSession session) throws IOException, SaneException {
       SaneInputStream stream = session.getInputStream();
 
-      int status = stream.readWord().integerValue();
+      SaneWord status = stream.readWord();
 
-      if (status != 0) {
-        throw new SaneException(SaneStatus.fromWireValue(status));
+      if (status.integerValue() != 0) {
+        throw SaneException.fromStatusWord(status);
       }
 
       int info = stream.readWord().integerValue();
@@ -735,10 +735,10 @@ public class SaneOption {
 
       if (!resource.isEmpty()) {
         session.authorize(resource);
-        status = stream.readWord().integerValue();
+        status = stream.readWord();
 
-        if (status != 0) {
-          throw new SaneException(SaneStatus.fromWireValue(status));
+        if (status.integerValue() != 0) {
+          throw SaneException.fromStatusWord(status);
         }
 
         info = stream.readWord().integerValue();
@@ -762,7 +762,7 @@ public class SaneOption {
         }
       }
 
-      return new ControlOptionResult(status, info, type, valueSize, value, resource);
+      return new ControlOptionResult(status.integerValue(), info, type, valueSize, value, resource);
     }
 
     public int getStatus() {

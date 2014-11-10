@@ -20,6 +20,10 @@ public enum SaneStatus implements SaneEnum {
     return SaneEnums.valueOf(SaneStatus.class, wireValue);
   }
 
+  public static SaneStatus fromWireValue(SaneWord statusWord) {
+    return fromWireValue(statusWord.integerValue());
+  }
+
   private SaneStatus(int wireValue) {
     this.wireValue = wireValue;
   }
