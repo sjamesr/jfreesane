@@ -128,16 +128,15 @@ public class SaneSession implements Closeable {
       outputStream.write(SaneRpcCode.SANE_NET_START);
       outputStream.write(handle.getHandle());
 
-      {
-        int status = inputStream.readWord().integerValue();
-        if (status != 0) {
-          throw new SaneException(SaneStatus.fromWireValue(status));
-        }
-      }
+      SaneWord startStatus = inputStream.readWord();
 
       int port = inputStream.readWord().integerValue();
       SaneWord byteOrder = inputStream.readWord();
       String resource = inputStream.readString();
+
+      if (startStatus.integerValue() != 0) {
+        throw SaneException.fromStatusWord(startStatus);
+      }
 
       if (!resource.isEmpty()) {
         authorize(resource);
