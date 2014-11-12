@@ -47,7 +47,7 @@ The easiest way to get this software is using [Maven](http://maven.apache.org/).
      <dependency>
        <groupId>com.googlecode.jfreesane</groupId>
        <artifactId>jfreesane</artifactId>
-       <version>0.91</version>
+       <version>0.92</version>
      </dependency>
    </dependencies>
 </project>
@@ -69,7 +69,7 @@ made and issues are reported.
 # Limitations
 
 * ~~JFreeSane currently does not support using SANE authenticated resources
-(i.e. a username and password).~~ Fixed in 0.91, see [the authentication section](#authentication).
+(i.e. a username and password).~~ Fixed since 0.91, see [the authentication section](#authentication).
 
 * JFreeSane must be used with a running SANE daemon. It will not run SANE for you.
 It cannot talk to your scanners without a SANE daemon.
