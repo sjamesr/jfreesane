@@ -200,6 +200,32 @@ public class SaneSessionTest {
   }
 
   @Test
+  public void acquireImageSucceedsAfterOutOfPaperCondition() throws Exception {
+    SaneDevice device = session.getDevice("test");
+    device.open();
+    assertThat(device.getOption("source").getStringConstraints()).has().item(
+        "Automatic Document Feeder");
+    device.getOption("source").setStringValue("Automatic Document Feeder");
+
+    boolean thrown = false;
+    for (int i = 0; i < 20; i++) {
+      try {
+        device.acquireImage();
+      } catch (SaneException e) {
+        if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
+          // out of documents to read, that's fine
+          thrown = true;
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    assertThat(thrown).isTrue();
+    device.acquireImage();
+  }
+
+  @Test
   public void acquireMonoImage() throws Exception {
     SaneDevice device = session.getDevice("test");
 
