@@ -1,6 +1,7 @@
 package au.com.southsky.jfreesane;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,6 +15,7 @@ import java.util.List;
  */
 public class SaneSession implements Closeable {
 
+  private static final int READ_BUFFER_SIZE = 1 << 20;  // 1mb
   private static final int DEFAULT_PORT = 6566;
 
   private final Socket socket;
@@ -168,7 +170,8 @@ public class SaneSession implements Closeable {
         parameters = inputStream.readSaneParameters();
         @SuppressWarnings("resource")
         FrameInputStream frameStream = new FrameInputStream(parameters,
-            imageSocket.getInputStream(), 0x4321 == byteOrder.integerValue());
+            new BufferedInputStream(imageSocket.getInputStream(), READ_BUFFER_SIZE),
+            0x4321 == byteOrder.integerValue());
         builder.addFrame(frameStream.readFrame());
       } finally {
         if (imageSocket != null) {
