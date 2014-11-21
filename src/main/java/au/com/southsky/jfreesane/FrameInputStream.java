@@ -32,6 +32,16 @@ class FrameInputStream extends InputStream {
     return underlyingStream.read();
   }
 
+  @Override
+  public int read(byte[] b) throws IOException {
+    return underlyingStream.read(b);
+  }
+
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    return underlyingStream.read(b, off, len);
+  }
+
   public Frame readFrame() throws IOException, SaneException {
     log.log(Level.FINE, "Reading frame: {0}", this);
     ByteArrayOutputStream bigArray;
