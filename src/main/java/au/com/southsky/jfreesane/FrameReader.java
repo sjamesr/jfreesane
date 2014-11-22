@@ -11,25 +11,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represents a stream for reading image {@link Frame frames}.
+ * Represents a reader of {@link Frame frames}.
  */
-class FrameInputStream extends InputStream {
-  private static final Logger log = Logger.getLogger(FrameInputStream.class.getName());
+class FrameReader {
+  private static final Logger log = Logger.getLogger(FrameReader.class.getName());
 
   private final SaneParameters parameters;
   private final InputStream underlyingStream;
   private final boolean bigEndian;
 
-  public FrameInputStream(
+  public FrameReader(
       SaneParameters parameters, InputStream underlyingStream, boolean bigEndian) {
     this.parameters = parameters;
     this.underlyingStream = underlyingStream;
     this.bigEndian = bigEndian;
-  }
-
-  @Override
-  public int read() throws IOException {
-    return underlyingStream.read();
   }
 
   public Frame readFrame() throws IOException, SaneException {
@@ -78,7 +73,7 @@ class FrameInputStream extends InputStream {
   }
 
   private int readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
-    DataInputStream inputStream = new DataInputStream(this);
+    DataInputStream inputStream = new DataInputStream(underlyingStream);
     int length = inputStream.readInt();
 
     if (length == 0xffffffff) {
@@ -87,7 +82,7 @@ class FrameInputStream extends InputStream {
       // Hack: saned may actually write a status record here, even
       // though the sane specification says that no more bytes should
       // be read in an end-of-records situation
-      int status = read();
+      int status = inputStream.read();
       if (status != -1) {
         SaneStatus saneStatus = SaneStatus.fromWireValue(status);
 
@@ -105,20 +100,28 @@ class FrameInputStream extends InputStream {
     }
 
     byte[] buffer = new byte[length];
-    int result = read(buffer, 0, length);
-    if (result != length) {
+    int bytesRead = 0;
+    while (bytesRead < length) {
+      int result = inputStream.read(buffer, bytesRead, length - bytesRead);
+      if (result == -1) {
+        throw new IllegalStateException("Encountered end of stream while attempting to read "
+            + (length - bytesRead) + " bytes.");
+      }
+      bytesRead += result;
+    }
+    if (bytesRead != length) {
       throw new IllegalStateException(
-          "read too few bytes (" + result + "), was expecting " + length);
+          "read too few bytes (" + bytesRead + "), was expecting " + length);
     }
     destination.write(buffer, 0, length);
 
-    log.fine("Read a record of " + result + " bytes");
-    return result;
+    log.fine("Read a record of " + bytesRead + " bytes");
+    return bytesRead;
   }
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(FrameInputStream.class).add("isBigEndian", bigEndian)
+    return MoreObjects.toStringHelper(FrameReader.class).add("isBigEndian", bigEndian)
         .add("parameters", parameters).toString();
   }
 }
