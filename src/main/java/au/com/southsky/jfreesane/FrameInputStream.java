@@ -100,15 +100,23 @@ class FrameInputStream {
     }
 
     byte[] buffer = new byte[length];
-    int result = inputStream.read(buffer, 0, length);
-    if (result != length) {
+    int bytesRead = 0;
+    while (bytesRead < length) {
+      int result = inputStream.read(buffer, bytesRead, length - bytesRead);
+      if (result == -1) {
+        throw new IllegalStateException("Encountered end of stream while attempting to read "
+            + (length - bytesRead) + " bytes.");
+      }
+      bytesRead += result;
+    }
+    if (bytesRead != length) {
       throw new IllegalStateException(
-          "read too few bytes (" + result + "), was expecting " + length);
+          "read too few bytes (" + bytesRead + "), was expecting " + length);
     }
     destination.write(buffer, 0, length);
 
-    log.fine("Read a record of " + result + " bytes");
-    return result;
+    log.fine("Read a record of " + bytesRead + " bytes");
+    return bytesRead;
   }
 
   @Override
