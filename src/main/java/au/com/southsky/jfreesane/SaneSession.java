@@ -168,7 +168,6 @@ public class SaneSession implements Closeable {
         }
 
         parameters = inputStream.readSaneParameters();
-        @SuppressWarnings("resource")
         FrameInputStream frameStream = new FrameInputStream(parameters,
             new BufferedInputStream(imageSocket.getInputStream(), READ_BUFFER_SIZE),
             0x4321 == byteOrder.integerValue());
