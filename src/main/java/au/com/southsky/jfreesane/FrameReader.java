@@ -11,16 +11,16 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represents a stream for reading image {@link Frame frames}.
+ * Represents a reader of {@link Frame frames}.
  */
-class FrameInputStream {
-  private static final Logger log = Logger.getLogger(FrameInputStream.class.getName());
+class FrameReader {
+  private static final Logger log = Logger.getLogger(FrameReader.class.getName());
 
   private final SaneParameters parameters;
   private final InputStream underlyingStream;
   private final boolean bigEndian;
 
-  public FrameInputStream(
+  public FrameReader(
       SaneParameters parameters, InputStream underlyingStream, boolean bigEndian) {
     this.parameters = parameters;
     this.underlyingStream = underlyingStream;
@@ -121,7 +121,7 @@ class FrameInputStream {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(FrameInputStream.class).add("isBigEndian", bigEndian)
+    return MoreObjects.toStringHelper(FrameReader.class).add("isBigEndian", bigEndian)
         .add("parameters", parameters).toString();
   }
 }
