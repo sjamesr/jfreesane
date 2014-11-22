@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 /**
  * Represents a stream for reading image {@link Frame frames}.
  */
-class FrameInputStream extends InputStream {
+class FrameInputStream {
   private static final Logger log = Logger.getLogger(FrameInputStream.class.getName());
 
   private final SaneParameters parameters;
@@ -25,21 +25,6 @@ class FrameInputStream extends InputStream {
     this.parameters = parameters;
     this.underlyingStream = underlyingStream;
     this.bigEndian = bigEndian;
-  }
-
-  @Override
-  public int read() throws IOException {
-    return underlyingStream.read();
-  }
-
-  @Override
-  public int read(byte[] b) throws IOException {
-    return underlyingStream.read(b);
-  }
-
-  @Override
-  public int read(byte[] b, int off, int len) throws IOException {
-    return underlyingStream.read(b, off, len);
   }
 
   public Frame readFrame() throws IOException, SaneException {
@@ -88,7 +73,7 @@ class FrameInputStream extends InputStream {
   }
 
   private int readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
-    DataInputStream inputStream = new DataInputStream(this);
+    DataInputStream inputStream = new DataInputStream(underlyingStream);
     int length = inputStream.readInt();
 
     if (length == 0xffffffff) {
@@ -97,7 +82,7 @@ class FrameInputStream extends InputStream {
       // Hack: saned may actually write a status record here, even
       // though the sane specification says that no more bytes should
       // be read in an end-of-records situation
-      int status = read();
+      int status = inputStream.read();
       if (status != -1) {
         SaneStatus saneStatus = SaneStatus.fromWireValue(status);
 
@@ -115,7 +100,7 @@ class FrameInputStream extends InputStream {
     }
 
     byte[] buffer = new byte[length];
-    int result = read(buffer, 0, length);
+    int result = inputStream.read(buffer, 0, length);
     if (result != length) {
       throw new IllegalStateException(
           "read too few bytes (" + result + "), was expecting " + length);
