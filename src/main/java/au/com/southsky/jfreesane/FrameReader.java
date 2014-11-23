@@ -18,15 +18,20 @@ import com.google.common.primitives.UnsignedInteger;
 class FrameReader {
   private static final Logger log = Logger.getLogger(FrameReader.class.getName());
 
+  private final SaneDevice device;
   private final SaneParameters parameters;
   private final InputStream underlyingStream;
   private final boolean bigEndian;
+  private final ScanListener listener;
 
-  public FrameReader(
-      SaneParameters parameters, InputStream underlyingStream, boolean bigEndian) {
+
+  public FrameReader(SaneDevice device, SaneParameters parameters, InputStream underlyingStream,
+      boolean bigEndian, ScanListener listener) {
+    this.device = device;
     this.parameters = parameters;
     this.underlyingStream = underlyingStream;
     this.bigEndian = bigEndian;
+    this.listener = listener;
   }
 
   public Frame readFrame() throws IOException, SaneException {
@@ -34,13 +39,22 @@ class FrameReader {
     ByteArrayOutputStream bigArray;
     int imageSize = parameters.getBytesPerLine() * parameters.getLineCount();
 
+    // For hand-held scanners where the line count is not known, report an image
+    // size of -1 to the user.
+    int reportedImageSize = parameters.getLineCount() == -1 ? -1 : imageSize;
+
     if (parameters.getLineCount() > 0) {
       bigArray = new ByteArrayOutputStream(imageSize);
     } else {
       bigArray = new ByteArrayOutputStream(256);
     }
 
-    while (readRecord(bigArray) >= 0);
+    int bytesRead;
+    int totalBytesRead = 0;
+    while ((bytesRead = readRecord(bigArray)) >= 0) {
+      totalBytesRead += bytesRead;
+      listener.readRecord(device, totalBytesRead, reportedImageSize);
+    }
 
     if (imageSize > 0 && bigArray.size() < imageSize) {
       int difference = imageSize - bigArray.size();
@@ -74,7 +88,7 @@ class FrameReader {
     return new Frame(parameters, outputArray);
   }
 
-  private long readRecord(OutputStream destination) throws IOException, SaneException {
+  private int readRecord(OutputStream destination) throws IOException, SaneException {
     DataInputStream inputStream = new DataInputStream(underlyingStream);
     int length = inputStream.readInt();
 
@@ -101,8 +115,8 @@ class FrameReader {
       throw new IllegalStateException("TODO: support massive records");
     }
 
-    long bytesRead = ByteStreams.copy(ByteStreams.limit(inputStream, length), destination);
-    log.log(Level.INFO, "Read a record of {0} bytes", bytesRead);
+    int bytesRead = (int) ByteStreams.copy(ByteStreams.limit(inputStream, length), destination);
+    log.log(Level.FINE, "Read a record of {0} bytes", bytesRead);
     return bytesRead;
   }
 

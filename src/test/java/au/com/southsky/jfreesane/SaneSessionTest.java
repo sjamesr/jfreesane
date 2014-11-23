@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -614,6 +616,34 @@ public class SaneSessionTest {
     } finally {
       passwordFile.delete();
     }
+  }
+
+  @Test
+  public void listenerReceivesScanStartedEvent() throws Exception {
+    final AtomicReference<SaneDevice> notifiedDevice = new AtomicReference<SaneDevice>();
+    final AtomicInteger frameCount = new AtomicInteger();
+
+    ScanListener listener = new ScanListenerAdapter() {
+      @Override
+      public void scanningStarted(SaneDevice device) {
+        notifiedDevice.set(device);
+      }
+
+      @Override
+      public void frameAcquisitionStarted(SaneDevice device, SaneParameters parameters,
+          int currentFrame, int likelyTotalFrames) {
+        frameCount.incrementAndGet();
+      }
+    };
+
+    SaneDevice device = session.getDevice("test");
+    device.open();
+    device.getOption("resolution").setFixedValue(1200);
+    device.getOption("mode").setStringValue("Color");
+    device.getOption("three-pass").setBooleanValue(true);
+    device.acquireImage(listener);
+    assertThat(notifiedDevice.get()).is(device);
+    assertThat(frameCount.get()).isEqualTo(3);
   }
 
   private void openAndCloseDevice(SaneDevice device) throws Exception {

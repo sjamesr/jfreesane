@@ -87,8 +87,33 @@ public class SaneDevice implements Closeable {
    *           if an application-level error was returned by the Sane daemon
    */
   public BufferedImage acquireImage() throws IOException, SaneException {
+    return acquireImage(null);
+  }
+
+  /**
+   * Acquires a single image from the Sane daemon. The given
+   * {@link ScanListener} will be notified about updates during the scan.
+   *
+   * <p>
+   * The scanning thread will be used to make calls to {@code listener}.
+   * Scanning will not proceed until control returns to JFreeSane, so your
+   * implementation should not monopolize this thread for longer than necessary.
+   *
+   * @param listener
+   *          if not {@code null}, this object will receive notifications about
+   *          scan progress
+   * @return a {@link BufferedImage} representing the image obtained from Sane
+   * @throws IOException
+   *           if an error occurred while talking to the backend
+   * @throws SaneException
+   *           if an application-level error was returned by the Sane daemon
+   */
+  public BufferedImage acquireImage(ScanListener listener) throws IOException, SaneException {
     Preconditions.checkState(isOpen(), "device is not open");
-    return session.acquireImage(handle);
+    if (listener == null) {
+      listener = new ScanListenerAdapter();
+    }
+    return session.acquireImage(this, listener);
   }
 
   /**

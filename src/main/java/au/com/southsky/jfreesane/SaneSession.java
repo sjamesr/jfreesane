@@ -122,11 +122,15 @@ public class SaneSession implements Closeable {
     return new SaneDeviceHandle(status, handle, resource);
   }
 
-  BufferedImage acquireImage(SaneDeviceHandle handle) throws IOException, SaneException {
+  BufferedImage acquireImage(SaneDevice device, ScanListener listener) throws IOException,
+      SaneException {
     SaneImage.Builder builder = new SaneImage.Builder();
     SaneParameters parameters = null;
+    listener.scanningStarted(device);
+    int currentFrame = 0;
 
     do {
+      SaneDeviceHandle handle = device.getHandle();
       outputStream.write(SaneRpcCode.SANE_NET_START);
       outputStream.write(handle.getHandle());
 
@@ -168,18 +172,38 @@ public class SaneSession implements Closeable {
         }
 
         parameters = inputStream.readSaneParameters();
-        FrameReader frameStream = new FrameReader(parameters, new BufferedInputStream(
-            imageSocket.getInputStream(), READ_BUFFER_SIZE), 0x4321 == byteOrder.integerValue());
+
+        // As a convenience to our listeners, try to figure out how many frames
+        // will be read. Usually this will be 1, except in the case of older
+        // three-pass color scanners.
+        listener.frameAcquisitionStarted(device, parameters, currentFrame,
+            getLikelyTotalFrameCount(parameters));
+        FrameReader frameStream = new FrameReader(device, parameters, new BufferedInputStream(
+            imageSocket.getInputStream(), READ_BUFFER_SIZE), 0x4321 == byteOrder.integerValue(),
+            listener);
         builder.addFrame(frameStream.readFrame());
       } finally {
         if (imageSocket != null) {
           imageSocket.close();
         }
       }
+
+      currentFrame++;
     } while (!parameters.isLastFrame());
 
     SaneImage image = builder.build();
     return image.toBufferedImage();
+  }
+
+  private int getLikelyTotalFrameCount(SaneParameters parameters) {
+    switch (parameters.getFrameType()) {
+    case RED:
+    case GREEN:
+    case BLUE:
+      return 3;
+    default:
+      return 1;
+    }
   }
 
   void closeDevice(SaneDeviceHandle handle) throws IOException {
