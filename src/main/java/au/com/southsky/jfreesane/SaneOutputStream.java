@@ -64,7 +64,7 @@ public class SaneOutputStream extends OutputStream {
    */
   public void write(char[] charArray) throws IOException {
     if (charArray.length > 0) {
-      byte[] encoded = Encoder.encodedLatin1(charArray);
+      byte[] encoded = SanePasswordEncoder.encodedLatin1(charArray);
       write(SaneWord.forInt(encoded.length + 1));
       write(encoded);
     }

@@ -282,7 +282,7 @@ public class SaneSession implements Closeable {
       // Write in clean
       outputStream.write(password);
     } else {
-      outputStream.write("$MD5$" + Encoder.derivePassword(resourceParts[1], password));
+      outputStream.write("$MD5$" + SanePasswordEncoder.derivePassword(resourceParts[1], password));
     }
   }
 
