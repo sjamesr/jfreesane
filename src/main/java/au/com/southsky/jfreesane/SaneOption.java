@@ -626,13 +626,15 @@ public class SaneOption {
   }
 
   private ControlOptionResult writeOption(List<Integer> value) throws IOException, SaneException {
-    Preconditions.checkState(isActive(), "option " + getName() + " is not active");
-    Preconditions.checkState(isWriteable(), "option " + getName() + " is not writeable");
-    Preconditions.checkState(getValueType() == OptionValueType.INT);
+    Preconditions.checkState(isActive(), "option %s is not active", getName());
+    Preconditions.checkState(isWriteable(), "option %s is not writeable", getName());
+    Preconditions.checkState(getValueType() == OptionValueType.INT,
+        "option %s is %s-typed, you must use the corresponding methods to set the value",
+        getName(), getValueType());
     SaneOutputStream out = device.getSession().getOutputStream();
     out.write(SaneRpcCode.SANE_NET_CONTROL_OPTION);
     out.write(device.getHandle().getHandle());
-    out.write(SaneWord.forInt(this.optionNumber));
+    out.write(SaneWord.forInt(optionNumber));
     out.write(OptionAction.SET_VALUE);
     out.write(getValueType());
     out.write(SaneWord.forInt(getSize()));
