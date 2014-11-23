@@ -1,6 +1,7 @@
 package au.com.southsky.jfreesane;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.io.ByteStreams;
 import com.google.common.primitives.UnsignedInteger;
 
 import java.io.ByteArrayOutputStream;
@@ -72,7 +73,7 @@ class FrameReader {
     return new Frame(parameters, outputArray);
   }
 
-  private int readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
+  private long readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
     DataInputStream inputStream = new DataInputStream(underlyingStream);
     int length = inputStream.readInt();
 
@@ -99,23 +100,8 @@ class FrameReader {
       throw new IllegalStateException("TODO: support massive records");
     }
 
-    byte[] buffer = new byte[length];
-    int bytesRead = 0;
-    while (bytesRead < length) {
-      int result = inputStream.read(buffer, bytesRead, length - bytesRead);
-      if (result == -1) {
-        throw new IllegalStateException("Encountered end of stream while attempting to read "
-            + (length - bytesRead) + " bytes.");
-      }
-      bytesRead += result;
-    }
-    if (bytesRead != length) {
-      throw new IllegalStateException(
-          "read too few bytes (" + bytesRead + "), was expecting " + length);
-    }
-    destination.write(buffer, 0, length);
-
-    log.fine("Read a record of " + bytesRead + " bytes");
+    long bytesRead = ByteStreams.copy(ByteStreams.limit(inputStream, length), destination);
+    log.log(Level.INFO, "Read a record of {0} bytes", bytesRead);
     return bytesRead;
   }
 
