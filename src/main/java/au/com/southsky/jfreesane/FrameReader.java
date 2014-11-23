@@ -1,15 +1,16 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.io.ByteStreams;
-import com.google.common.primitives.UnsignedInteger;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.google.common.base.MoreObjects;
+import com.google.common.io.ByteStreams;
+import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Represents a reader of {@link Frame frames}.
@@ -73,7 +74,7 @@ class FrameReader {
     return new Frame(parameters, outputArray);
   }
 
-  private long readRecord(ByteArrayOutputStream destination) throws IOException, SaneException {
+  private long readRecord(OutputStream destination) throws IOException, SaneException {
     DataInputStream inputStream = new DataInputStream(underlyingStream);
     int length = inputStream.readInt();
 
