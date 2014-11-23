@@ -16,7 +16,7 @@ public class ScanListenerAdapter implements ScanListener {
   }
 
   @Override
-  public void readRecord(SaneDevice device, int totalBytesRead, int imageSize) {
+  public void recordRead(SaneDevice device, int totalBytesRead, int imageSize) {
   }
 
   @Override

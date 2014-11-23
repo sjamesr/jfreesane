@@ -10,6 +10,13 @@ package au.com.southsky.jfreesane;
  * extend {@link ScannerListenerAdapter} instead of implementing this interface.
  *
  * <p>
+ * If you are using {@code ScanListener} to update a user interface, the
+ * frequency of notifications (specifically from {@link #recordRead}) may be too
+ * frequent. In this case, you can wrap your listener using one of the methods
+ * in {@link RateLimitingScanListeners} to obtain a listener that drops
+ * notifications occurring too frequently.
+ *
+ * <p>
  * Notifications will tend to occur as follows:
  *
  * <ol>
@@ -17,7 +24,7 @@ package au.com.southsky.jfreesane;
  * <li>{@code frameAcquisitionStarted} -- once for each frame. Typically there
  * is only one frame per page, but in older three-pass color scanners (where one
  * scan pass is made per color), there will be three frames per page</li>
- * <li>{@code readRecord} -- once for each record, one or more records make up a
+ * <li>{@code recordRead} -- once for each record, one or more records make up a
  * frame</li>
  * <li>{@code scanningFinished} -- once a page has been scanned</li>
  * </ol>
@@ -71,7 +78,7 @@ public interface ScanListener {
    *          in advance, this will be set to -1 (e.g. the scanner is a
    *          hand-held scanner or uses page height detection)
    */
-  void readRecord(SaneDevice device, int totalBytesRead, int imageSizeBytes);
+  void recordRead(SaneDevice device, int totalBytesRead, int imageSizeBytes);
 
   /**
    * Called once the current page is done.

@@ -53,7 +53,7 @@ class FrameReader {
     int totalBytesRead = 0;
     while ((bytesRead = readRecord(bigArray)) >= 0) {
       totalBytesRead += bytesRead;
-      listener.readRecord(device, totalBytesRead, reportedImageSize);
+      listener.recordRead(device, totalBytesRead, reportedImageSize);
     }
 
     if (imageSize > 0 && bigArray.size() < imageSize) {
