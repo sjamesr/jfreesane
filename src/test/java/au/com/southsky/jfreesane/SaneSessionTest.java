@@ -593,6 +593,15 @@ public class SaneSessionTest {
   }
 
   @Test
+  public void highResolutionScan() throws Exception {
+    SaneDevice device = session.getDevice("pixma");
+    device.open();
+    device.getOption("resolution").setIntegerValue(1200);
+    device.getOption("mode").setStringValue("Color");
+    device.acquireImage();
+  }
+
+  @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
     File passwordFile = File.createTempFile("sane", ".pass");
     try {
