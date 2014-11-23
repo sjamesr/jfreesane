@@ -1,6 +1,9 @@
 package au.com.southsky.jfreesane;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.Maps;
 
 /**
  * A static factory of listeners that limit the rate at which they send
@@ -41,12 +44,14 @@ public class RateLimitingScanListeners {
   /**
    * Returns {@link ScanListener} that calls the given listener
    * {@link ScanListener#recordRead} method no more frequently than the given
-   * time. Record read events that occur more frequently are simply discarded.
+   * time any one device. Record read events from one device that occur more
+   * frequently are simply discarded.
    */
   public static ScanListener noMoreFrequentlyThan(final ScanListener listener, final long time,
       final TimeUnit timeUnit) {
     return new ScanListener() {
-      private long lastSentTime = 0;
+      // Most users will only scan from one device at a time.
+      private Map<SaneDevice, Long> lastSentTime = Maps.newHashMapWithExpectedSize(1);
 
       @Override
       public void scanningStarted(SaneDevice device) {
@@ -62,8 +67,12 @@ public class RateLimitingScanListeners {
       @Override
       public void recordRead(SaneDevice device, int totalBytesRead, int imageSizeBytes) {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastSentTime > timeUnit.toMillis(time)) {
-          lastSentTime = currentTime;
+        if (!lastSentTime.containsKey(device)) {
+          lastSentTime.put(device, 0L);
+        }
+
+        if (currentTime - lastSentTime.get(device) > timeUnit.toMillis(time)) {
+          lastSentTime.put(device, currentTime);
           listener.recordRead(device, totalBytesRead, imageSizeBytes);
         }
       }
