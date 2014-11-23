@@ -10,7 +10,7 @@ public class SaneParameters {
   private int lineCount;
   private final int depthPerPixel;
 
-  public SaneParameters(
+  SaneParameters(
       int frame, boolean lastFrame, int bytesPerLine, int pixelsPerLine, int lines, int depth) {
     this.frameType = SaneEnums.valueOf(FrameType.class, frame);
     this.lastFrame = lastFrame;
