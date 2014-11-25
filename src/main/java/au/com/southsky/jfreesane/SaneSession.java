@@ -38,6 +38,10 @@ public class SaneSession implements Closeable {
     return passwordProvider;
   }
 
+  /**
+   * Sets the {@link SanePasswordProvider password provider} to use if the SANE
+   * daemon asks for credentials when accessing a resource.
+   */
   public void setPasswordProvider(SanePasswordProvider passwordProvider) {
     this.passwordProvider = passwordProvider;
   }
