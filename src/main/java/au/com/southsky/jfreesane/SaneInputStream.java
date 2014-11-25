@@ -34,6 +34,16 @@ public class SaneInputStream extends InputStream {
     return wrappedStream.read();
   }
 
+  @Override
+  public int read(byte[] b) throws IOException {
+    return wrappedStream.read(b);
+  }
+
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    return wrappedStream.read(b, off, len);
+  }
+
   public List<SaneDevice> readDeviceList() throws IOException, SaneException {
     // Status first
     SaneStatus status = readStatus();
