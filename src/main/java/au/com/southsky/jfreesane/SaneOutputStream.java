@@ -34,6 +34,16 @@ public class SaneOutputStream extends OutputStream {
     wrappedStream.write(b);
   }
 
+  @Override
+  public void write(byte[] b) throws IOException {
+    wrappedStream.write(b);
+  }
+
+  @Override
+  public void write(byte[] b, int off, int len) throws IOException {
+    wrappedStream.write(b, off, len);
+  }
+
   /**
    * Writes the given string to the underlying stream in SANE string format. The format is:
    * 
