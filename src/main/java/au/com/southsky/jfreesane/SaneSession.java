@@ -5,8 +5,13 @@ import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Represents a conversation taking place with a SANE daemon.
@@ -47,17 +52,42 @@ public class SaneSession implements Closeable {
   }
 
   /**
-   * Establishes a connection to the SANE daemon running on the given host on the default SANE port.
+   * Establishes a connection to the SANE daemon running on the given host on the default SANE port
+   * with no connection timeout.
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress) throws IOException {
     return withRemoteSane(saneAddress, DEFAULT_PORT);
   }
 
   /**
-   * Establishes a connection to the SANE daemon running on the given host at the given port.
+   * Establishes a connection to the SANE daemon running on the given host on the default SANE port
+   * with the given connection timeout.
+   */
+  public static SaneSession withRemoteSane(InetAddress saneAddress, long timeout, TimeUnit timeUnit)
+      throws IOException {
+    return withRemoteSane(saneAddress, DEFAULT_PORT, timeout, timeUnit);
+  }
+
+  /**
+   * Establishes a connection to the SANE daemon running on the given host on the given port with no
+   * connection timeout.
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
-    Socket socket = new Socket(saneAddress, port);
+    return withRemoteSane(saneAddress, port, 0, TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * Establishes a connection to the SANE daemon running on the given host on the given port. If the
+   * connection cannot be established within the given timeout, {@link SocketTimeoutException} is
+   * thrown.
+   */
+  public static SaneSession withRemoteSane(InetAddress saneAddress, int port, long timeout,
+      TimeUnit timeUnit) throws IOException {
+    long millis = timeUnit.toMillis(timeout);
+    Preconditions.checkArgument(millis >= 0 && millis <= Integer.MAX_VALUE,
+        "Timeout must be between 0 and Integer.MAX_VALUE milliseconds");
+    Socket socket = new Socket();
+    socket.connect(new InetSocketAddress(saneAddress, port), (int) millis);
     SaneSession session = new SaneSession(socket);
     session.initSane();
     return session;
