@@ -7,7 +7,7 @@ package au.com.southsky.jfreesane;
  *
  * <p>
  * If you are only interested in a subset of these events, you may want to
- * extend {@link ScannerListenerAdapter} instead of implementing this interface.
+ * extend {@link ScanListenerAdapter} instead of implementing this interface.
  *
  * <p>
  * If you are using {@code ScanListener} to update a user interface, the
