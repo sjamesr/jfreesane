@@ -171,8 +171,7 @@ public class SaneOption {
 
     outputStream.write(device.getHandle().getHandle());
 
-    // first word of response in number of option entries
-
+    // first word of response is number of option entries
     int length = inputStream.readWord().integerValue() - 1;
 
     if (length <= 0) {
