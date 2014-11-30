@@ -350,9 +350,10 @@ ScanListener progressBarUpdater = new ScanListenerAdapter() {
   }
 };
 
-// JFreeSane can generate recordRead events at a high rate. We don't really need more than a few
-// of these per second, otherwise we spend too much time updating the UI and not enough time
-// scanning. Use the RateLimitingScanListeners class to get a wrapper around our existing
+// JFreeSane can generate recordRead events at a high rate. We don't really
+// need more than a few of these per second, otherwise we spend too much
+// time updating the UI and not enough time scanning. Use the
+// RateLimitingScanListeners class to get a wrapper around our existing
 // listener that delivers messages at an acceptable rate (10 per second max).
 ScanListener rateLimitedListener = RateLimitedScanListeners.noMoreFrequentlyThan(
     progressBarUpdater, 100, TimeUnit.MILLISECONDS);
