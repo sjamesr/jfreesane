@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.google.common.base.Preconditions;
 
@@ -86,6 +88,13 @@ public class SaneSession implements Closeable {
     long millis = timeUnit.toMillis(timeout);
     Preconditions.checkArgument(millis >= 0 && millis <= Integer.MAX_VALUE,
         "Timeout must be between 0 and Integer.MAX_VALUE milliseconds");
+    // If the user specifies a non-zero timeout that rounds to 0 milliseconds,
+    // set the timeout to 1 millisecond instead.
+    if (timeout > 0 && millis == 0) {
+      Logger.getLogger(SaneSession.class.getName()).log(Level.WARNING,
+          "Specified timeout of {0} {1} rounds to 0ms and was clamped to 1ms",
+          new Object[] { timeout, timeUnit });
+    }
     Socket socket = new Socket();
     socket.connect(new InetSocketAddress(saneAddress, port), (int) millis);
     SaneSession session = new SaneSession(socket);
