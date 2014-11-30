@@ -325,13 +325,17 @@ progressBar.setStringPainted(true);
 progressbar.setString("Starting scan...");
 
 ScanListener progressBarUpdater = new ScanListenerAdapter() {
-  @Override public void recordRead(SaneDevice device, int totalBytesRead, int imageSize) {
+  @Override public void recordRead(
+      SaneDevice device,
+      final int totalBytesRead,
+      final int imageSize) {
     final double fraction = 1.0 * totalBytesRead / imageSize;
     SwingUtilities.invokeLater(new Runnable() {
       @Override public void run() {
         progressBar.setValue((int) (fraction * 100));
         progressBar.setString(
-            String.format("Read %d of %d bytes (%.2f%%)", totalBytesRead, imageSize, fraction));
+            String.format("Read %d of %d bytes (%.2f%%)",
+              totalBytesRead, imageSize, fraction));
       }
     });
   }
@@ -350,11 +354,10 @@ ScanListener progressBarUpdater = new ScanListenerAdapter() {
 // of these per second, otherwise we spend too much time updating the UI and not enough time
 // scanning. Use the RateLimitingScanListeners class to get a wrapper around our existing
 // listener that delivers messages at an acceptable rate (10 per second max).
-ScanListener rateLimitedListener
-    = RateLimitedScanListeners.noMoreFrequentlyThan(progressBarUpdater, 100, TimeUnit.MILLISECONDS);
-    
+ScanListener rateLimitedListener = RateLimitedScanListeners.noMoreFrequentlyThan(
+    progressBarUpdater, 100, TimeUnit.MILLISECONDS);
+  
 BufferedImage image = device.acquireImage(rateLimitedListener);
-
 ```
 
 In some cases, JFreeSane cannot know the eventual size of the image. In this case, the `imageSize`
