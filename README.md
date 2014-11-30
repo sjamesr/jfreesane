@@ -17,6 +17,7 @@ page](http://www.sane-project.org/) for more information about SANE itself.
         - [Option getters and setters](#option-getters-and-setters)
     - [Reading from an automatic document feeder](#reading-from-an-automatic-document-feeder)
     - [Authentication](#authentication)
+    - [Listening to events](#listening-to-events)
 
 # Introduction
 
@@ -310,3 +311,61 @@ Thanks to generous contributions from Paul and Matthias, JFreeSane now supports 
 By default, JFreeSane will use SANE-style authentication as documented in
 [the `scanimage(1)` man page](http://www.sane-project.org/man/scanimage.1.html). If you want to implement
 an alternative method of supplying usernames and passwords, see the javadoc for `SaneSession.setPasswordProvider`.
+
+## Listening to events
+
+As of JFreeSane 0.93, you can now receive feedback when various scan events occur. For example, you can use
+a `ScanListener` to provide scan progress information to the user. In the following example, a Swing progress bar
+is updated as the scan proceeds.
+
+```java
+SaneDevice device = ...;
+final JProgressBar progressBar = new JProgressBar();
+progressBar.setStringPainted(true);
+progressbar.setString("Starting scan...");
+
+ScanListener progressBarUpdater = new ScanListenerAdapter() {
+  @Override public void recordRead(SaneDevice device, int totalBytesRead, int imageSize) {
+    final double fraction = 1.0 * totalBytesRead / imageSize;
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override public void run() {
+        progressBar.setValue((int) (fraction * 100));
+        progressBar.setString(
+            String.format("Read %d of %d bytes (%.2f%%)", totalBytesRead, imageSize, fraction));
+      }
+    });
+  }
+
+  @Override public void scanningFinished(SaneDevice device) {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override public void run() {
+        progressBar.setValue(100);
+        progressBar.setString("Scanning completed!");
+      }
+    });
+  }
+};
+
+// JFreeSane can generate recordRead events at a high rate. We don't really need more than a few
+// of these per second, otherwise we spend too much time updating the UI and not enough time
+// scanning. Use the RateLimitingScanListeners class to get a wrapper around our existing
+// listener that delivers messages at an acceptable rate (10 per second max).
+ScanListener rateLimitedListener
+    = RateLimitedScanListeners.noMoreFrequentlyThan(progressBarUpdater, 100, TimeUnit.MILLISECONDS);
+    
+BufferedImage image = device.acquireImage(rateLimitedListener);
+
+```
+
+In some cases, JFreeSane cannot know the eventual size of the image. In this case, the `imageSize`
+parameter of `recordRead` will be set to `-1`. Examples of this situation are:
+
+* when using a handheld scanner
+* when using a scanning driver that supports page height detection (that is, scanning stops only
+when the scanner detects the end of the page)
+
+Also, if you are using an old three-pass scanner (where one pass is made for each of three color
+bands), you will want to listen to the `frameAcquisitionStarted` message. JFreeSane will try to
+guess how many frames will eventually be sent and which frame it is currently acquiring.
+
+See the javadoc for `ScanListener` for more details.
