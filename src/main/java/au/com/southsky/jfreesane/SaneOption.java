@@ -13,6 +13,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
 
 /**
  * This class represents a SANE device option. An option may be active or inactive (see
@@ -727,7 +728,7 @@ public class SaneOption {
       } else {
         value = new byte[valueSize];
 
-        if (stream.read(value) != valueSize) {
+        if (ByteStreams.read(stream, value, 0, valueSize) != valueSize) {
           throw new IOException("truncated read while getting value");
         }
       }

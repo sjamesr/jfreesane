@@ -11,6 +11,7 @@ import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
 
 /**
  * Wraps an {@link InputStream} to provide some methods for deserializing SANE-related types.
@@ -118,7 +119,7 @@ public class SaneInputStream extends InputStream {
 
     // now read all the bytes
     byte[] input = new byte[length];
-    if (read(input) != input.length) {
+    if (ByteStreams.read(this, input, 0, length) != length) {
       throw new IllegalStateException("truncated input while reading string");
     }
 
