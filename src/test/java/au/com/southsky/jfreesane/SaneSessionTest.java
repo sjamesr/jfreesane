@@ -183,7 +183,7 @@ public class SaneSessionTest {
   public void adfAcquisitionSucceeds() throws Exception {
     SaneDevice device = session.getDevice("test");
     device.open();
-    assertThat(device.getOption("source").getStringConstraints()).has().item(
+    assertThat(device.getOption("source").getStringConstraints()).contains(
         "Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
@@ -642,7 +642,7 @@ public class SaneSessionTest {
     device.getOption("mode").setStringValue("Color");
     device.getOption("three-pass").setBooleanValue(true);
     device.acquireImage(listener);
-    assertThat(notifiedDevice.get()).is(device);
+    assertThat(notifiedDevice.get()).isSameAs(device);
     assertThat(frameCount.get()).isEqualTo(3);
   }
 
