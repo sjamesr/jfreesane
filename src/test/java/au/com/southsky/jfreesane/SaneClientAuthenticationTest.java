@@ -23,7 +23,7 @@ public class SaneClientAuthenticationTest {
 
   @Test
   public void testSaneClientAuthenticationWithMissingFileDoesNotFail() {
-    String filepath = "NONE_EXISTENT_PATH_" + UUID.randomUUID().toString();
+    String filepath = "NON_EXISTENT_PATH_" + UUID.randomUUID().toString();
     SaneClientAuthentication sca = new SaneClientAuthentication(filepath);
     Assert.assertNotNull(sca);
   }
