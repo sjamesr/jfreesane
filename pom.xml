@@ -5,7 +5,7 @@
   <packaging>jar</packaging>
   <version>0.95-SNAPSHOT</version>
   <name>jfreesane</name>
-  <url>http://jfreesane.googlecode.com</url>
+  <url>http://github.com/sjamesr/jfreesane</url>
   <description>A Java client for the SANE daemon</description>
   <licenses>
     <license>
