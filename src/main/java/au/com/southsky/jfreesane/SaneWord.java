@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.io.ByteStreams;
 
 /**
  * Represents a SANE word type. JFreeSane chooses to represent the SANE word type as an array of
@@ -68,7 +69,7 @@ public final class SaneWord {
    */
   public static SaneWord fromStream(InputStream input) throws IOException {
     byte[] newValue = new byte[SIZE_IN_BYTES];
-    if (input.read(newValue) != newValue.length) {
+    if (ByteStreams.read(input, newValue, 0, newValue.length) != newValue.length) {
       throw new IOException("input stream was truncated while reading a word");
     }
 
