@@ -32,6 +32,7 @@ public class SaneSession implements Closeable {
 
   private SaneSession(Socket socket) throws IOException {
     this.socket = socket;
+    this.socket.setTcpNoDelay(true);
     this.outputStream = new SaneOutputStream(socket.getOutputStream());
     this.inputStream = new SaneInputStream(this, socket.getInputStream());
   }
