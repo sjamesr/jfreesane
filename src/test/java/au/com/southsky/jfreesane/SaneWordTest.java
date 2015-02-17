@@ -1,6 +1,7 @@
 package au.com.southsky.jfreesane;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,6 +18,11 @@ import com.google.common.truth.Truth;
  * @author James Ring (sjr@jdns.org)
  */
 public class SaneWordTest {
+  @Test
+  public void testFailure() {
+    fail("This should fail travis-ci");
+  }
+
   @Test
   public void testFixedPrecisionValue() {
     assertEquals(216.069, SaneWord.forFixedPrecision(216.069).fixedPrecisionValue(), 0.0001);
