@@ -1,6 +1,7 @@
 JFreeSane: A SANE client for Java
 =================================
 [![Build Status](https://travis-ci.org/sjamesr/jfreesane.svg?branch=master)](https://travis-ci.org/sjamesr/jfreesane)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane)
 
 JFreeSane is a pure-Java implementation of a SANE client. See [the SANE project
 page](http://www.sane-project.org/) for more information about SANE itself.
