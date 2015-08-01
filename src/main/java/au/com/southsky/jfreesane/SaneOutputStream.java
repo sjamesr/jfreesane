@@ -52,6 +52,7 @@ public class SaneOutputStream extends OutputStream {
    * null terminator</li>
    * <li>if the string is non-empty, the bytes of the string (see {@link String#toCharArray})</li>
    * <li>unconditionally, a null terminator</li>
+   * </ul>
    * 
    * @param string
    * @throws IOException
@@ -68,6 +69,7 @@ public class SaneOutputStream extends OutputStream {
    * null terminator</li>
    * <li>if the char[] is non-empty, the bytes of the char[]</li>
    * <li>unconditionally, a null terminator</li>
+   * </ul>
    * 
    * @param charArray character array to be written to the stream
    * @throws IOException
