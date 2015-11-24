@@ -1,0 +1,106 @@
+plugins {
+    id 'checkstyle'
+    id 'java'
+    id 'wrapper'
+    id 'com.jfrog.bintray' version '1.4'
+    id 'maven-publish'
+}
+
+def releaseVersion = '0.95'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.google.guava:guava:18.0'
+    testCompile 'junit:junit:4.8.2'
+    testCompile 'com.google.truth:truth:0.24'
+}
+
+wrapper {
+    gradleVersion = '2.8'
+}
+
+checkstyle {
+    configFile = file('checkstyle_config.xml')
+    ignoreFailures = true
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    baseName 'javadoc'
+
+    from javadoc.destinationDir
+}
+
+task sourceJar(type: Jar) {
+    baseName 'sources'
+
+    from sourceSets.main.allJava
+}
+
+def appendMavenCentralMetadata(Node node) {
+    node.appendNode('name', 'JFreeSane')
+    node.appendNode('description', 'A Java client for the SANE daemon')
+    node.appendNode('url', 'http://github.com/sjamesr/jfreesane')
+
+    def license = node.appendNode('licenses').appendNode('license')
+    license.appendNode('name', 'The Apache Software License, Version 2.0')
+    license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
+    license.appendNode('distribution', 'repo')
+
+    node.appendNode('scm').appendNode('url', 'https://github.com/sjamesr/jfreesane.git')
+
+    def developerInfo = node.appendNode('developers').appendNode('developer')
+    developerInfo.appendNode('id', 'dev')
+    developerInfo.appendNode('name', 'The JFreeSane Contributors')
+    developerInfo.appendNode('email', 'jfreesane-discuss@googlegroups.com')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            artifact sourceJar {
+                classifier 'sources'
+            }
+
+            artifact javadocJar {
+                classifier 'javadoc'
+            }
+
+            groupId 'com.googlecode'
+            artifactId 'jfreesane'
+            version releaseVersion
+
+            pom.withXml {
+                appendMavenCentralMetadata(asNode())
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.properties.bintrayUsername
+    key = project.properties.bintrayApiKey
+
+    pkg {
+        repo = 'maven'
+        name = 'jfreesane'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/sjamesr/jfreesane.git'
+
+        version {
+            name = releaseVersion
+            vcsTag = "jfreesane-${releaseVersion}"
+
+            gpg {
+                sign = true
+            }
+        }
+
+    }
+
+    publications = ['mavenJava']
+}
