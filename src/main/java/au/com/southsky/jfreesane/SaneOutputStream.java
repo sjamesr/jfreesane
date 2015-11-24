@@ -9,7 +9,7 @@ import java.io.OutputStream;
  * 
  * @author James Ring (sjr@jdns.org)
  */
-public class SaneOutputStream extends OutputStream {
+class SaneOutputStream extends OutputStream {
   private final OutputStream wrappedStream;
 
   /**

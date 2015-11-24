@@ -14,7 +14,7 @@ import com.google.common.collect.Sets;
  *
  * @author James Ring (sjr@jdns.org)
  */
-public final class SaneEnums {
+final class SaneEnums {
   private static Map<Class<?>, Map<Integer, ?>> cachedTypeMaps = Maps.newHashMap();
 
   // no public constructor
