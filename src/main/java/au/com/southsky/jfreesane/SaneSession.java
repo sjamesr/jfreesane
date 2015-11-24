@@ -130,13 +130,18 @@ public class SaneSession implements Closeable {
     return inputStream.readDeviceList();
   }
 
+  /**
+   * Closes the connection to the SANE server. This is done immediately by closing the socket.
+   *
+   * @throws IOException if an error occurred while closing the connection
+   */
   @Override
   public void close() throws IOException {
     try {
       outputStream.write(SaneRpcCode.SANE_NET_EXIT);
       outputStream.close();
     } finally {
-          socket.close();
+      socket.close();
     }
   }
 
@@ -330,11 +335,11 @@ public class SaneSession implements Closeable {
     }
   }
 
-  public SaneOutputStream getOutputStream() {
+  SaneOutputStream getOutputStream() {
     return outputStream;
   }
 
-  public SaneInputStream getInputStream() {
+  SaneInputStream getInputStream() {
     return inputStream;
   }
 }
