@@ -1,16 +1,16 @@
 package au.com.southsky.jfreesane;
 
-import java.awt.image.BufferedImage;
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
+import java.awt.image.BufferedImage;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.
@@ -120,7 +120,7 @@ public class SaneDevice implements Closeable {
    * Cancel the current operation of a remote SANE device.
    *
    * @throws IOException if an error occurs talking to the SANE backend
-   * @throws IllegalStateException if the device is
+   * @throws IllegalStateException if the device is not open
    */
   public void cancel() throws IOException {
     Preconditions.checkState(isOpen(), "device is not open");
@@ -153,7 +153,7 @@ public class SaneDevice implements Closeable {
    * Returns the handle by which this device is known to the SANE backend, or {@code null} if
    * if the device is not open (see {@link #isOpen}).
    */
-  public SaneDeviceHandle getHandle() {
+  SaneDeviceHandle getHandle() {
     return handle;
   }
 
@@ -200,7 +200,7 @@ public class SaneDevice implements Closeable {
     return optionTitleMap.get(title);
   }
 
-  public SaneSession getSession() {
+  SaneSession getSession() {
     return session;
   }
 

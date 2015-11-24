@@ -113,7 +113,7 @@ public class SaneOption {
    */
   public enum OptionWriteInfo implements SaneEnum {
     /**
-     * The value passed to SANE was accepted, but the SANE daemon has chosen a slightly different
+     * The value passed to SANE was accepted, but the SANE daemon has chosen a different
      * value than the one specified.
      */
     INEXACT(1),

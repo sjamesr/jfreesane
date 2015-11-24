@@ -6,7 +6,7 @@ package au.com.southsky.jfreesane;
  *
  * @author James Ring (sjr@jdns.org)
  */
-public interface SaneEnum {
+interface SaneEnum {
 
   /**
    * Returns the integer used by the SANE network protocol to represent an instance of this enum on

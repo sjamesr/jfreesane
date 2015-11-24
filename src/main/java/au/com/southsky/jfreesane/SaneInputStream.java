@@ -18,7 +18,7 @@ import com.google.common.io.ByteStreams;
  *
  * @author James Ring (sjr@jdns.org)
  */
-public class SaneInputStream extends InputStream {
+class SaneInputStream extends InputStream {
   private static final Logger logger = Logger.getLogger(SaneInputStream.class.getName());
 
   private final SaneSession saneSession;

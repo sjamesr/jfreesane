@@ -2,7 +2,7 @@ package au.com.southsky.jfreesane;
 
 import com.google.common.base.MoreObjects;
 
-public class SaneParameters {
+class SaneParameters {
   private final FrameType frameType;
   private final boolean lastFrame;
   private final int bytesPerLine;
