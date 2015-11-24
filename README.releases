@@ -8,23 +8,18 @@ Author: James Ring (sjr@jdns.org)
 Making the release
 ##################
 
-For general instructions about how to push releases to Sonatype so they can be
-sync'd to Maven central repositories:
+$ ./gradlew clean
 
-https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide
+Change build.gradle to have the appropriate version in releaseVersion.
 
-Distilled version:
+$ ./gradlew bintrayUpload
 
-$ mvn release:clean
+* go to http://bintray.com/
+* select the latest version, then click "Publish". JFreeSane is now available
+  on JCenter
+* click on "Maven Central". Enter your Sonatype ORSSH password. Ensure the
+  "Close and release" checkbox is selected and click "Sync". JFreeSane will then
+  go out to Maven Central shortly (usually within 10 minutes).
 
-$ mvn release:prepare
-
-$ mvn release:perform
-
-* go to https://oss.sonatype.org/ and log in
-* click "Staging Repositories"
-* select the checkbox next to the newly created staging repository
-* click "Close", optionally leave a comment
-* select the checkbox again
-* click "Release", optionally leave a comment
-* wait patiently while your JARs go out to the world
+$ git tag jfreesane-<releaseVersion> # e.g. git tag jfreesane-0.96
+$ git push --tags
