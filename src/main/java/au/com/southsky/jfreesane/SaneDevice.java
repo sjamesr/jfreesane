@@ -81,32 +81,26 @@ public class SaneDevice implements Closeable {
    * Acquires a single image from the Sane daemon.
    *
    * @return a {@link BufferedImage} representing the image obtained from Sane
-   * @throws IOException
-   *           if an error occurred while talking to the backend
-   * @throws SaneException
-   *           if an application-level error was returned by the Sane daemon
+   * @throws IOException if an error occurred while talking to the backend
+   * @throws SaneException if an application-level error was returned by the Sane daemon
    */
   public BufferedImage acquireImage() throws IOException, SaneException {
     return acquireImage(null);
   }
 
   /**
-   * Acquires a single image from the Sane daemon. The given
-   * {@link ScanListener} will be notified about updates during the scan.
+   * Acquires a single image from the Sane daemon. The given {@link ScanListener} will be notified
+   * about updates during the scan.
    *
    * <p>
-   * The scanning thread will be used to make calls to {@code listener}.
-   * Scanning will not proceed until control returns to JFreeSane, so your
-   * implementation should not monopolize this thread for longer than necessary.
+   * The scanning thread will be used to make calls to {@code listener}. Scanning will not proceed
+   * until control returns to JFreeSane, so your implementation should not monopolize this thread
+   * for longer than necessary.
    *
-   * @param listener
-   *          if not {@code null}, this object will receive notifications about
-   *          scan progress
+   * @param listener if not {@code null}, this object will receive notifications about scan progress
    * @return a {@link BufferedImage} representing the image obtained from Sane
-   * @throws IOException
-   *           if an error occurred while talking to the backend
-   * @throws SaneException
-   *           if an application-level error was returned by the Sane daemon
+   * @throws IOException if an error occurred while talking to the backend
+   * @throws SaneException if an application-level error was returned by the Sane daemon
    */
   public BufferedImage acquireImage(ScanListener listener) throws IOException, SaneException {
     Preconditions.checkState(isOpen(), "device is not open");
@@ -145,13 +139,20 @@ public class SaneDevice implements Closeable {
 
   @Override
   public String toString() {
-    return "SaneDevice [name=" + name + ", vendor=" + vendor + ", model=" + model + ", type="
-        + type + "]";
+    return "SaneDevice [name="
+        + name
+        + ", vendor="
+        + vendor
+        + ", model="
+        + model
+        + ", type="
+        + type
+        + "]";
   }
 
   /**
-   * Returns the handle by which this device is known to the SANE backend, or {@code null} if
-   * if the device is not open (see {@link #isOpen}).
+   * Returns the handle by which this device is known to the SANE backend, or {@code null} if if the
+   * device is not open (see {@link #isOpen}).
    */
   SaneDeviceHandle getHandle() {
     return handle;
@@ -166,13 +167,15 @@ public class SaneDevice implements Closeable {
   public List<SaneOption> listOptions() throws IOException {
     if (optionTitleMap == null) {
       groups.clear();
-      optionTitleMap = Maps.uniqueIndex(SaneOption.optionsFor(this),
-          new Function<SaneOption, String>() {
-            @Override
-            public String apply(SaneOption input) {
-              return input.getName();
-            }
-          });
+      optionTitleMap =
+          Maps.uniqueIndex(
+              SaneOption.optionsFor(this),
+              new Function<SaneOption, String>() {
+                @Override
+                public String apply(SaneOption input) {
+                  return input.getName();
+                }
+              });
     }
 
     // Maps.uniqueIndex guarantees the order of optionTitleMap.values()
@@ -192,8 +195,8 @@ public class SaneDevice implements Closeable {
   }
 
   /**
-   * Returns the option with the given name for this device. If the option does
-   * not exist, {@code null} is returned. Name matching is case-sensitive.
+   * Returns the option with the given name for this device. If the option does not exist,
+   * {@code null} is returned. Name matching is case-sensitive.
    */
   public SaneOption getOption(String title) throws IOException {
     listOptions();

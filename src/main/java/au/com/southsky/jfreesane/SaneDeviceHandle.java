@@ -19,13 +19,11 @@ class SaneDeviceHandle {
    * Constructs a new {@code SaneDeviceHandle}. This will typically be done in response to a call to
    * {@link SaneDevice#open}.
    *
-   * @param status
-   *          the status code returned by the SANE daemon in response to the {@code open} request
-   * @param handle
-   *          the handle assigned to the device by the SANE daemon
-   * @param resource
-   *          the name of the resource for authentication purposes, or {@code null} if authorization
-   *          is not required to use the resource
+   * @param status the status code returned by the SANE daemon in response to the {@code open}
+   * request
+   * @param handle the handle assigned to the device by the SANE daemon
+   * @param resource the name of the resource for authentication purposes, or {@code null} if
+   * authorization is not required to use the resource
    */
   SaneDeviceHandle(SaneWord status, SaneWord handle, String resource) {
     this.status = status;

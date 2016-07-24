@@ -16,10 +16,10 @@ import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
 
 /**
- * Represents the authentication configuration used by SANE clients. The SANE
- * utilities like {@code scanimage} will read the {@code ~/.sane/pass} directory
- * (if it exists), this class provides an implementation of that behavior.
- * 
+ * Represents the authentication configuration used by SANE clients. The SANE utilities like
+ * {@code scanimage} will read the {@code ~/.sane/pass} directory (if it exists), this class
+ * provides an implementation of that behavior.
+ *
  * <p>
  * Threadsafe.
  */
@@ -28,8 +28,8 @@ public class SaneClientAuthentication extends SanePasswordProvider {
 
   public static final String MARKER_MD5 = "$MD5$";
 
-  private static final String DEFAULT_CONFIGURATION_PATH = Joiner.on(File.separator).join(
-      System.getProperty("user.home"), ".sane", "pass");
+  private static final String DEFAULT_CONFIGURATION_PATH =
+      Joiner.on(File.separator).join(System.getProperty("user.home"), ".sane", "pass");
 
   private final Table<String, String, String> credentials = HashBasedTable.create();
   private final CharSource configurationSource;
@@ -40,17 +40,18 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   }
 
   public SaneClientAuthentication(final String path) {
-    this(new CharSource() {
-      @Override
-      public Reader openStream() throws IOException {
-        return new InputStreamReader(new FileInputStream(path), Charsets.US_ASCII);
-      }
-    });
+    this(
+        new CharSource() {
+          @Override
+          public Reader openStream() throws IOException {
+            return new InputStreamReader(new FileInputStream(path), Charsets.US_ASCII);
+          }
+        });
   }
 
   /**
-   * Returns a new {@code SaneClientAuthentication} whose configuration is
-   * represented by the characters supplied by the given {@link CharSource}.
+   * Returns a new {@code SaneClientAuthentication} whose configuration is represented by the
+   * characters supplied by the given {@link CharSource}.
    */
   public SaneClientAuthentication(CharSource configurationSource) {
     this.configurationSource = configurationSource;
@@ -63,40 +64,44 @@ public class SaneClientAuthentication extends SanePasswordProvider {
 
     initialized = true;
     try {
-      CharStreams.readLines(configurationSource.openStream(), new LineProcessor<Void>() {
-        private int lineNumber = 0;
+      CharStreams.readLines(
+          configurationSource.openStream(),
+          new LineProcessor<Void>() {
+            private int lineNumber = 0;
 
-        @Override
-        public boolean processLine(String line) throws IOException {
-          lineNumber++;
-          ClientCredential credential = ClientCredential.fromAuthString(line);
-          if (credential == null) {
-            logger.log(Level.WARNING, "ignoring invalid configuration format (line {0}): {1}",
-                new Object[] { lineNumber, line });
-          } else {
-            credentials.put(credential.backend, credential.username, credential.password);
-            if (credentials.row(credential.backend).size() > 1) {
-              logger.log(Level.WARNING,
-                  "ignoring line {0}, we already have a configuration for resource [{1}]",
-                  new Object[] { lineNumber, credential.backend });
+            @Override
+            public boolean processLine(String line) throws IOException {
+              lineNumber++;
+              ClientCredential credential = ClientCredential.fromAuthString(line);
+              if (credential == null) {
+                logger.log(
+                    Level.WARNING,
+                    "ignoring invalid configuration format (line {0}): {1}",
+                    new Object[] {lineNumber, line});
+              } else {
+                credentials.put(credential.backend, credential.username, credential.password);
+                if (credentials.row(credential.backend).size() > 1) {
+                  logger.log(
+                      Level.WARNING,
+                      "ignoring line {0}, we already have a configuration for resource [{1}]",
+                      new Object[] {lineNumber, credential.backend});
+                }
+              }
+              return true;
             }
-          }
-          return true;
-        }
 
-        @Override
-        public Void getResult() {
-          return null;
-        }
-      });
+            @Override
+            public Void getResult() {
+              return null;
+            }
+          });
     } catch (IOException e) {
       logger.log(Level.WARNING, "could not read auth configuration due to IOException", e);
     }
   }
 
   /**
-   * Returns {@code true} if the configuration contains an entry for the given
-   * resource.
+   * Returns {@code true} if the configuration contains an entry for the given resource.
    */
   @Override
   public boolean canAuthenticate(String resource) {
@@ -132,7 +137,7 @@ public class SaneClientAuthentication extends SanePasswordProvider {
 
   /**
    * Class to hold Sane client credentials organised by backend.
-   * 
+   *
    * @author paul
    */
   public static class ClientCredential {

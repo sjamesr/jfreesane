@@ -24,9 +24,12 @@ class FrameReader {
   private final boolean bigEndian;
   private final ScanListener listener;
 
-
-  public FrameReader(SaneDevice device, SaneParameters parameters, InputStream underlyingStream,
-      boolean bigEndian, ScanListener listener) {
+  public FrameReader(
+      SaneDevice device,
+      SaneParameters parameters,
+      InputStream underlyingStream,
+      boolean bigEndian,
+      ScanListener listener) {
     this.device = device;
     this.parameters = parameters;
     this.underlyingStream = underlyingStream;
@@ -58,8 +61,10 @@ class FrameReader {
 
     if (imageSize > 0 && bigArray.size() < imageSize) {
       int difference = imageSize - bigArray.size();
-      log.log(Level.WARNING, "truncated read (got {0}, expected {1} bytes)", new Object[] {
-          bigArray.size(), imageSize });
+      log.log(
+          Level.WARNING,
+          "truncated read (got {0}, expected {1} bytes)",
+          new Object[] {bigArray.size(), imageSize});
       bigArray.write(new byte[difference]);
       log.log(Level.WARNING, "padded image with {0} null bytes", difference);
     }
@@ -122,7 +127,9 @@ class FrameReader {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(FrameReader.class).add("isBigEndian", bigEndian)
-        .add("parameters", parameters).toString();
+    return MoreObjects.toStringHelper(FrameReader.class)
+        .add("isBigEndian", bigEndian)
+        .add("parameters", parameters)
+        .toString();
   }
 }

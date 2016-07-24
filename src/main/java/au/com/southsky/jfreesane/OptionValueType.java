@@ -27,7 +27,9 @@ public enum OptionValueType implements SaneEnum {
    * The option's value is a string and can be written with {@link SaneOption#setStringValue} and
    * read by {@link SaneOption#getStringValue}.
    */
-  STRING(3), BUTTON(4), GROUP(5);
+  STRING(3),
+  BUTTON(4),
+  GROUP(5);
 
   private final int typeNo;
 

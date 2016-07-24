@@ -22,7 +22,7 @@ import com.google.common.base.Preconditions;
  */
 public class SaneSession implements Closeable {
 
-  private static final int READ_BUFFER_SIZE = 1 << 20;  // 1mb
+  private static final int READ_BUFFER_SIZE = 1 << 20; // 1mb
   private static final int DEFAULT_PORT = 6566;
 
   private final Socket socket;
@@ -37,17 +37,17 @@ public class SaneSession implements Closeable {
   }
 
   /**
-   * Returns the current password provider. By default, this password provider
-   * will be supplied by {@link SanePasswordProvider#usingDotSanePassFile}, but
-   * you may override that with {@link #setPasswordProvider}.
+   * Returns the current password provider. By default, this password provider will be supplied by
+   * {@link SanePasswordProvider#usingDotSanePassFile}, but you may override that with
+   * {@link #setPasswordProvider}.
    */
   public SanePasswordProvider getPasswordProvider() {
     return passwordProvider;
   }
 
   /**
-   * Sets the {@link SanePasswordProvider password provider} to use if the SANE
-   * daemon asks for credentials when accessing a resource.
+   * Sets the {@link SanePasswordProvider password provider} to use if the SANE daemon asks for
+   * credentials when accessing a resource.
    */
   public void setPasswordProvider(SanePasswordProvider passwordProvider) {
     this.passwordProvider = passwordProvider;
@@ -83,17 +83,20 @@ public class SaneSession implements Closeable {
    * connection cannot be established within the given timeout, {@link SocketTimeoutException} is
    * thrown.
    */
-  public static SaneSession withRemoteSane(InetAddress saneAddress, int port, long timeout,
-      TimeUnit timeUnit) throws IOException {
+  public static SaneSession withRemoteSane(
+      InetAddress saneAddress, int port, long timeout, TimeUnit timeUnit) throws IOException {
     long millis = timeUnit.toMillis(timeout);
-    Preconditions.checkArgument(millis >= 0 && millis <= Integer.MAX_VALUE,
+    Preconditions.checkArgument(
+        millis >= 0 && millis <= Integer.MAX_VALUE,
         "Timeout must be between 0 and Integer.MAX_VALUE milliseconds");
     // If the user specifies a non-zero timeout that rounds to 0 milliseconds,
     // set the timeout to 1 millisecond instead.
     if (timeout > 0 && millis == 0) {
-      Logger.getLogger(SaneSession.class.getName()).log(Level.WARNING,
-          "Specified timeout of {0} {1} rounds to 0ms and was clamped to 1ms",
-          new Object[] { timeout, timeUnit });
+      Logger.getLogger(SaneSession.class.getName())
+          .log(
+              Level.WARNING,
+              "Specified timeout of {0} {1} rounds to 0ms and was clamped to 1ms",
+              new Object[] {timeout, timeUnit});
     }
     Socket socket = new Socket();
     socket.setTcpNoDelay(true);
@@ -108,9 +111,8 @@ public class SaneSession implements Closeable {
    * not exist.
    *
    * @return a new {@link SaneDevice} with the given name associated with the current session, never
-   *         {@code null}
-   * @throws IOException
-   *           if an error occurs while communicating with the SANE daemon
+   * {@code null}
+   * @throws IOException if an error occurs while communicating with the SANE daemon
    */
   public SaneDevice getDevice(String name) throws IOException {
     return new SaneDevice(this, name, "", "", "");
@@ -120,10 +122,8 @@ public class SaneSession implements Closeable {
    * Lists the devices known to the SANE daemon.
    *
    * @return a list of devices that may be opened, see {@link SaneDevice#open}
-   * @throws IOException
-   *           if an error occurs while communicating with the SANE daemon
-   * @throws SaneException
-   *           if the SANE backend returns an error in response to this request
+   * @throws IOException if an error occurs while communicating with the SANE daemon
+   * @throws SaneException if the SANE backend returns an error in response to this request
    */
   public List<SaneDevice> listDevices() throws IOException, SaneException {
     outputStream.write(SaneRpcCode.SANE_NET_GET_DEVICES);
@@ -171,8 +171,8 @@ public class SaneSession implements Closeable {
     return new SaneDeviceHandle(status, handle, resource);
   }
 
-  BufferedImage acquireImage(SaneDevice device, ScanListener listener) throws IOException,
-      SaneException {
+  BufferedImage acquireImage(SaneDevice device, ScanListener listener)
+      throws IOException, SaneException {
     SaneImage.Builder builder = new SaneImage.Builder();
     SaneParameters parameters = null;
     listener.scanningStarted(device);
@@ -225,11 +225,15 @@ public class SaneSession implements Closeable {
         // As a convenience to our listeners, try to figure out how many frames
         // will be read. Usually this will be 1, except in the case of older
         // three-pass color scanners.
-        listener.frameAcquisitionStarted(device, parameters, currentFrame,
-            getLikelyTotalFrameCount(parameters));
-        FrameReader frameStream = new FrameReader(device, parameters, new BufferedInputStream(
-            imageSocket.getInputStream(), READ_BUFFER_SIZE), 0x4321 == byteOrder.integerValue(),
-            listener);
+        listener.frameAcquisitionStarted(
+            device, parameters, currentFrame, getLikelyTotalFrameCount(parameters));
+        FrameReader frameStream =
+            new FrameReader(
+                device,
+                parameters,
+                new BufferedInputStream(imageSocket.getInputStream(), READ_BUFFER_SIZE),
+                0x4321 == byteOrder.integerValue(),
+                listener);
         builder.addFrame(frameStream.readFrame());
       } finally {
         if (imageSocket != null) {
@@ -247,12 +251,12 @@ public class SaneSession implements Closeable {
 
   private int getLikelyTotalFrameCount(SaneParameters parameters) {
     switch (parameters.getFrameType()) {
-    case RED:
-    case GREEN:
-    case BLUE:
-      return 3;
-    default:
-      return 1;
+      case RED:
+      case GREEN:
+      case BLUE:
+        return 3;
+      default:
+        return 1;
     }
   }
 
@@ -293,13 +297,13 @@ public class SaneSession implements Closeable {
   /**
    * Authorize the resource for access.
    *
-   * @throws IOException
-   *           if an error occurs while communicating with the SANE daemon
+   * @throws IOException if an error occurs while communicating with the SANE daemon
    */
   void authorize(String resource) throws IOException {
     if (passwordProvider == null) {
-      throw new IOException("Authorization failed - no password provider present "
-          + "(you must call setPasswordProvider)");
+      throw new IOException(
+          "Authorization failed - no password provider present "
+              + "(you must call setPasswordProvider)");
     }
     // RPC code FOR SANE_NET_AUTHORIZE
     outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
@@ -308,8 +312,11 @@ public class SaneSession implements Closeable {
     if (!passwordProvider.canAuthenticate(resource)) {
       // the password provider has indicated that there's no way it can provide
       // credentials for this request.
-      throw new IOException("Authorization failed - the password provider is "
-          + "unable to provide a password for the resource [" + resource + "]");
+      throw new IOException(
+          "Authorization failed - the password provider is "
+              + "unable to provide a password for the resource ["
+              + resource
+              + "]");
     }
 
     outputStream.write(passwordProvider.getUsername(resource));
@@ -320,10 +327,10 @@ public class SaneSession implements Closeable {
 
   /**
    * Write password to outputstream depending on resource provided by saned.
-   * 
+   *
    * @param resource as provided by sane in authorization request
    * @param password
-   * @throws IOException 
+   * @throws IOException
    */
   private void writePassword(String resource, String password) throws IOException {
     String[] resourceParts = resource.split("\\$MD5\\$");

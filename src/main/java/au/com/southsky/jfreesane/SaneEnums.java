@@ -18,8 +18,7 @@ final class SaneEnums {
   private static Map<Class<?>, Map<Integer, ?>> cachedTypeMaps = Maps.newHashMap();
 
   // no public constructor
-  private SaneEnums() {
-  }
+  private SaneEnums() {}
 
   @SuppressWarnings("unchecked")
   private static synchronized <T extends Enum<T> & SaneEnum> Map<Integer, T> mapForType(

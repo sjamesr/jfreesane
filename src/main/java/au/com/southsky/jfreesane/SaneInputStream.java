@@ -135,8 +135,7 @@ class SaneInputStream extends InputStream {
     int lines = readWord().integerValue();
     int depth = readWord().integerValue();
 
-    return new SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines,
-        depth);
+    return new SaneParameters(frame, lastFrame, bytesPerLine, pixelsPerLine, lines, depth);
   }
 
   public SaneStatus readStatus() throws IOException {
@@ -174,8 +173,8 @@ class SaneInputStream extends InputStream {
     int capabilityWord = readWord().integerValue();
     int constraintTypeInt = readWord().integerValue();
     // TODO: range check here
-    OptionValueConstraintType constraintType = SaneEnums.valueOf(
-        OptionValueConstraintType.class, constraintTypeInt);
+    OptionValueConstraintType constraintType =
+        SaneEnums.valueOf(OptionValueConstraintType.class, constraintTypeInt);
 
     // decode the constraint
 
@@ -184,62 +183,74 @@ class SaneInputStream extends InputStream {
     RangeConstraint rangeConstraint = null;
 
     switch (constraintType) {
-    case NO_CONSTRAINT:
-      // inputStream.readWord(); // discard empty list
-      break;
-    case STRING_LIST_CONSTRAINT:
-      stringConstraints = Lists.newArrayList();
+      case NO_CONSTRAINT:
+        // inputStream.readWord(); // discard empty list
+        break;
+      case STRING_LIST_CONSTRAINT:
+        stringConstraints = Lists.newArrayList();
 
-      int n = readWord().integerValue();
-      for (int i = 0; i < n; i++) {
-        String stringConstraint = readString();
+        int n = readWord().integerValue();
+        for (int i = 0; i < n; i++) {
+          String stringConstraint = readString();
 
-        // the last element is a null terminator, don't add that
-        if (i < n - 1) {
-          stringConstraints.add(stringConstraint);
+          // the last element is a null terminator, don't add that
+          if (i < n - 1) {
+            stringConstraints.add(stringConstraint);
+          }
         }
-      }
 
-      break;
-    case VALUE_LIST_CONSTRAINT:
-      valueConstraints = Lists.newArrayList();
-      n = readWord().integerValue();
-      for (int i = 0; i < n; i++) {
-        // first element is list length, don't add that
-        SaneWord value = readWord();
+        break;
+      case VALUE_LIST_CONSTRAINT:
+        valueConstraints = Lists.newArrayList();
+        n = readWord().integerValue();
+        for (int i = 0; i < n; i++) {
+          // first element is list length, don't add that
+          SaneWord value = readWord();
 
-        if (i != 0) {
-          valueConstraints.add(value);
+          if (i != 0) {
+            valueConstraints.add(value);
+          }
         }
-      }
 
-      break;
-    case RANGE_CONSTRAINT:
-      // discard pointer to range
-      readWord();
+        break;
+      case RANGE_CONSTRAINT:
+        // discard pointer to range
+        readWord();
 
-      SaneWord min = readWord();
-      SaneWord max = readWord();
-      SaneWord quantization = readWord();
+        SaneWord min = readWord();
+        SaneWord max = readWord();
+        SaneWord quantization = readWord();
 
-      switch (valueType) {
-      case INT:
-      case FIXED:
-        rangeConstraint = new RangeConstraint(min, max, quantization);
+        switch (valueType) {
+          case INT:
+          case FIXED:
+            rangeConstraint = new RangeConstraint(min, max, quantization);
+            break;
+          default:
+            logger.log(
+                Level.WARNING,
+                "Ignoring invalid option type/constraint combination: "
+                    + "value_type={0},constraint_type={1} for option {2}. "
+                    + "Option will be treated by jfreesane as unconstrained",
+                new Object[] {valueType, constraintType, optionName});
+        }
         break;
       default:
-        logger.log(Level.WARNING, "Ignoring invalid option type/constraint combination: "
-            + "value_type={0},constraint_type={1} for option {2}. "
-            + "Option will be treated by jfreesane as unconstrained", new Object[] { valueType,
-            constraintType, optionName });
-      }
-      break;
-    default:
-      throw new IllegalStateException("Unknown constraint type");
+        throw new IllegalStateException("Unknown constraint type");
     }
 
-    return new SaneOptionDescriptor(optionName, optionTitle, optionDescription, currentGroup,
-        valueType, units, size, SaneEnums.enumSet(OptionCapability.class, capabilityWord),
-        constraintType, rangeConstraint, stringConstraints, valueConstraints);
+    return new SaneOptionDescriptor(
+        optionName,
+        optionTitle,
+        optionDescription,
+        currentGroup,
+        valueType,
+        units,
+        size,
+        SaneEnums.enumSet(OptionCapability.class, capabilityWord),
+        constraintType,
+        rangeConstraint,
+        stringConstraints,
+        valueConstraints);
   }
 }

@@ -6,7 +6,7 @@ import java.io.OutputStream;
 /**
  * This class wraps a {@link OutputStream} and provides a handful of utilities to serialize
  * SANE-related types to the underlying stream.
- * 
+ *
  * @author James Ring (sjr@jdns.org)
  */
 class SaneOutputStream extends OutputStream {
@@ -46,14 +46,14 @@ class SaneOutputStream extends OutputStream {
 
   /**
    * Writes the given string to the underlying stream in SANE string format. The format is:
-   * 
+   *
    * <ul>
    * <li>if the string is non-empty, a {@link SaneWord} representing the length of the string plus a
    * null terminator</li>
    * <li>if the string is non-empty, the bytes of the string (see {@link String#toCharArray})</li>
    * <li>unconditionally, a null terminator</li>
    * </ul>
-   * 
+   *
    * @param string
    * @throws IOException
    */
@@ -63,14 +63,14 @@ class SaneOutputStream extends OutputStream {
 
   /**
    * Writes the given char[] to the underlying stream in SANE string format. The format is:
-   * 
+   *
    * <ul>
    * <li>if the char[] is non-empty, a {@link SaneWord} representing the length of the string plus a
    * null terminator</li>
    * <li>if the char[] is non-empty, the bytes of the char[]</li>
    * <li>unconditionally, a null terminator</li>
    * </ul>
-   * 
+   *
    * @param charArray character array to be written to the stream
    * @throws IOException
    */
@@ -83,7 +83,7 @@ class SaneOutputStream extends OutputStream {
 
     write(0);
   }
-  
+
   /**
    * Writes the bytes of the given {@link SaneWord} to the underlying stream. See
    * {@link SaneWord#getValue}.
