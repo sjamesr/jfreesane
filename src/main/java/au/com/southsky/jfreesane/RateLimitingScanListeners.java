@@ -34,7 +34,7 @@ import com.google.common.collect.Maps;
  *   saneDevice.acquireImage(rateLimitedListener);
  * </pre>
  */
-public class RateLimitingScanListeners {
+public final class RateLimitingScanListeners {
 
   // Not to be instantiated.
   private RateLimitingScanListeners() {}

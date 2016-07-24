@@ -25,7 +25,7 @@ import java.security.NoSuchAlgorithmException;
  * href="http://www.sane-project.org/html/doc017.html#s5.2.10">Section 5.2.10</a> of the SANE
  * specification.
  */
-class SanePasswordEncoder {
+final class SanePasswordEncoder {
   static final Charset iso8859_1 = Charset.forName("ISO-8859-1");
 
   // Not to be instantiated.

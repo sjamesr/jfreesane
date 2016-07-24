@@ -676,9 +676,8 @@ public class SaneSessionTest {
 
     if (testPicture.startsWith("Solid")) {
       assertImageSolidColor(testPicture.endsWith("black") ? Color.black : Color.white, actualImage);
-    } else {
-      // compare with sample images
     }
+    // TODO(sjr): compare with reference images.
   }
 
   private void writeImage(

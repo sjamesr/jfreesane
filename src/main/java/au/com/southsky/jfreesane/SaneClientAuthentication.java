@@ -1,11 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import java.io.*;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -14,6 +8,16 @@ import com.google.common.collect.Table;
 import com.google.common.io.CharSource;
 import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents the authentication configuration used by SANE clients. The SANE utilities like
@@ -141,9 +145,9 @@ public class SaneClientAuthentication extends SanePasswordProvider {
    * @author paul
    */
   public static class ClientCredential {
-    public final String backend;
-    public final String username;
-    public final String password;
+    private final String backend;
+    private final String username;
+    private final String password;
 
     protected ClientCredential(String backend, String username, String password) {
       this.backend = backend;
@@ -158,6 +162,18 @@ public class SaneClientAuthentication extends SanePasswordProvider {
       }
 
       return new ClientCredential(fields.get(2), fields.get(0), fields.get(1));
+    }
+
+    public String getBackend() {
+      return backend;
+    }
+
+    public String getUsername() {
+      return username;
+    }
+
+    public String getPassword() {
+      return password;
     }
   }
 }

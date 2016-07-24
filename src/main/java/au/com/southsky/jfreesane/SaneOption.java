@@ -36,9 +36,9 @@ import com.google.common.io.ByteStreams;
  *
  * @author James Ring (sjr@jdns.org)
  */
-public class SaneOption {
+public final class SaneOption {
 
-  private final static Logger logger = Logger.getLogger(SaneOption.class.getName());
+  private static final Logger logger = Logger.getLogger(SaneOption.class.getName());
 
   private enum OptionAction implements SaneEnum {
     GET_VALUE(0),
@@ -381,8 +381,10 @@ public class SaneOption {
     byte[] value = result.getValue();
 
     // string is null terminated
-    int length;
-    for (length = 0; length < value.length && value[length] != 0; length++) ;
+    int length = 0;
+    while (length < value.length && value[length] != 0) {
+      length++;
+    }
 
     // trim the trailing null character
     return new String(result.getValue(), 0, length, encoding);
@@ -702,7 +704,7 @@ public class SaneOption {
   /**
    * Represents the result of calling {@code SANE_NET_CONTROL_OPTION} (RPC code 5).
    */
-  private static class ControlOptionResult {
+  private static final class ControlOptionResult {
     private final int status;
     private final Set<OptionWriteInfo> info;
     private final OptionValueType type;
@@ -740,9 +742,7 @@ public class SaneOption {
       // read the pointer
       int pointer = stream.readWord().integerValue();
       byte[] value = null;
-      if (pointer == 0) {
-        // there is no value
-      } else {
+      if (pointer != 0) {
         value = new byte[valueSize];
 
         if (ByteStreams.read(stream, value, 0, valueSize) != valueSize) {
@@ -769,9 +769,7 @@ public class SaneOption {
         // read the pointer
         pointer = stream.readWord().integerValue();
         value = null;
-        if (pointer == 0) {
-          // there is no value
-        } else {
+        if (pointer != 0) {
           value = new byte[valueSize];
 
           if (stream.read(value) != valueSize) {

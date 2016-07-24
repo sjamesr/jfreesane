@@ -84,10 +84,8 @@ class SaneInputStream extends InputStream {
    * in the stream. Returns {@code null} if the pointer is a null pointer.
    */
   private SaneDevice readSaneDevicePointer() throws IOException {
-    if (!readPointer()) {
-      // TODO(sjr): why is there always a null pointer here?
-      // return null;
-    }
+    // TODO(sjr): why is there always a null pointer here?
+    readPointer();
 
     // now we assume that there's a sane device ready to parse
     return readSaneDevice();
