@@ -8,7 +8,7 @@ class Frame {
   private final SaneParameters parameters;
   private final byte[] data;
 
-  public Frame(SaneParameters parameters, byte[] data) {
+  Frame(SaneParameters parameters, byte[] data) {
     this.parameters = parameters;
     this.data = data;
   }

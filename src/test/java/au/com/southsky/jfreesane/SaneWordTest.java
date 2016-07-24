@@ -1,22 +1,27 @@
 package au.com.southsky.jfreesane;
 
-import static org.junit.Assert.assertEquals;
+import com.google.common.truth.Truth;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.google.common.truth.Truth;
+import static org.junit.Assert.assertEquals;
 
 /**
  * This class implements tests for {@link SaneWord}.
  *
  * @author James Ring (sjr@jdns.org)
  */
+@RunWith(JUnit4.class)
 public class SaneWordTest {
+  @Rule public ExpectedException expectedException = ExpectedException.none();
+
   @Test
   public void testFixedPrecisionValue() {
     assertEquals(216.069, SaneWord.forFixedPrecision(216.069).fixedPrecisionValue(), 0.0001);
@@ -41,13 +46,7 @@ public class SaneWordTest {
     Truth.assertThat(SaneWord.fromStream(stream).integerValue()).comparesEqualTo(2);
     Truth.assertThat(SaneWord.fromStream(stream).integerValue()).comparesEqualTo(3);
     Truth.assertThat(SaneWord.fromStream(stream).integerValue()).comparesEqualTo(4);
-
-    try {
-      SaneWord.fromStream(stream);
-      Assert.fail("fromStream should have thrown IOException but didn't");
-    } catch (IOException ignored) {
-      System.out.println("whatever");
-      // Expected this exception.
-    }
+    expectedException.expect(IOException.class);
+    SaneWord.fromStream(stream);
   }
 }

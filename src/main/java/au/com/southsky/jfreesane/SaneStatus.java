@@ -33,7 +33,7 @@ public enum SaneStatus implements SaneEnum {
     return fromWireValue(statusWord.integerValue());
   }
 
-  private SaneStatus(int wireValue) {
+  SaneStatus(int wireValue) {
     this.wireValue = wireValue;
   }
 

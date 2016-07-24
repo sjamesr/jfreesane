@@ -25,7 +25,7 @@ class SaneInputStream extends InputStream {
   private InputStream wrappedStream;
   private OptionGroup currentGroup;
 
-  public SaneInputStream(SaneSession saneSession, InputStream wrappedStream) {
+  SaneInputStream(SaneSession saneSession, InputStream wrappedStream) {
     this.saneSession = saneSession;
     this.wrappedStream = wrappedStream;
   }

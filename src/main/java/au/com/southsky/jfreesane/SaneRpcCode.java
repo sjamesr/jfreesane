@@ -20,7 +20,7 @@ enum SaneRpcCode implements SaneEnum {
 
   private final int wireValue;
 
-  private SaneRpcCode(int wireValue) {
+  SaneRpcCode(int wireValue) {
     this.wireValue = wireValue;
   }
 
