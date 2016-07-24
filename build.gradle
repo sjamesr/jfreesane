@@ -27,6 +27,14 @@ checkstyle {
     ignoreFailures = true
 }
 
+task checkstyleHtml << {
+    ant.xslt(in: checkstyleMain.reports.xml.destination,
+             style: file('checkstyle-noframes-sorted.xsl'),
+             out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+}
+
+checkstyleMain.finalizedBy checkstyleHtml
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
     baseName 'javadoc'
 
