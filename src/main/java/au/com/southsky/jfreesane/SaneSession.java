@@ -1,5 +1,7 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.Preconditions;
+
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -7,20 +9,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.google.common.base.Preconditions;
 
 /**
  * Represents a conversation taking place with a SANE daemon.
  *
  * @author James Ring (sjr@jdns.org)
  */
-public class SaneSession implements Closeable {
+public final class SaneSession implements Closeable {
 
   private static final int READ_BUFFER_SIZE = 1 << 20; // 1mb
   private static final int DEFAULT_PORT = 6566;
@@ -80,8 +79,8 @@ public class SaneSession implements Closeable {
 
   /**
    * Establishes a connection to the SANE daemon running on the given host on the given port. If the
-   * connection cannot be established within the given timeout, {@link SocketTimeoutException} is
-   * thrown.
+   * connection cannot be established within the given timeout,
+   * {@link java.net.SocketTimeoutException} is thrown.
    */
   public static SaneSession withRemoteSane(
       InetAddress saneAddress, int port, long timeout, TimeUnit timeUnit) throws IOException {

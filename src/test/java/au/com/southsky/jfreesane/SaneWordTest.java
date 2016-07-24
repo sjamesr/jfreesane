@@ -45,7 +45,8 @@ public class SaneWordTest {
     try {
       SaneWord.fromStream(stream);
       Assert.fail("fromStream should have thrown IOException but didn't");
-    } catch (IOException expected) {
+    } catch (IOException ignored) {
+      System.out.println("whatever");
       // Expected this exception.
     }
   }

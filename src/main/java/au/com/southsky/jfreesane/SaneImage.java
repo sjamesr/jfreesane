@@ -23,7 +23,7 @@ import com.google.common.collect.Sets;
 /**
  * Represents a SANE image, which are composed of one or more {@link Frame frames}.
  */
-class SaneImage {
+final class SaneImage {
   private static final Set<FrameType> singletonFrameTypes =
       Sets.immutableEnumSet(FrameType.GRAY, FrameType.RGB);
 
@@ -231,9 +231,9 @@ class SaneImage {
       frames.add(frame);
     }
 
-    public void setPixelDepth(int depthPerPixel) {
-      Preconditions.checkArgument(depthPerPixel > 0, "depth must be positive");
-      this.depthPerPixel.set(depthPerPixel);
+    public void setPixelDepth(int newDepth) {
+      Preconditions.checkArgument(newDepth > 0, "depth must be positive");
+      this.depthPerPixel.set(newDepth);
     }
 
     public void setWidth(int width) {
@@ -277,10 +277,10 @@ class SaneImage {
   private static class WriteOnce<T> {
     private T value = null;
 
-    public void set(T value) {
+    public void set(T newValue) {
       if (this.value == null) {
-        this.value = value;
-      } else if (!value.equals(this.value)) {
+        this.value = newValue;
+      } else if (!newValue.equals(this.value)) {
         throw new IllegalArgumentException("Cannot overwrite with a different value");
       }
     }

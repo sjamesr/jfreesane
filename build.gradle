@@ -25,7 +25,7 @@ wrapper {
 
 checkstyle {
     configFile = file('checkstyle_config.xml')
-    ignoreFailures = true
+    ignoreFailures = false
 }
 
 task checkstyleHtml << {
