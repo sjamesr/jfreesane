@@ -25,10 +25,18 @@ class SaneOptionDescriptor {
   // TODO: wrong level of abstraction
   private final List<SaneWord> wordConstraints;
 
-  public SaneOptionDescriptor(String name, String title, String description, OptionGroup group,
-      OptionValueType valueType, OptionUnits units, int size,
-      Set<OptionCapability> optionCapabilities, OptionValueConstraintType constraintType,
-      RangeConstraint rangeConstraints, List<String> stringContraints,
+  public SaneOptionDescriptor(
+      String name,
+      String title,
+      String description,
+      OptionGroup group,
+      OptionValueType valueType,
+      OptionUnits units,
+      int size,
+      Set<OptionCapability> optionCapabilities,
+      OptionValueConstraintType constraintType,
+      RangeConstraint rangeConstraints,
+      List<String> stringContraints,
       List<SaneWord> wordConstraints) {
     this.name = name;
     this.title = title;

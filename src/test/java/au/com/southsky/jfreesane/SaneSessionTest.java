@@ -151,7 +151,8 @@ public class SaneSessionTest {
         if (!option.isActive()) {
           System.out.print(" [inactive]");
         } else {
-          if (option.getType() == OptionValueType.INT && option.getValueCount() == 1
+          if (option.getType() == OptionValueType.INT
+              && option.getValueCount() == 1
               && option.isActive()) {
             System.out.print("=" + option.getIntegerValue());
           } else if (option.getType() == OptionValueType.STRING) {
@@ -183,8 +184,8 @@ public class SaneSessionTest {
   public void adfAcquisitionSucceeds() throws Exception {
     SaneDevice device = session.getDevice("test");
     device.open();
-    assertThat(device.getOption("source").getStringConstraints()).contains(
-        "Automatic Document Feeder");
+    assertThat(device.getOption("source").getStringConstraints())
+        .contains("Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     for (int i = 0; i < 20; i++) {
@@ -205,8 +206,9 @@ public class SaneSessionTest {
   public void acquireImageSucceedsAfterOutOfPaperCondition() throws Exception {
     SaneDevice device = session.getDevice("test");
     device.open();
-    assertThat(device.getOption("source").getStringConstraints()).has().item(
-        "Automatic Document Feeder");
+    assertThat(device.getOption("source").getStringConstraints())
+        .has()
+        .item("Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
     boolean thrown = false;
@@ -283,8 +285,8 @@ public class SaneSessionTest {
       assertProducesCorrectImage(device, "Gray", 1, "Grid");
       assertProducesCorrectImage(device, "Color", 1, "Color pattern");
 
-//      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
-//      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
+      //      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
+      //      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
       device.close();
     }
@@ -347,9 +349,14 @@ public class SaneSessionTest {
 
       SaneOption option = device.getOption("string-constraint-string-list");
       assertThat(option).isNotNull();
-      assertThat(option.getConstraintType()).isEqualTo(OptionValueConstraintType.STRING_LIST_CONSTRAINT);
-      assertThat(option.getStringConstraints()).has().exactly("First entry", "Second entry",
-          "This is the very long third entry. Maybe the frontend has an idea how to display it");
+      assertThat(option.getConstraintType())
+          .isEqualTo(OptionValueConstraintType.STRING_LIST_CONSTRAINT);
+      assertThat(option.getStringConstraints())
+          .has()
+          .exactly(
+              "First entry",
+              "Second entry",
+              "This is the very long third entry. Maybe the frontend has an idea how to display it");
     } finally {
       device.close();
     }
@@ -365,7 +372,8 @@ public class SaneSessionTest {
       SaneOption option = device.getOption("int-constraint-word-list");
       assertNotNull(option);
       assertEquals(OptionValueConstraintType.VALUE_LIST_CONSTRAINT, option.getConstraintType());
-      assertEquals(ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
+      assertEquals(
+          ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
           option.getIntegerValueListConstraint());
     } finally {
       device.close();
@@ -440,7 +448,7 @@ public class SaneSessionTest {
 
       SaneOption option = device.getOption("gamma-table");
       assertNotNull(option);
-//      assertFalse(option.isConstrained());
+      //      assertFalse(option.isConstrained());
       assertEquals(OptionValueType.INT, option.getType());
       List<Integer> values = Lists.newArrayList();
 
@@ -533,8 +541,8 @@ public class SaneSessionTest {
     SaneDevice device = session.getDevice("test");
     try {
       device.open();
-      assertEquals("Color pattern", device.getOption("test-picture")
-          .setStringValue("Color pattern"));
+      assertEquals(
+          "Color pattern", device.getOption("test-picture").setStringValue("Color pattern"));
       assertEquals("Color", device.getOption("mode").setStringValue("Color"));
       assertEquals(true, device.getOption("three-pass").setBooleanValue(true));
       for (int i = 0; i < 5; i++) {
@@ -574,8 +582,8 @@ public class SaneSessionTest {
   }
 
   /**
-   * This test assumes that you have protected the "test" device with a username
-   * of "sjr" and a password other than "badpassword".
+   * This test assumes that you have protected the "test" device with a username of "sjr" and a
+   * password other than "badpassword".
    */
   @Test
   public void invalidPasswordCausesAccessDeniedError() throws Exception {
@@ -608,8 +616,8 @@ public class SaneSessionTest {
     File passwordFile = File.createTempFile("sane", ".pass");
     try {
       Files.write("sjr:password:test", passwordFile, Charsets.ISO_8859_1);
-      session.setPasswordProvider(SanePasswordProvider.usingSanePassFile(passwordFile
-          .getAbsolutePath()));
+      session.setPasswordProvider(
+          SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
       SaneDevice device = session.getDevice("test");
       device.open();
       device.acquireImage();
@@ -623,18 +631,22 @@ public class SaneSessionTest {
     final AtomicReference<SaneDevice> notifiedDevice = new AtomicReference<SaneDevice>();
     final AtomicInteger frameCount = new AtomicInteger();
 
-    ScanListener listener = new ScanListenerAdapter() {
-      @Override
-      public void scanningStarted(SaneDevice device) {
-        notifiedDevice.set(device);
-      }
+    ScanListener listener =
+        new ScanListenerAdapter() {
+          @Override
+          public void scanningStarted(SaneDevice device) {
+            notifiedDevice.set(device);
+          }
 
-      @Override
-      public void frameAcquisitionStarted(SaneDevice device, SaneParameters parameters,
-          int currentFrame, int likelyTotalFrames) {
-        frameCount.incrementAndGet();
-      }
-    };
+          @Override
+          public void frameAcquisitionStarted(
+              SaneDevice device,
+              SaneParameters parameters,
+              int currentFrame,
+              int likelyTotalFrames) {
+            frameCount.incrementAndGet();
+          }
+        };
 
     SaneDevice device = session.getDevice("test");
     device.open();
@@ -672,8 +684,10 @@ public class SaneSessionTest {
   private void writeImage(
       String mode, int sampleDepth, String testPicture, BufferedImage actualImage)
       throws IOException {
-    File file = File.createTempFile(
-        String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')), ".png");
+    File file =
+        File.createTempFile(
+            String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')),
+            ".png");
     ImageIO.write(actualImage, "png", file);
     System.out.println("Successfully wrote " + file);
   }

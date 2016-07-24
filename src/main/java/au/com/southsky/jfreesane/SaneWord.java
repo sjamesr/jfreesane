@@ -37,12 +37,13 @@ public final class SaneWord {
    *
    * @see SaneWord#integerValue
    */
-  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION = new Function<SaneWord, Integer>() {
-    @Override
-    public Integer apply(SaneWord word) {
-      return word.integerValue();
-    }
-  };
+  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION =
+      new Function<SaneWord, Integer>() {
+        @Override
+        public Integer apply(SaneWord word) {
+          return word.integerValue();
+        }
+      };
 
   /**
    * A function that, when applied to a {@link SaneWord} instance, returns the SANE fixed precision
@@ -50,12 +51,13 @@ public final class SaneWord {
    *
    * @see SaneWord#fixedPrecisionValue
    */
-  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION = new Function<SaneWord, Double>() {
-    @Override
-    public Double apply(SaneWord word) {
-      return word.fixedPrecisionValue();
-    }
-  };
+  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION =
+      new Function<SaneWord, Double>() {
+        @Override
+        public Double apply(SaneWord word) {
+          return word.fixedPrecisionValue();
+        }
+      };
 
   private final byte[] value;
 
@@ -93,12 +95,9 @@ public final class SaneWord {
   /**
    * Returns a new {@code SaneWord} representing the given SANE version.
    *
-   * @param major
-   *          the SANE major version
-   * @param minor
-   *          the SANE minor version
-   * @param build
-   *          the SANE build identifier
+   * @param major the SANE major version
+   * @param minor the SANE minor version
+   * @param build the SANE build identifier
    */
   public static SaneWord forSaneVersion(int major, int minor, int build) {
     int result = (major & 0xff) << 24;

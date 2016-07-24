@@ -1,8 +1,8 @@
 package au.com.southsky.jfreesane;
 
 /**
- * Represents one frame of a {@link SaneImage}. A SANE image is composed of one
- * or more of these frames.
+ * Represents one frame of a {@link SaneImage}. A SANE image is composed of one or more of these
+ * frames.
  */
 class Frame {
   private final SaneParameters parameters;

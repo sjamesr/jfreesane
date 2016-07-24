@@ -50,9 +50,13 @@ class SaneParameters {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(SaneParameters.class).add("frameType", frameType)
-        .add("isLastFrame", lastFrame).add("bytesPerLine", bytesPerLine)
-        .add("pixelsPerLine", pixelsPerLine).add("lineCount", lineCount)
-        .add("depthPerPixel", depthPerPixel).toString();
+    return MoreObjects.toStringHelper(SaneParameters.class)
+        .add("frameType", frameType)
+        .add("isLastFrame", lastFrame)
+        .add("bytesPerLine", bytesPerLine)
+        .add("pixelsPerLine", pixelsPerLine)
+        .add("lineCount", lineCount)
+        .add("depthPerPixel", depthPerPixel)
+        .toString();
   }
 }

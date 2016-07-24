@@ -4,6 +4,7 @@ plugins {
     id 'wrapper'
     id 'com.jfrog.bintray' version '1.4'
     id 'maven-publish'
+    id 'com.github.sherter.google-java-format' version '0.3.2'
 }
 
 def releaseVersion = '0.95'

@@ -24,11 +24,11 @@ import com.google.common.collect.Sets;
  * Represents a SANE image, which are composed of one or more {@link Frame frames}.
  */
 class SaneImage {
-  private static final Set<FrameType> singletonFrameTypes = Sets.immutableEnumSet(
-      FrameType.GRAY, FrameType.RGB);
+  private static final Set<FrameType> singletonFrameTypes =
+      Sets.immutableEnumSet(FrameType.GRAY, FrameType.RGB);
 
-  private static final Set<FrameType> redGreenBlueFrameTypes = Sets.immutableEnumSet(
-      FrameType.RED, FrameType.GREEN, FrameType.BLUE);
+  private static final Set<FrameType> redGreenBlueFrameTypes =
+      Sets.immutableEnumSet(FrameType.RED, FrameType.GREEN, FrameType.BLUE);
 
   private final List<Frame> frames;
   private final int depthPerPixel;
@@ -40,14 +40,17 @@ class SaneImage {
       List<Frame> frames, int depthPerPixel, int width, int height, int bytesPerLine) {
     // this ensures that in the 3-frame situation, they are always
     // arranged in the following order: red, green, blue
-    this.frames = Ordering.explicit(
-        FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY).onResultOf(
-        new Function<Frame, FrameType>() {
-          @Override
-          public FrameType apply(Frame input) {
-            return input.getType();
-          }
-        }).immutableSortedCopy(frames);
+    this.frames =
+        Ordering.explicit(
+                FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY)
+            .onResultOf(
+                new Function<Frame, FrameType>() {
+                  @Override
+                  public FrameType apply(Frame input) {
+                    return input.getType();
+                  }
+                })
+            .immutableSortedCopy(frames);
     this.depthPerPixel = depthPerPixel;
     this.width = width;
     this.height = height;
@@ -79,11 +82,23 @@ class SaneImage {
 
     if (getFrames().size() == redGreenBlueFrameTypes.size()) {
       // 3 frames, one or two bytes per sample, 3 samples per pixel
-      WritableRaster raster = Raster.createBandedRaster(buffer, getWidth(), getHeight(),
-          getBytesPerLine(), new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, new Point(0, 0));
+      WritableRaster raster =
+          Raster.createBandedRaster(
+              buffer,
+              getWidth(),
+              getHeight(),
+              getBytesPerLine(),
+              new int[] {0, 1, 2},
+              new int[] {0, 0, 0},
+              new Point(0, 0));
 
-      ColorModel model = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
-          false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+      ColorModel model =
+          new ComponentColorModel(
+              ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
+              false,
+              false,
+              Transparency.OPAQUE,
+              DataBuffer.TYPE_BYTE);
 
       return new BufferedImage(model, raster, false, null);
     }
@@ -105,17 +120,25 @@ class SaneImage {
 
       if (getFrames().get(0).getType() == FrameType.GRAY) {
         colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
-        bandOffsets = new int[] { 0 };
-      } else /* RGB */{
+        bandOffsets = new int[] {0};
+      } else /* RGB */ {
         colorSpace = ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
-        bandOffsets = new int[] { 0, 1 * bytesPerSample, 2 * bytesPerSample };
+        bandOffsets = new int[] {0, 1 * bytesPerSample, 2 * bytesPerSample};
       }
 
-      WritableRaster raster = Raster.createInterleavedRaster(buffer, width, height, bytesPerLine,
-          bytesPerSample * bandOffsets.length, bandOffsets, new Point(0, 0));
+      WritableRaster raster =
+          Raster.createInterleavedRaster(
+              buffer,
+              width,
+              height,
+              bytesPerLine,
+              bytesPerSample * bandOffsets.length,
+              bandOffsets,
+              new Point(0, 0));
 
-      ColorModel model = new ComponentColorModel(
-          colorSpace, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+      ColorModel model =
+          new ComponentColorModel(
+              colorSpace, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
 
       return new BufferedImage(model, raster, false, null);
     }
