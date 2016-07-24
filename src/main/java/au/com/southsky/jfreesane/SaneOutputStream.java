@@ -15,7 +15,7 @@ class SaneOutputStream extends OutputStream {
   /**
    * Creates a new {@code SaneOutputStream} that wraps the given stream.
    */
-  public SaneOutputStream(OutputStream wrappedStream) {
+  SaneOutputStream(OutputStream wrappedStream) {
     this.wrappedStream = wrappedStream;
   }
 

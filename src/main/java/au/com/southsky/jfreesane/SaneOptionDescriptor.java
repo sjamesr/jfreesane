@@ -25,7 +25,7 @@ class SaneOptionDescriptor {
   // TODO: wrong level of abstraction
   private final List<SaneWord> wordConstraints;
 
-  public SaneOptionDescriptor(
+  SaneOptionDescriptor(
       String name,
       String title,
       String description,

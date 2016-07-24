@@ -24,7 +24,7 @@ class FrameReader {
   private final boolean bigEndian;
   private final ScanListener listener;
 
-  public FrameReader(
+  FrameReader(
       SaneDevice device,
       SaneParameters parameters,
       InputStream underlyingStream,

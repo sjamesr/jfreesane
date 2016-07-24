@@ -32,7 +32,7 @@ public enum OptionValueConstraintType implements SaneEnum {
   private final int wireValue;
   private final String description;
 
-  private OptionValueConstraintType(int wireValue, String description) {
+  OptionValueConstraintType(int wireValue, String description) {
     this.wireValue = wireValue;
     this.description = description;
   }

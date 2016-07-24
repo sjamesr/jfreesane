@@ -33,7 +33,7 @@ public enum OptionValueType implements SaneEnum {
 
   private final int typeNo;
 
-  private OptionValueType(int typeNo) {
+  OptionValueType(int typeNo) {
     this.typeNo = typeNo;
   }
 

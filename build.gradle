@@ -26,6 +26,7 @@ wrapper {
 checkstyle {
     configFile = file('checkstyle_config.xml')
     ignoreFailures = false
+    toolVersion = '6.19'
 }
 
 task checkstyleHtml << {
