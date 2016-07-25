@@ -117,3 +117,11 @@ bintray {
 
     publications = ['mavenJava']
 }
+
+// If Java formatter checks fail, tell the user how to fix them.
+task printFormatHelperMessage << {
+    throw new GradleException('google-java-format is required.\n' +
+        'Use ./gradlew googleJavaFormat to reformat the broken files')
+}
+verifyGoogleJavaFormat.finalizedBy printFormatHelperMessage
+printFormatHelperMessage.onlyIf { verifyGoogleJavaFormat.state.failure != null }
