@@ -1,5 +1,11 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
+
 import java.awt.Point;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -8,18 +14,13 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 
 /**
  * Represents a SANE image, which are composed of one or more {@link Frame frames}.
@@ -117,14 +118,12 @@ final class SaneImage {
       ColorSpace colorSpace;
       int[] bandOffsets;
 
-      int bytesPerSample = getDepthPerPixel() / Byte.SIZE;
-
       if (getFrames().get(0).getType() == FrameType.GRAY) {
         colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
         bandOffsets = new int[] {0};
       } else /* RGB */ {
         colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-        bandOffsets = new int[] {0, 1 * bytesPerSample, 2 * bytesPerSample};
+        bandOffsets = new int[] {0, 1, 2};
       }
 
       WritableRaster raster =
@@ -132,14 +131,18 @@ final class SaneImage {
               buffer,
               width,
               height,
-              bytesPerLine,
-              bytesPerSample * bandOffsets.length,
+              bytesPerLine * Byte.SIZE / depthPerPixel,
+              bandOffsets.length,
               bandOffsets,
               new Point(0, 0));
 
       ColorModel model =
           new ComponentColorModel(
-              colorSpace, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+              colorSpace,
+              false,
+              false,
+              Transparency.OPAQUE,
+              getDepthPerPixel() == 8 ? DataBuffer.TYPE_BYTE : DataBuffer.TYPE_USHORT);
 
       return new BufferedImage(model, raster, false, null);
     }
@@ -190,13 +193,29 @@ final class SaneImage {
   }
 
   private DataBuffer asDataBuffer() {
-    byte[][] buffers = new byte[getFrames().size()][];
+    if (depthPerPixel == 1 || depthPerPixel == 8) {
+      byte[][] buffers = new byte[getFrames().size()][];
 
-    for (int i = 0; i < getFrames().size(); i++) {
-      buffers[i] = getFrames().get(i).getData();
+      for (int i = 0; i < getFrames().size(); i++) {
+        buffers[i] = getFrames().get(i).getData();
+      }
+
+      return new DataBufferByte(buffers, getFrames().get(0).getData().length);
+    } else {
+      short[][] buffers = new short[getFrames().size()][];
+      int stride = Short.SIZE / Byte.SIZE;
+
+      for (int i = 0; i < getFrames().size(); i++) {
+        byte[] bank = getFrames().get(i).getData();
+        buffers[i] = new short[bank.length / stride];
+        for (int j = 0; j < buffers[i].length; j++) {
+          buffers[i][j] = (short) ((bank[stride * j] & 0xFF) << Byte.SIZE);
+          buffers[i][j] |= (short) (bank[stride * j + 1] & 0xFF);
+        }
+      }
+
+      return new DataBufferUShort(buffers, getFrames().get(0).getData().length / stride);
     }
-
-    return new DataBufferByte(buffers, getFrames().get(0).getData().length);
   }
 
   public static class Builder {
