@@ -1,3 +1,4 @@
+sudo: required  # for installing the SANE daemon
 language: java
 jdk:
   - oraclejdk8
@@ -14,3 +15,14 @@ before_install:
   - sudo hostname "$(hostname | cut -c1-63)"
   - sed -e "s/^\\(127\\.0\\.0\\.1.*\\)/\\1 $(hostname | cut -c1-63)/" /etc/hosts | sudo tee /etc/hosts
   - cat /etc/hosts # optionally check the content *after*
+
+  # Installs SANE for SaneSessionTest.
+  - sudo apt-get update -q
+  - sudo apt-get install sane-utils
+  - sudo sed -i s/RUN=no/RUN=yes/ /etc/default/saned
+
+  # Add a password to the test device.
+  - sudo bash -c 'echo testuser:goodpass:test > /etc/sane.d/saned.users'
+  - sudo /etc/init.d/saned start
+
+script: ./gradlew check --info
