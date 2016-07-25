@@ -8,6 +8,7 @@ import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.EnumSet;
@@ -106,7 +107,7 @@ final class SaneImage {
     // Otherwise we're in a one-frame situation
     if (depthPerPixel == 1) {
       if (getFrames().get(0).getType() == FrameType.GRAY) {
-        return decodeSingleBitGrayscaleImage();
+        return decodeSingleBitGrayscaleImage(buffer);
       } else {
         return decodeSingleBitColorImage();
       }
@@ -146,25 +147,18 @@ final class SaneImage {
     throw new IllegalStateException("Unsupported SaneImage type");
   }
 
-  private BufferedImage decodeSingleBitGrayscaleImage() {
-    byte[] data = frames.get(0).getData();
-    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        int lineStartByte = y * bytesPerLine;
-        int offsetWithinLine = x / Byte.SIZE;
-        int offsetWithinByte = 1 << (Byte.SIZE - (x % Byte.SIZE) - 1);
-
-        // for a GRAY frame of single bit depth, the value is
-        // intensity: 1 is lowest intensity (black), 0 is highest
-        // (white)
-        int rgb = (data[lineStartByte + offsetWithinLine] & offsetWithinByte) == 0 ? 0xffffff : 0;
-        image.setRGB(x, y, rgb);
-      }
-    }
-
-    return image;
+  private BufferedImage decodeSingleBitGrayscaleImage(DataBuffer buffer) {
+    WritableRaster raster = Raster.createPackedRaster(buffer, width, height, 1, new Point(0, 0));
+    return new BufferedImage(
+        new IndexColorModel(
+            1,
+            2,
+            new byte[] {(byte) 0xff, 0},
+            new byte[] {(byte) 0xff, 0},
+            new byte[] {(byte) 0xff, 0}),
+        raster,
+        false,
+        null);
   }
 
   private BufferedImage decodeSingleBitColorImage() {
