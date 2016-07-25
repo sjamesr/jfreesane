@@ -10,7 +10,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -26,7 +30,6 @@ import java.util.logging.Logger;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -42,6 +45,7 @@ import static org.junit.Assert.fail;
  *
  * @author James Ring (sjr@jdns.org)
  */
+@RunWith(JUnit4.class)
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
@@ -49,6 +53,8 @@ public class SaneSessionTest {
   private static final Logger jfreesaneLogger = Logger.getLogger("au.com.southsky.jfreesane");
   private SanePasswordProvider correctPasswordProvider =
       SanePasswordProvider.forUsernameAndPassword("testuser", "goodpass");
+
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Before
   public void initSession() throws Exception {
@@ -550,17 +556,11 @@ public class SaneSessionTest {
   public void invalidPasswordCausesAccessDeniedError() throws Exception {
     session.setPasswordProvider(
         SanePasswordProvider.forUsernameAndPassword("testuser", "badpassword"));
-    SaneDevice device = session.getDevice("test");
-
     try {
+      SaneDevice device = session.getDevice("test");
+      expectedException.expect(SaneException.class);
+      expectedException.expectMessage("STATUS_ACCESS_DENIED");
       device.open();
-      fail("Expected a SaneException, didn't get one");
-    } catch (SaneException e) {
-      if (e.getStatus() != SaneStatus.STATUS_ACCESS_DENIED) {
-        throw e;
-      }
-
-      // if we got here, we got the expected exception
     } finally {
       // Restore the session's password provider.
       session.setPasswordProvider(correctPasswordProvider);
