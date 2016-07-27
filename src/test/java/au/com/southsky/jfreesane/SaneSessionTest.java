@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,6 +41,10 @@ import static org.junit.Assert.assertNotNull;
  * should be 'goodpass'.
  *
  * <p>
+ * If you cannot run a SANE server locally, you can set the {@code SANE_TEST_SERVER_ADDRESS}
+ * environment variable to the address of a SANE server in {@link HostAndPort} format.
+ *
+ * <p>
  * If you can't create this test environment, feel free to add the {@link org.junit.Ignore}
  * annotation to the test class.
  *
@@ -58,7 +63,15 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    this.session = SaneSession.withRemoteSane(InetAddress.getByName("localhost"));
+    HostAndPort hostAndPort;
+    String address = System.getenv("SANE_TEST_SERVER_ADDRESS");
+    if (address == null) {
+      address = "localhost";
+    }
+    hostAndPort = HostAndPort.fromString(address);
+    this.session =
+        SaneSession.withRemoteSane(
+            InetAddress.getByName(hostAndPort.getHostText()), hostAndPort.getPortOrDefault(6566));
     session.setPasswordProvider(correctPasswordProvider);
   }
 
