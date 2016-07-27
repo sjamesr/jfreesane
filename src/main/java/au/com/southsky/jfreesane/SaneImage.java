@@ -95,7 +95,7 @@ final class SaneImage {
 
       ColorModel model =
           new ComponentColorModel(
-              ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB),
+              ColorSpace.getInstance(ColorSpace.CS_sRGB),
               false,
               false,
               Transparency.OPAQUE,
@@ -123,7 +123,7 @@ final class SaneImage {
         colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
         bandOffsets = new int[] {0};
       } else /* RGB */ {
-        colorSpace = ColorSpace.getInstance(ColorSpace.CS_LINEAR_RGB);
+        colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
         bandOffsets = new int[] {0, 1 * bytesPerSample, 2 * bytesPerSample};
       }
 
