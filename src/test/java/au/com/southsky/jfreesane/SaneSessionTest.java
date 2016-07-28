@@ -296,10 +296,10 @@ public class SaneSessionTest {
        */
 
       assertProducesCorrectImage(device, "Gray", 1, "Grid");
-      assertProducesCorrectImage(device, "Color", 1, "Color pattern");
+      //      assertProducesCorrectImage(device, "Color", 1, "Color pattern");
 
-      //      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
-      //      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
+      assertProducesCorrectImage(device, "Color", 8, "Color pattern");
+      assertProducesCorrectImage(device, "Color", 16, "Color pattern");
     } finally {
       device.close();
     }
