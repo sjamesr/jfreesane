@@ -7,7 +7,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.3.2'
 }
 
-def releaseVersion = '0.95'
+def releaseVersion = '0.96'
 
 repositories {
     mavenCentral()
@@ -83,7 +83,7 @@ publishing {
                 classifier 'javadoc'
             }
 
-            groupId 'com.googlecode'
+            groupId 'com.googlecode.jfreesane'
             artifactId 'jfreesane'
             version releaseVersion
 
