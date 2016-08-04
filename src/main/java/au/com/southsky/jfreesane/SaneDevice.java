@@ -11,11 +11,14 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.
+ * Two devices are considered {@link #equals(java.lang.Object) } if they have the same {@code name},
+ * {@code vendor}, {@code model} and {@code type} attribute value which makes it possible that two
+ * identical devices are considered equal.
  *
- * <p>
  * Definitely not thread-safe. If you're going to use this object from multiple threads, you must do
  * your own synchronization. Even performing read operations (like getting an option's value) must
  * be synchronized.
@@ -213,5 +216,42 @@ public class SaneDevice implements Closeable {
    */
   void invalidateOptions() {
     optionTitleMap = null;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 3;
+    hash = 37 * hash + Objects.hashCode(this.name);
+    hash = 37 * hash + Objects.hashCode(this.vendor);
+    hash = 37 * hash + Objects.hashCode(this.model);
+    hash = 37 * hash + Objects.hashCode(this.type);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final SaneDevice other = (SaneDevice) obj;
+    if (!Objects.equals(this.name, other.name)) {
+      return false;
+    }
+    if (!Objects.equals(this.vendor, other.vendor)) {
+      return false;
+    }
+    if (!Objects.equals(this.model, other.model)) {
+      return false;
+    }
+    if (!Objects.equals(this.type, other.type)) {
+      return false;
+    }
+    return true;
   }
 }

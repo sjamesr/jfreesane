@@ -14,19 +14,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import java.util.Objects;
 
 /**
  * This class represents a SANE device option. An option may be active or inactive (see
  * {@link #isActive}). Active options may be read (see {@link #isReadable}) and modified (see
  * {@link #isWriteable}).
  *
- * <p>
  * Options have a type (see {@link #getType}), in order to read or write an option's value, you must
  * call the getter or setter method corresponding to the option's type. For example, for an option
  * of type {@link OptionValueType#STRING}, you will call {@link #setStringValue} or
  * {@link #getStringValue}.
  *
- * <p>
  * Options may have constraints that impose restrictions on the range of values the option may take.
  * Constraints have a type which may be obtained using {@link #getConstraintType}. You may read the
  * actual constraints by calling the constraint getter method corresponding to the constraint type.
@@ -804,5 +803,38 @@ public final class SaneOption {
     public String getResource() {
       return resource;
     }
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 3;
+    hash = 97 * hash + Objects.hashCode(this.device);
+    hash = 97 * hash + this.optionNumber;
+    hash = 97 * hash + Objects.hashCode(this.descriptor);
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (obj == null) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    final SaneOption other = (SaneOption) obj;
+    if (this.optionNumber != other.optionNumber) {
+      return false;
+    }
+    if (!Objects.equals(this.device, other.device)) {
+      return false;
+    }
+    if (!Objects.equals(this.descriptor, other.descriptor)) {
+      return false;
+    }
+    return true;
   }
 }
