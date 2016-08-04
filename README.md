@@ -2,6 +2,7 @@ JFreeSane: A SANE client for Java
 =================================
 [![Build Status](https://travis-ci.org/sjamesr/jfreesane.svg?branch=master)](https://travis-ci.org/sjamesr/jfreesane)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane)
+[![Gitter](https://badges.gitter.im/sjamesr/jfreesane.svg)](https://gitter.im/sjamesr/jfreesane)
 
 JFreeSane is a pure-Java implementation of a SANE client. See [the SANE project
 page](http://www.sane-project.org/) for more information about SANE itself.
@@ -98,6 +99,9 @@ If you want to contribute back to JFreeSane, please consider [forking](https://h
 the project. Once you have some code you'd like to contribute,
 [submit a pull request](https://help.github.com/articles/using-pull-requests). We really appreciate contributions
 and we'll get it checked in as fast as possible.
+
+You can also get in touch via [jfreesane-discuss](http://groups.google.com/group/jfreesane-discuss) or 
+[Gitter](https://gitter.im/sjamesr/jfreesane).
 
 # Usage
 
