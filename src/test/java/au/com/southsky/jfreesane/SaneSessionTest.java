@@ -7,17 +7,6 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.SettableFuture;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
-import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
@@ -27,6 +16,16 @@ import java.net.InetAddress;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -220,26 +219,14 @@ public class SaneSessionTest {
     SaneDevice device = session.getDevice("test");
     device.open();
     assertThat(device.getOption("source").getStringConstraints())
-        .has()
-        .item("Automatic Document Feeder");
+        .contains("Automatic Document Feeder");
     device.getOption("source").setStringValue("Automatic Document Feeder");
 
-    boolean thrown = false;
+    expectedException.expect(SaneException.class);
+    expectedException.expectMessage("STATUS_NO_DOCS");
     for (int i = 0; i < 20; i++) {
-      try {
-        device.acquireImage();
-      } catch (SaneException e) {
-        if (e.getStatus() == SaneStatus.STATUS_NO_DOCS) {
-          // out of documents to read, that's fine
-          thrown = true;
-        } else {
-          throw e;
-        }
-      }
+      device.acquireImage();
     }
-
-    assertThat(thrown).isTrue();
-    device.acquireImage();
   }
 
   @Test
