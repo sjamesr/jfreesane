@@ -24,6 +24,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -57,6 +58,8 @@ public class SaneSessionTest {
   private static final Logger jfreesaneLogger = Logger.getLogger("au.com.southsky.jfreesane");
   private SanePasswordProvider correctPasswordProvider =
       SanePasswordProvider.forUsernameAndPassword("testuser", "goodpass");
+
+  @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
@@ -115,7 +118,7 @@ public class SaneSessionTest {
     try {
       device.open();
       BufferedImage image = device.acquireImage();
-      File file = File.createTempFile("image", ".png");
+      File file = File.createTempFile("image", ".png", tempFolder.getRoot());
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
@@ -239,7 +242,7 @@ public class SaneSessionTest {
       assertEquals("Gray", modeOption.setStringValue("Gray"));
       BufferedImage image = device.acquireImage();
 
-      File file = File.createTempFile("mono-image", ".png");
+      File file = File.createTempFile("mono-image", ".png", tempFolder.getRoot());
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
     } finally {
@@ -514,7 +517,7 @@ public class SaneSessionTest {
       assertEquals("Color", device.getOption("mode").setStringValue("Color"));
       assertEquals(true, device.getOption("three-pass").setBooleanValue(true));
       for (int i = 0; i < 5; i++) {
-        File file = File.createTempFile("three-pass", ".png");
+        File file = File.createTempFile("three-pass", ".png", tempFolder.getRoot());
         ImageIO.write(device.acquireImage(), "png", file);
         System.out.println("Wrote three-pass test to " + file);
       }
@@ -569,17 +572,13 @@ public class SaneSessionTest {
 
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
-    File passwordFile = File.createTempFile("sane", ".pass");
-    try {
-      Files.write("testuser:goodpass:test", passwordFile, Charsets.ISO_8859_1);
-      session.setPasswordProvider(
-          SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
-      SaneDevice device = session.getDevice("test");
-      device.open();
-      device.acquireImage();
-    } finally {
-      passwordFile.delete();
-    }
+    File passwordFile = tempFolder.newFile("sane.pass");
+    Files.write("testuser:goodpass:test", passwordFile, Charsets.ISO_8859_1);
+    session.setPasswordProvider(
+        SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
+    SaneDevice device = session.getDevice("test");
+    device.open();
+    device.acquireImage();
   }
 
   @Test
@@ -642,7 +641,8 @@ public class SaneSessionTest {
     File file =
         File.createTempFile(
             String.format("image-%s-%d-%s", mode, sampleDepth, testPicture.replace(' ', '_')),
-            ".png");
+            ".png",
+            tempFolder.getRoot());
     ImageIO.write(actualImage, "png", file);
     System.out.println("Successfully wrote " + file);
   }
