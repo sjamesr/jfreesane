@@ -7,7 +7,7 @@ plugins {
     id 'com.github.sherter.google-java-format' version '0.3.2'
 }
 
-def releaseVersion = '0.96'
+def releaseVersion = '0.97-SNAPSHOT'
 
 repositories {
     mavenCentral()
