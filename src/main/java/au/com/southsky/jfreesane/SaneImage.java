@@ -115,15 +115,16 @@ final class SaneImage {
     }
 
     if (getDepthPerPixel() == 8 || getDepthPerPixel() == 16) {
-      ColorSpace colorSpace;
+      ColorSpace colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
       int[] bandOffsets;
+      int scanlineStride;
 
       if (getFrames().get(0).getType() == FrameType.GRAY) {
-        colorSpace = ColorSpace.getInstance(ColorSpace.CS_GRAY);
-        bandOffsets = new int[] {0};
+        bandOffsets = new int[] {0, 0, 0};
+        scanlineStride = 1;
       } else /* RGB */ {
-        colorSpace = ColorSpace.getInstance(ColorSpace.CS_sRGB);
         bandOffsets = new int[] {0, 1, 2};
+        scanlineStride = 3;
       }
 
       WritableRaster raster =
@@ -132,7 +133,7 @@ final class SaneImage {
               width,
               height,
               bytesPerLine * Byte.SIZE / depthPerPixel,
-              bandOffsets.length,
+              scanlineStride,
               bandOffsets,
               new Point(0, 0));
 
