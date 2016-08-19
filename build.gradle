@@ -40,6 +40,10 @@ checkstyleMain.finalizedBy checkstyleHtml
 // Don't stop test from running because of checkstyle failures.
 checkstyleTest.mustRunAfter test
 
+javadoc {
+    options.memberLevel = JavadocMemberLevel.PROTECTED
+}
+
 task javadocJar(type: Jar, dependsOn: javadoc) {
     baseName 'javadoc'
 
