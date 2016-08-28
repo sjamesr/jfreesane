@@ -447,8 +447,7 @@ public final class SaneOption {
     }
 
     // read result
-    ControlOptionResult result = ControlOptionResult.fromSession(device.getSession());
-    return result;
+    return ControlOptionResult.fromSession(device.getSession());
   }
 
   /**
@@ -726,6 +725,14 @@ public final class SaneOption {
         throws IOException, SaneException {
       SaneInputStream stream = session.getInputStream();
 
+      // Expected record format:
+      // SANE_Status status
+      // SANE_Word info
+      // SANE_Word value_type
+      // SANE_Word value_size
+      // void *value
+      // SANE_String *resource
+      // See http://sane-project.org/html/doc017.html#s5.2.6.
       SaneWord status = stream.readWord();
 
       if (status.integerValue() != 0) {
