@@ -20,7 +20,7 @@ dependencies {
 }
 
 wrapper {
-    gradleVersion = '2.8'
+    gradleVersion = '3.0'
 }
 
 checkstyle {
