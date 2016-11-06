@@ -5,6 +5,15 @@ plugins {
     id 'com.jfrog.bintray' version '1.4'
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
+    id 'jacoco'
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination "${buildDir}/jacocoHtml"
+    }
 }
 
 def releaseVersion = '0.97'
