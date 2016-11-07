@@ -6,6 +6,7 @@ plugins {
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id 'jacoco'
+    id 'net.ltgt.errorprone' version '0.0.8'
 }
 
 jacocoTestReport {
@@ -20,6 +21,10 @@ def releaseVersion = '0.97'
 
 repositories {
     mavenCentral()
+}
+
+configurations.errorprone {
+  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
 }
 
 dependencies {
