@@ -199,6 +199,13 @@ public final class SaneOption {
           continue;
         }
 
+        if (!option.isWriteable()) {
+          //as it is done into scanimage, we ignore !SANE_OPTION_IS_SETTABLE options
+          //this solve problems with pfufs backend (fujitsu scanner) which returns several not settable options with the name 'inactive'
+          logger.fine(String.format("ignoring not writeable option with id %d: %s", i, option));
+          continue;
+        }
+
         options.add(option);
       }
     }
