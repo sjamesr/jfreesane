@@ -1,11 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Logger;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -14,6 +8,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * This class represents a SANE device option. An option may be active or inactive (see
@@ -183,10 +182,6 @@ public final class SaneOption {
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
-      if (option == null) {
-        continue;
-      }
-
       if (option.getValueType() == OptionValueType.GROUP) {
         device.addOptionGroup(option.getGroup());
       } else {
@@ -196,6 +191,21 @@ public final class SaneOption {
         // omitted
         if (i > 0 && Strings.isNullOrEmpty(option.getName())) {
           logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
+          continue;
+        }
+
+        if (option.isWriteable() && option.isHardSelectable()) {
+          // This option is invalid, it can't be both hardware and software selectable.
+          continue;
+        }
+
+        if (option.isWriteable() && !option.isReadable()) {
+          // Can't have a write-only option.
+          continue;
+        }
+
+        if (!(option.isWriteable() || option.isReadable() || option.isHardSelectable())) {
+          // Useless option, skip it.
           continue;
         }
 
@@ -698,6 +708,10 @@ public final class SaneOption {
 
   public boolean isWriteable() {
     return descriptor.getOptionCapabilities().contains(OptionCapability.SOFT_SELECT);
+  }
+
+  boolean isHardSelectable() {
+    return descriptor.getOptionCapabilities().contains(OptionCapability.HARD_SELECT);
   }
 
   /**
