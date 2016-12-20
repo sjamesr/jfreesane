@@ -16,18 +16,18 @@ public enum OptionValueConstraintType implements SaneEnum {
   /**
    * The option's value is constrained to some range of values.
    */
-  RANGE_CONSTRAINT(1, ""),
+  RANGE_CONSTRAINT(1, "Range constraint"),
 
   /**
    * The option's value is constrained to some list of values.
    */
-  VALUE_LIST_CONSTRAINT(2, ""),
+  VALUE_LIST_CONSTRAINT(2, "Value list constraint"),
 
   /**
    * The option's value type is {@link OptionValueType#STRING} and its value is constrained to some
    * list of string values.
    */
-  STRING_LIST_CONSTRAINT(3, "");
+  STRING_LIST_CONSTRAINT(3, "String list constraint");
 
   private final int wireValue;
   private final String description;
