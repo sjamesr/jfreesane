@@ -1,5 +1,7 @@
 JFreeSane: A SANE client for Java
 =================================
+
+[![Join the chat at https://gitter.im/sjamesr/jfreesane](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sjamesr/jfreesane?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/sjamesr/jfreesane.svg?branch=master)](https://travis-ci.org/sjamesr/jfreesane)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane/badge.svg?style=plastic)](https://maven-badges.herokuapp.com/maven-central/com.googlecode.jfreesane/jfreesane)
 [![Gitter](https://badges.gitter.im/sjamesr/jfreesane.svg)](https://gitter.im/sjamesr/jfreesane)
