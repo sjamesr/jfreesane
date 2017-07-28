@@ -16,16 +16,10 @@ import com.google.common.io.CharSource;
 public class SaneClientAuthenticationTest {
 
   @Test
-  public void testSaneClientAuthentication() {
-    SaneClientAuthentication sca = new SaneClientAuthentication();
-    Assert.assertNotNull(sca);
-  }
-
-  @Test
   public void testSaneClientAuthenticationWithMissingFileDoesNotFail() {
     String filepath = "NON_EXISTENT_PATH_" + UUID.randomUUID().toString();
     SaneClientAuthentication sca = new SaneClientAuthentication(filepath);
-    Assert.assertNotNull(sca);
+    sca.getCredentialForResource("");
   }
 
   @Test
