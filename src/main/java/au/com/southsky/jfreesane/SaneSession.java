@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -64,9 +65,19 @@ public final class SaneSession implements Closeable {
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port
    * with the given connection timeout.
    */
+  public static SaneSession withRemoteSane(InetAddress saneAddress, long timeout, TimeUnit timeUnit,
+                                           long soTimeout, TimeUnit soTimeUnit)
+          throws IOException {
+    return withRemoteSane(saneAddress, DEFAULT_PORT, timeout, timeUnit, soTimeout, soTimeUnit);
+  }
+
+  /**
+   * Establishes a connection to the SANE daemon running on the given host on the default SANE port
+   * with the given connection timeout.
+   */
   public static SaneSession withRemoteSane(InetAddress saneAddress, long timeout, TimeUnit timeUnit)
       throws IOException {
-    return withRemoteSane(saneAddress, DEFAULT_PORT, timeout, timeUnit);
+    return withRemoteSane(saneAddress, DEFAULT_PORT, timeout, timeUnit,  0, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -74,16 +85,26 @@ public final class SaneSession implements Closeable {
    * connection timeout.
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
-    return withRemoteSane(saneAddress, port, 0, TimeUnit.MILLISECONDS);
+    return withRemoteSane(saneAddress, port, 0, TimeUnit.MILLISECONDS,  0, TimeUnit.MILLISECONDS);
   }
 
   /**
    * Establishes a connection to the SANE daemon running on the given host on the given port. If the
    * connection cannot be established within the given timeout,
    * {@link java.net.SocketTimeoutException} is thrown.
+   *
+   * @param saneAddress
+   * @param port
+   * @param timeout       Connection timeout
+   * @param timeUnit      Connection timeout unit
+   * @param soTimeout     Socket timeout (for read on socket)
+   * @param soTimeUnit    Socket timeout unit
+   * @return
+   * @throws IOException
    */
   public static SaneSession withRemoteSane(
-      InetAddress saneAddress, int port, long timeout, TimeUnit timeUnit) throws IOException {
+      InetAddress saneAddress, int port, long timeout, TimeUnit timeUnit, long soTimeout, TimeUnit soTimeUnit)
+          throws IOException, SocketTimeoutException {
     long millis = timeUnit.toMillis(timeout);
     Preconditions.checkArgument(
         millis >= 0 && millis <= Integer.MAX_VALUE,
@@ -99,6 +120,14 @@ public final class SaneSession implements Closeable {
     }
     Socket socket = new Socket();
     socket.setTcpNoDelay(true);
+
+    if (soTimeUnit != null && soTimeout > 0) {
+      long soTimeoutMillis = soTimeUnit.toMillis(soTimeout);
+      Preconditions.checkArgument(
+              soTimeoutMillis >= 0 && soTimeoutMillis <= Integer.MAX_VALUE,
+              "Socket timeout must be between 0 and Integer.MAX_VALUE milliseconds");
+      socket.setSoTimeout((int)soTimeoutMillis);
+    }
     socket.connect(new InetSocketAddress(saneAddress, port), (int) millis);
     SaneSession session = new SaneSession(socket);
     session.initSane();
