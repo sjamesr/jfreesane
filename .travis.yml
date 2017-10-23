@@ -1,3 +1,4 @@
+dist: precise
 sudo: required  # for installing the SANE daemon
 language: java
 jdk:
