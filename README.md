@@ -81,19 +81,7 @@ It cannot talk to your scanners without a SANE daemon.
 # Please contribute
 
 If you've been looking for a Java SANE client and you're familiar with SANE, please
-consider contributing documentation or patches. The easiest way to get started with
-Eclipse is to do this:
-
-```
-$ git clone https://github.com/sjamesr/jfreesane.git
-$ cd jfreesane
-~/jfreesane$ mvn eclipse:configure-workspace \
-    -Declipse.workspace=/path/to/eclipse/workspace  # eclipse workspace, not working directory
-jfreesane$ mvn eclipse:eclipse
-```
-* run eclipse, import existing project, specify this jfreesane directory 
-as the project root
-* start hacking
+consider contributing documentation or patches.
 
 If you want to contribute back to JFreeSane, please consider [forking](https://help.github.com/articles/fork-a-repo)
 the project. Once you have some code you'd like to contribute,
