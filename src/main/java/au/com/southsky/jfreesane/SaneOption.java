@@ -777,10 +777,6 @@ public final class SaneOption {
         session.authorize(resource);
         status = stream.readWord();
 
-        if (status.integerValue() != 0) {
-          throw SaneException.fromStatusWord(status);
-        }
-
         info = stream.readWord().integerValue();
 
         type = SaneEnums.valueOf(OptionValueType.class, stream.readWord().integerValue());
@@ -796,6 +792,10 @@ public final class SaneOption {
           if (stream.read(value) != valueSize) {
             throw new IOException("truncated read while getting value");
           }
+        }
+
+        if (status.integerValue() != 0) {
+          throw SaneException.fromStatusWord(status);
         }
       }
 

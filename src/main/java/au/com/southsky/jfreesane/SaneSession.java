@@ -194,11 +194,11 @@ public final class SaneSession implements Closeable {
     if (!resource.isEmpty()) {
       authorize(resource);
       status = inputStream.readWord();
+      handle = inputStream.readWord();
+      resource = inputStream.readString();
       if (status.integerValue() != 0) {
         throw new SaneException(SaneStatus.fromWireValue(status.integerValue()));
       }
-      handle = inputStream.readWord();
-      resource = inputStream.readString();
     }
 
     return new SaneDeviceHandle(status, handle, resource);
@@ -228,15 +228,16 @@ public final class SaneSession implements Closeable {
 
       if (!resource.isEmpty()) {
         authorize(resource);
-        {
-          int status = inputStream.readWord().integerValue();
-          if (status != 0) {
-            throw new SaneException(SaneStatus.fromWireValue(status));
-          }
-        }
+        int status = inputStream.readWord().integerValue();
         port = inputStream.readWord().integerValue();
         byteOrder = inputStream.readWord();
-        resource = inputStream.readString();
+
+        // Throw away the resource string, we don't attempt to authenticate again anyway.
+        inputStream.readString();
+
+        if (status != 0) {
+          throw new SaneException(SaneStatus.fromWireValue(status));
+        }
       }
 
       // Ask the server for the parameters of this scan
@@ -354,7 +355,7 @@ public final class SaneSession implements Closeable {
 
     outputStream.write(passwordProvider.getUsername(resource));
     writePassword(resource, passwordProvider.getPassword(resource));
-    // Read reply - from network
+    // Read dummy reply and discard (according to the spec, it is unused).
     inputStream.readWord();
   }
 
