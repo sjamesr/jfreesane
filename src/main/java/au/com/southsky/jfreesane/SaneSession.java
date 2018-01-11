@@ -181,6 +181,7 @@ public final class SaneSession implements Closeable {
   SaneDeviceHandle openDevice(SaneDevice device) throws IOException, SaneException {
     outputStream.write(SaneRpcCode.SANE_NET_OPEN);
     outputStream.write(device.getName());
+    outputStream.flush();
 
     SaneWord status = inputStream.readWord();
 
@@ -215,6 +216,7 @@ public final class SaneSession implements Closeable {
       SaneDeviceHandle handle = device.getHandle();
       outputStream.write(SaneRpcCode.SANE_NET_START);
       outputStream.write(handle.getHandle());
+      outputStream.flush();
 
       SaneWord startStatus = inputStream.readWord();
 
@@ -242,6 +244,7 @@ public final class SaneSession implements Closeable {
       // Ask the server for the parameters of this scan
       outputStream.write(SaneRpcCode.SANE_NET_GET_PARAMETERS);
       outputStream.write(handle.getHandle());
+      outputStream.flush();
 
       Socket imageSocket = null;
 
@@ -297,6 +300,7 @@ public final class SaneSession implements Closeable {
     // RPC code
     outputStream.write(SaneRpcCode.SANE_NET_CLOSE);
     outputStream.write(handle.getHandle());
+    outputStream.flush();
 
     // read the dummy value from the wire, if it doesn't throw an exception
     // we assume the close was successful
@@ -307,6 +311,7 @@ public final class SaneSession implements Closeable {
     // RPC code
     outputStream.write(SaneRpcCode.SANE_NET_CANCEL);
     outputStream.write(handle.getHandle());
+    outputStream.flush();
 
     // read the dummy value from the wire, if it doesn't throw an exception
     // we assume the cancel was successful
@@ -322,6 +327,7 @@ public final class SaneSession implements Closeable {
 
     // username
     outputStream.write(System.getProperty("user.name"));
+    outputStream.flush();
 
     inputStream.readWord();
     inputStream.readWord();
@@ -341,6 +347,7 @@ public final class SaneSession implements Closeable {
     // RPC code FOR SANE_NET_AUTHORIZE
     outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
     outputStream.write(resource);
+    outputStream.flush();
 
     if (!passwordProvider.canAuthenticate(resource)) {
       // the password provider has indicated that there's no way it can provide
@@ -354,6 +361,8 @@ public final class SaneSession implements Closeable {
 
     outputStream.write(passwordProvider.getUsername(resource));
     writePassword(resource, passwordProvider.getPassword(resource));
+    outputStream.flush();
+
     // Read reply - from network
     inputStream.readWord();
   }

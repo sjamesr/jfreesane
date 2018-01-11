@@ -1,5 +1,6 @@
 package au.com.southsky.jfreesane;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -9,39 +10,13 @@ import java.io.OutputStream;
  *
  * @author James Ring (sjr@jdns.org)
  */
-class SaneOutputStream extends OutputStream {
-  private final OutputStream wrappedStream;
+class SaneOutputStream extends BufferedOutputStream {
 
   /**
    * Creates a new {@code SaneOutputStream} that wraps the given stream.
    */
   SaneOutputStream(OutputStream wrappedStream) {
-    this.wrappedStream = wrappedStream;
-  }
-
-  @Override
-  public void close() throws IOException {
-    wrappedStream.close();
-  }
-
-  @Override
-  public void flush() throws IOException {
-    wrappedStream.flush();
-  }
-
-  @Override
-  public void write(int b) throws IOException {
-    wrappedStream.write(b);
-  }
-
-  @Override
-  public void write(byte[] b) throws IOException {
-    wrappedStream.write(b);
-  }
-
-  @Override
-  public void write(byte[] b, int off, int len) throws IOException {
-    wrappedStream.write(b, off, len);
+    super(wrappedStream);
   }
 
   /**
@@ -78,10 +53,10 @@ class SaneOutputStream extends OutputStream {
     if (charArray.length > 0) {
       byte[] encoded = SanePasswordEncoder.encodedLatin1(charArray);
       write(SaneWord.forInt(encoded.length + 1));
-      write(encoded);
+      out.write(encoded);
     }
 
-    write(0);
+    out.write(0);
   }
 
   /**
@@ -89,7 +64,7 @@ class SaneOutputStream extends OutputStream {
    * {@link SaneWord#getValue}.
    */
   public void write(SaneWord word) throws IOException {
-    write(word.getValue());
+    out.write(word.getValue());
   }
 
   /**
