@@ -171,6 +171,7 @@ public final class SaneOption {
     // select device
 
     outputStream.write(device.getHandle().getHandle());
+    outputStream.flush();
 
     // first word of response is number of option entries
     int length = inputStream.readWord().integerValue() - 1;
@@ -456,6 +457,8 @@ public final class SaneOption {
       // buffer in an RPC call ???
     }
 
+    out.flush();
+
     // read result
     return ControlOptionResult.fromSession(device.getSession());
   }
@@ -618,6 +621,8 @@ public final class SaneOption {
       out.write(element);
     }
 
+    out.flush();
+
     ControlOptionResult result = handleWriteResponse();
     if (result.getInfo().contains(OptionWriteInfo.RELOAD_OPTIONS)
         || result.getInfo().contains(OptionWriteInfo.RELOAD_PARAMETERS)) {
@@ -643,6 +648,7 @@ public final class SaneOption {
 
     // write(String) takes care of writing the size for us
     out.write(value);
+    out.flush();
 
     return handleWriteResponse();
   }
@@ -670,6 +676,7 @@ public final class SaneOption {
     for (Integer element : value) {
       out.write(SaneWord.forInt(element));
     }
+    out.flush();
 
     return handleWriteResponse();
   }
@@ -684,6 +691,7 @@ public final class SaneOption {
     out.write(getValueType());
     out.write(SaneWord.forInt(0));
     out.write(SaneWord.forInt(0)); // only one value follows
+    out.flush();
 
     return handleWriteResponse();
   }
