@@ -160,6 +160,7 @@ public final class SaneSession implements Closeable {
    */
   public List<SaneDevice> listDevices() throws IOException, SaneException {
     outputStream.write(SaneRpcCode.SANE_NET_GET_DEVICES);
+    outputStream.flush();
     return inputStream.readDeviceList();
   }
 
