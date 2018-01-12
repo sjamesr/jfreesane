@@ -346,10 +346,6 @@ public final class SaneSession implements Closeable {
           "Authorization failed - no password provider present "
               + "(you must call setPasswordProvider)");
     }
-    // RPC code FOR SANE_NET_AUTHORIZE
-    outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
-    outputStream.write(resource);
-    outputStream.flush();
 
     if (!passwordProvider.canAuthenticate(resource)) {
       // the password provider has indicated that there's no way it can provide
@@ -361,6 +357,9 @@ public final class SaneSession implements Closeable {
               + "]");
     }
 
+    // RPC code FOR SANE_NET_AUTHORIZE
+    outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
+    outputStream.write(resource);
     outputStream.write(passwordProvider.getUsername(resource));
     writePassword(resource, passwordProvider.getPassword(resource));
     outputStream.flush();
