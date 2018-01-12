@@ -1,7 +1,6 @@
 package au.com.southsky.jfreesane;
 
 import com.google.common.base.Preconditions;
-
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -9,7 +8,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -109,7 +107,7 @@ public final class SaneSession implements Closeable {
       TimeUnit timeUnit,
       long soTimeout,
       TimeUnit soTimeUnit)
-      throws IOException, SocketTimeoutException {
+      throws IOException {
     long millis = timeUnit.toMillis(timeout);
     Preconditions.checkArgument(
         millis >= 0 && millis <= Integer.MAX_VALUE,
