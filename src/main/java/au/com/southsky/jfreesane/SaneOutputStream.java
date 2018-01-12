@@ -53,10 +53,10 @@ class SaneOutputStream extends BufferedOutputStream {
     if (charArray.length > 0) {
       byte[] encoded = SanePasswordEncoder.encodedLatin1(charArray);
       write(SaneWord.forInt(encoded.length + 1));
-      out.write(encoded);
+      write(encoded);
     }
 
-    out.write(0);
+    write(0);
   }
 
   /**
@@ -64,7 +64,7 @@ class SaneOutputStream extends BufferedOutputStream {
    * {@link SaneWord#getValue}.
    */
   public void write(SaneWord word) throws IOException {
-    out.write(word.getValue());
+    write(word.getValue());
   }
 
   /**
