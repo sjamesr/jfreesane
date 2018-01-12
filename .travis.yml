@@ -1,10 +1,9 @@
-dist: precise
+dist: trusty
 sudo: required  # for installing the SANE daemon
 language: java
 jdk:
   - oraclejdk8
-  - oraclejdk7
-  - openjdk7
+  - openjdk8
 
 # Works around an issue in Travis, see
 # https://github.com/travis-ci/travis-ci/issues/5227.
