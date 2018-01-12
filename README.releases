@@ -12,7 +12,7 @@ $ ./gradlew clean
 
 Change build.gradle to have the appropriate version in releaseVersion.
 
-$ ./gradlew bintrayUpload
+$ ./gradlew -PbintrayUsername=<user> -PbintrayApiKey=<apiKey> bintrayUpload
 
 * go to http://bintray.com/
 * select the latest version, then click "Publish". JFreeSane is now available
