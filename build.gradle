@@ -17,7 +17,7 @@ jacocoTestReport {
     }
 }
 
-def releaseVersion = '0.97'
+def releaseVersion = '0.98'
 
 repositories {
     mavenCentral()
