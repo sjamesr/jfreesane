@@ -45,10 +45,11 @@ public final class SaneSession implements Closeable {
 
   /**
    * Sets the {@link SanePasswordProvider password provider} to use if the SANE daemon asks for
-   * credentials when accessing a resource.
+   * credentials when accessing a resource. Throws {@link NullPointerException} if
+   * {@code passwordProvider} is {@code null}.
    */
   public void setPasswordProvider(SanePasswordProvider passwordProvider) {
-    this.passwordProvider = passwordProvider;
+    this.passwordProvider = Preconditions.checkNotNull(passwordProvider);
   }
 
   /**
@@ -191,7 +192,9 @@ public final class SaneSession implements Closeable {
     }
 
     if (!resource.isEmpty()) {
-      authorize(resource);
+      if (!authorize(resource)) {
+        throw new SaneException(SaneStatus.STATUS_ACCESS_DENIED);
+      }
       status = inputStream.readWord();
       handle = inputStream.readWord();
       resource = inputStream.readString();
@@ -227,7 +230,9 @@ public final class SaneSession implements Closeable {
       }
 
       if (!resource.isEmpty()) {
-        authorize(resource);
+        if (!authorize(resource)) {
+          throw new SaneException(SaneStatus.STATUS_ACCESS_DENIED);
+        }
         int status = inputStream.readWord().integerValue();
         port = inputStream.readWord().integerValue();
         byteOrder = inputStream.readWord();
@@ -337,32 +342,27 @@ public final class SaneSession implements Closeable {
    *
    * @throws IOException if an error occurs while communicating with the SANE daemon
    */
-  void authorize(String resource) throws IOException {
+  boolean authorize(String resource) throws IOException {
     if (passwordProvider == null) {
       throw new IOException(
           "Authorization failed - no password provider present "
               + "(you must call setPasswordProvider)");
     }
 
-    if (!passwordProvider.canAuthenticate(resource)) {
-      // the password provider has indicated that there's no way it can provide
-      // credentials for this request.
-      throw new IOException(
-          "Authorization failed - the password provider is "
-              + "unable to provide a password for the resource ["
-              + resource
-              + "]");
+    if (passwordProvider.canAuthenticate(resource)) {
+      // RPC code FOR SANE_NET_AUTHORIZE
+      outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
+      outputStream.write(resource);
+      outputStream.write(passwordProvider.getUsername(resource));
+      writePassword(resource, passwordProvider.getPassword(resource));
+      outputStream.flush();
+
+      // Read dummy reply and discard (according to the spec, it is unused).
+      inputStream.readWord();
+      return true;
     }
 
-    // RPC code FOR SANE_NET_AUTHORIZE
-    outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
-    outputStream.write(resource);
-    outputStream.write(passwordProvider.getUsername(resource));
-    writePassword(resource, passwordProvider.getPassword(resource));
-    outputStream.flush();
-
-    // Read dummy reply and discard (according to the spec, it is unused).
-    inputStream.readWord();
+    return false;
   }
 
   /**
