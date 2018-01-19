@@ -55,7 +55,6 @@ public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
   private SaneSession session;
-  private static final Logger jfreesaneLogger = Logger.getLogger("au.com.southsky.jfreesane");
   private SanePasswordProvider correctPasswordProvider =
       SanePasswordProvider.forUsernameAndPassword("testuser", "goodpass");
 
@@ -92,44 +91,34 @@ public class SaneSessionTest {
 
   @Test
   public void openDeviceSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void optionGroupsArePopulated() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       assertThat(device.getOptionGroups()).isNotEmpty();
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void imageAcquisitionSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       BufferedImage image = device.acquireImage();
       File file = File.createTempFile("image", ".png", tempFolder.getRoot());
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void listOptionsSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       List<SaneOption> options = device.listOptions();
       Assert.assertTrue("Expect multiple SaneOptions", options.size() > 0);
@@ -140,15 +129,12 @@ public class SaneSessionTest {
           System.out.println(option.getValueCount());
         }
       }
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void getOptionValueSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       List<SaneOption> options = device.listOptions();
       Assert.assertTrue("Expect multiple SaneOptions", options.size() > 0);
@@ -177,21 +163,16 @@ public class SaneSessionTest {
 
         System.out.println();
       }
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void setOptionValueSucceedsForString() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       SaneOption modeOption = device.getOption("mode");
       assertThat(modeOption.setStringValue("Gray")).isEqualTo("Gray");
-    } finally {
-      device.close();
     }
   }
 
@@ -234,9 +215,8 @@ public class SaneSessionTest {
 
   @Test
   public void acquireMonoImage() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       SaneOption modeOption = device.getOption("mode");
       assertEquals("Gray", modeOption.setStringValue("Gray"));
@@ -245,8 +225,6 @@ public class SaneSessionTest {
       File file = File.createTempFile("mono-image", ".png", tempFolder.getRoot());
       ImageIO.write(image, "png", file);
       System.out.println("Successfully wrote " + file);
-    } finally {
-      device.close();
     }
   }
 
@@ -256,9 +234,8 @@ public class SaneSessionTest {
    */
   @Test
   public void producesCorrectImages() throws Exception {
-    SaneDevice device = session.getDevice("test");
     // Solid black and white
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       device.getOption("br-x").setFixedValue(200);
       device.getOption("br-y").setFixedValue(200);
@@ -290,47 +267,38 @@ public class SaneSessionTest {
 
       assertProducesCorrectImage(device, "Color", 8, "Color pattern");
       assertProducesCorrectImage(device, "Color", 16, "Color pattern");
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readsAndSetsStringsCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).matches("Gray|Color");
       assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
       assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).isEqualTo("Gray");
       assertThat(device.getOption("read-return-value").getStringValue(Charsets.US_ASCII))
           .isEqualTo("Default");
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readsFixedPrecisionCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       // this option gets rounded to the nearest whole number by the backend
       assertEquals(123, device.getOption("br-x").setFixedValue(123.456), 0.0001);
       assertEquals(123, device.getOption("br-x").getFixedValue(), 0.0001);
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readsBooleanOptionsCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("hand-scanner");
@@ -338,16 +306,13 @@ public class SaneSessionTest {
       assertThat(option.getBooleanValue()).isTrue();
       assertThat(option.setBooleanValue(false)).isFalse();
       assertThat(option.getBooleanValue()).isFalse();
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readsStringListConstraintsCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("string-constraint-string-list");
@@ -360,16 +325,13 @@ public class SaneSessionTest {
               "First entry",
               "Second entry",
               "This is the very long third entry. Maybe the frontend has an idea how to display it");
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readIntegerValueListConstraintsCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("int-constraint-word-list");
@@ -378,16 +340,13 @@ public class SaneSessionTest {
       assertEquals(
           ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
           option.getIntegerValueListConstraint());
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readFixedValueListConstraintsCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("fixed-constraint-word-list");
@@ -400,17 +359,13 @@ public class SaneSessionTest {
       for (int i = 0; i < expected.size(); i++) {
         assertEquals(expected.get(i), actual.get(i), 0.00001);
       }
-
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readIntegerConstraintRangeCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("int-constraint-range");
@@ -419,16 +374,13 @@ public class SaneSessionTest {
       assertEquals(4, option.getRangeConstraints().getMinimumInteger());
       assertEquals(192, option.getRangeConstraints().getMaximumInteger());
       assertEquals(2, option.getRangeConstraints().getQuantumInteger());
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void readFixedConstraintRangeCorrectly() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("fixed-constraint-range");
@@ -437,16 +389,13 @@ public class SaneSessionTest {
       assertEquals(-42.17, option.getRangeConstraints().getMinimumFixed(), 0.00001);
       assertEquals(32767.9999, option.getRangeConstraints().getMaximumFixed(), 0.00001);
       assertEquals(2.0, option.getRangeConstraints().getQuantumFixed(), 0.00001);
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void arrayOption() throws Exception {
-    SaneDevice device = session.getDevice("test");
 
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       device.getOption("enable-test-options").setBooleanValue(true);
 
@@ -464,8 +413,6 @@ public class SaneSessionTest {
 
       assertEquals(values, option.setIntegerValue(values));
       assertEquals(values, option.getIntegerArrayValue());
-    } finally {
-      device.close();
     }
   }
 
@@ -497,20 +444,16 @@ public class SaneSessionTest {
 
   @Test
   public void handScanning() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       device.getOption("hand-scanner").setBooleanValue(true);
       device.acquireImage();
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void threePassScanning() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       assertEquals(
           "Color pattern", device.getOption("test-picture").setStringValue("Color pattern"));
@@ -521,15 +464,12 @@ public class SaneSessionTest {
         ImageIO.write(device.acquireImage(), "png", file);
         System.out.println("Wrote three-pass test to " + file);
       }
-    } finally {
-      device.close();
     }
   }
 
   @Test
   public void reducedArea() throws Exception {
-    SaneDevice device = session.getDevice("test");
-    try {
+    try (SaneDevice device = session.getDevice("test")) {
       device.open();
       device.getOption("mode").setStringValue("Color");
       device.getOption("resolution").setFixedValue(200);
@@ -538,8 +478,6 @@ public class SaneSessionTest {
       device.getOption("br-x").setFixedValue(105.0);
       device.getOption("br-y").setFixedValue(149.0);
       device.acquireImage();
-    } finally {
-      device.close();
     }
   }
 
