@@ -184,13 +184,12 @@ public final class SaneSession implements Closeable {
     outputStream.flush();
 
     SaneWord status = inputStream.readWord();
+    SaneWord handle = inputStream.readWord();
+    String resource = inputStream.readString();
 
     if (status.integerValue() != 0) {
       throw new SaneException(SaneStatus.fromWireValue(status.integerValue()));
     }
-
-    SaneWord handle = inputStream.readWord();
-    String resource = inputStream.readString();
 
     if (!resource.isEmpty()) {
       if (!authorize(resource)) {
