@@ -782,13 +782,13 @@ public final class SaneOption {
       String resource = stream.readString();
 
       if (!resource.isEmpty()) {
-        session.authorize(resource);
+        if (!session.authorize(resource)) {
+          throw new SaneException(SaneStatus.STATUS_ACCESS_DENIED);
+        }
+
         status = stream.readWord();
-
         info = stream.readWord().integerValue();
-
         type = SaneEnums.valueOf(OptionValueType.class, stream.readWord().integerValue());
-
         valueSize = stream.readWord().integerValue();
 
         // read the pointer

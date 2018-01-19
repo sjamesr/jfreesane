@@ -559,14 +559,41 @@ public class SaneSessionTest {
   public void invalidPasswordCausesAccessDeniedError() throws Exception {
     session.setPasswordProvider(
         SanePasswordProvider.forUsernameAndPassword("testuser", "badpassword"));
-    try {
-      SaneDevice device = session.getDevice("test");
+    try (SaneDevice device = session.getDevice("test")) {
       expectedException.expect(SaneException.class);
       expectedException.expectMessage("STATUS_ACCESS_DENIED");
       device.open();
-    } finally {
-      // Restore the session's password provider.
-      session.setPasswordProvider(correctPasswordProvider);
+    }
+  }
+
+  /**
+   * Checks to ensure a STATUS_ACCESS_DENIED exception is raised if the authenticator is unable to
+   * authenticate.
+   */
+  @Test
+  public void cannotAuthenticateThrowsAccessDeniedError() throws Exception {
+    session.setPasswordProvider(
+        new SanePasswordProvider() {
+          @Override
+          public String getUsername(String resource) {
+            return null;
+          }
+
+          @Override
+          public String getPassword(String resource) {
+            return null;
+          }
+
+          @Override
+          public boolean canAuthenticate(String resource) {
+            return false;
+          }
+        });
+
+    try (SaneDevice device = session.getDevice("test")) {
+      expectedException.expect(SaneException.class);
+      expectedException.expectMessage("STATUS_ACCESS_DENIED");
+      device.open();
     }
   }
 
