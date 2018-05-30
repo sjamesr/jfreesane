@@ -6,7 +6,7 @@ plugins {
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
     id 'jacoco'
-    id 'net.ltgt.errorprone' version '0.0.8'
+    id 'net.ltgt.errorprone' version '0.0.11'
 
     // code coverage support
     id 'net.saliman.cobertura' version '2.5.4'
@@ -43,7 +43,7 @@ dependencies {
 }
 
 wrapper {
-    gradleVersion = '3.0'
+    gradleVersion = '4.7'
 }
 
 checkstyle {
