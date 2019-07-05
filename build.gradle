@@ -5,7 +5,7 @@ plugins {
     id 'com.jfrog.bintray' version '1.4'
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
-    id 'net.ltgt.errorprone' version '0.0.11'
+    id 'net.ltgt.errorprone' version '0.8.1'
 
     // code coverage support
     id 'net.saliman.cobertura' version '2.5.4'
@@ -20,21 +20,20 @@ repositories {
     mavenCentral()
 }
 
-configurations.errorprone {
-  resolutionStrategy.force 'com.google.errorprone:error_prone_core:2.0.5'
-}
-
 dependencies {
-    compile 'com.google.guava:guava:18.0'
+    compile 'com.google.guava:guava:23.0'
     testCompile 'junit:junit:4.8.2'
     testCompile 'com.google.truth:truth:0.24'
 
     // Cobertura requires slf4j at runtime
     testRuntime 'org.slf4j:slf4j-api:1.7.10'
+
+    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
+    errorproneJavac 'com.google.errorprone:error_prone_core:2.3.3'
 }
 
 wrapper {
-    gradleVersion = '4.7'
+    gradleVersion = '5.5'
 }
 
 checkstyle {

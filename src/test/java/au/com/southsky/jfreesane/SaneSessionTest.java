@@ -74,7 +74,7 @@ public class SaneSessionTest {
     hostAndPort = HostAndPort.fromString(address);
     this.session =
         SaneSession.withRemoteSane(
-            InetAddress.getByName(hostAndPort.getHostText()), hostAndPort.getPortOrDefault(6566));
+            InetAddress.getByName(hostAndPort.getHost()), hostAndPort.getPortOrDefault(6566));
     session.setPasswordProvider(correctPasswordProvider);
   }
 
