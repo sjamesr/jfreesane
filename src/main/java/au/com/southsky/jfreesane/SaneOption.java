@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  *
  * @author James Ring (sjr@jdns.org)
  */
-public final class SaneOption {
+public class SaneOption {
 
   private static final Logger logger = Logger.getLogger(SaneOption.class.getName());
 

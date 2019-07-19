@@ -13,7 +13,9 @@ import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
@@ -550,6 +552,7 @@ public class SaneSessionTest {
   public void listenerReceivesScanStartedEvent() throws Exception {
     final SettableFuture<SaneDevice> notifiedDevice = SettableFuture.create();
     final AtomicInteger frameCount = new AtomicInteger();
+    final Set<FrameType> framesSeen = EnumSet.noneOf(FrameType.class);
 
     ScanListener listener =
         new ScanListenerAdapter() {
@@ -565,6 +568,7 @@ public class SaneSessionTest {
               int currentFrame,
               int likelyTotalFrames) {
             frameCount.incrementAndGet();
+            framesSeen.add(parameters.getFrameType());
           }
         };
 
@@ -576,6 +580,7 @@ public class SaneSessionTest {
     device.acquireImage(listener);
     assertThat(notifiedDevice.get()).isSameAs(device);
     assertThat(frameCount.get()).isEqualTo(3);
+    assertThat(framesSeen).containsExactly(FrameType.RED, FrameType.GREEN, FrameType.BLUE);
   }
 
   private void openAndCloseDevice(SaneDevice device) throws Exception {

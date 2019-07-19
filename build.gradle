@@ -5,8 +5,7 @@ plugins {
     id 'com.jfrog.bintray' version '1.4'
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
-    id 'jacoco'
-    id 'net.ltgt.errorprone' version '0.0.8'
+    id 'net.ltgt.errorprone' version '0.0.11'
 
     // code coverage support
     id 'net.saliman.cobertura' version '2.5.4'
@@ -14,14 +13,6 @@ plugins {
 }
 
 cobertura.coverageFormats = ['html', 'xml']
-
-jacocoTestReport {
-    reports {
-        xml.enabled false
-        csv.enabled false
-        html.destination "${buildDir}/jacocoHtml"
-    }
-}
 
 def releaseVersion = '0.98'
 
@@ -43,7 +34,7 @@ dependencies {
 }
 
 wrapper {
-    gradleVersion = '3.0'
+    gradleVersion = '4.7'
 }
 
 checkstyle {
@@ -52,10 +43,12 @@ checkstyle {
     toolVersion = '6.19'
 }
 
-task checkstyleHtml << {
-    ant.xslt(in: checkstyleMain.reports.xml.destination,
-             style: file('checkstyle-noframes-sorted.xsl'),
-             out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+task checkstyleHtml {
+    doLast {
+        ant.xslt(in: checkstyleMain.reports.xml.destination,
+                 style: file('checkstyle-noframes-sorted.xsl'),
+                 out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+    }
 }
 
 checkstyleMain.finalizedBy checkstyleHtml
@@ -146,9 +139,11 @@ bintray {
 }
 
 // If Java formatter checks fail, tell the user how to fix them.
-task printFormatHelperMessage << {
-    throw new GradleException('google-java-format is required.\n' +
-        'Use ./gradlew googleJavaFormat to reformat the broken files')
+task printFormatHelperMessage {
+    doLast {
+        throw new GradleException('google-java-format is required.\n' +
+            'Use ./gradlew googleJavaFormat to reformat the broken files')
+    }
 }
 verifyGoogleJavaFormat.finalizedBy printFormatHelperMessage
 printFormatHelperMessage.onlyIf { verifyGoogleJavaFormat.state.failure != null }
