@@ -70,7 +70,7 @@ public class SaneClientAuthenticationTest {
   }
 
   private CharSource getTestConfigurationSource() {
-    final StringBuffer users = new StringBuffer();
+    final StringBuilder users = new StringBuilder();
     users.append("sane-user:password:pixma\n");
     users.append("other-user:strongPassword:net\n");
     users.append("user::mustek\n");

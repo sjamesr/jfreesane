@@ -43,7 +43,7 @@ enum OptionCapability implements SaneEnum {
    */
   ADVANCED(64);
 
-  private int capBit;
+  private final int capBit;
 
   OptionCapability(int capBit) {
     this.capBit = capBit;

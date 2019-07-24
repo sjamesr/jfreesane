@@ -44,7 +44,7 @@ public final class SaneOption {
     SET_VALUE(1),
     SET_AUTO(2);
 
-    private int actionNo;
+    private final int actionNo;
 
     OptionAction(int actionNo) {
       this.actionNo = actionNo;
@@ -158,7 +158,6 @@ public final class SaneOption {
 
   static List<SaneOption> optionsFor(SaneDevice device) throws IOException {
     Preconditions.checkState(device.isOpen(), "you must open() the device first");
-    List<SaneOption> options = Lists.newArrayList();
     SaneSession session = device.getSession();
 
     SaneInputStream inputStream = session.getInputStream();
@@ -180,6 +179,7 @@ public final class SaneOption {
       return ImmutableList.of();
     }
 
+    ImmutableList.Builder<SaneOption> options = new ImmutableList.Builder<>();
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
@@ -214,7 +214,7 @@ public final class SaneOption {
       }
     }
 
-    return options;
+    return options.build();
   }
 
   private static SaneOption fromStream(
