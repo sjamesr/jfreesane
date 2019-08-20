@@ -1,6 +1,7 @@
 package au.com.southsky.jfreesane;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -373,12 +374,13 @@ public final class SaneSession implements Closeable {
    * @throws IOException
    */
   private void writePassword(String resource, String password) throws IOException {
-    String[] resourceParts = resource.split("\\$MD5\\$");
-    if (resourceParts.length == 1) {
+    List<String> resourceParts = Splitter.on("\\$MD5\\$").splitToList(resource);
+    if (resourceParts.size() == 1) {
       // Write in clean
       outputStream.write(password);
     } else {
-      outputStream.write("$MD5$" + SanePasswordEncoder.derivePassword(resourceParts[1], password));
+      outputStream.write(
+          "$MD5$" + SanePasswordEncoder.derivePassword(resourceParts.get(1), password));
     }
   }
 
