@@ -33,6 +33,7 @@ import org.junit.runners.JUnit4;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -460,7 +461,7 @@ public class SaneSessionTest {
       assertEquals(
           "Color pattern", device.getOption("test-picture").setStringValue("Color pattern"));
       assertEquals("Color", device.getOption("mode").setStringValue("Color"));
-      assertEquals(true, device.getOption("three-pass").setBooleanValue(true));
+      assertTrue(device.getOption("three-pass").setBooleanValue(true));
       for (int i = 0; i < 5; i++) {
         File file = File.createTempFile("three-pass", ".png", tempFolder.getRoot());
         ImageIO.write(device.acquireImage(), "png", file);
