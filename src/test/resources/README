@@ -1,0 +1,7 @@
+SANE reference images generated on Tue 20 Aug 2019 02:37:35 PM PDT by:
+
+
+scanimage (sane-backends) 1.0.27; backend version 1.0.27
+
+
+To regenerate, run src/test/generateTestResources.sh from the project root directory.
