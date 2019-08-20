@@ -540,7 +540,7 @@ public class SaneSessionTest {
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
     File passwordFile = tempFolder.newFile("sane.pass");
-    Files.write("testuser:goodpass:test", passwordFile, Charsets.ISO_8859_1);
+    Files.asCharSink(passwordFile, Charsets.ISO_8859_1).write("testuser:goodpass:test");
     session.setPasswordProvider(
         SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
     SaneDevice device = session.getDevice("test");
