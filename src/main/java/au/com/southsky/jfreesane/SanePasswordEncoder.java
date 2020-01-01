@@ -16,7 +16,7 @@
 package au.com.southsky.jfreesane;
 
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -26,19 +26,18 @@ import java.security.NoSuchAlgorithmException;
  * specification.
  */
 final class SanePasswordEncoder {
-  static final Charset iso8859_1 = Charset.forName("ISO-8859-1");
 
   // Not to be instantiated.
   private SanePasswordEncoder() {}
 
-  public static byte[] encodedLatin1(char[] charArray) {
-    return iso8859_1.encode(CharBuffer.wrap(charArray)).array();
+  static byte[] encodedLatin1(char[] charArray) {
+    return StandardCharsets.ISO_8859_1.encode(CharBuffer.wrap(charArray)).array();
   }
 
   private static String encodeAsHex(byte[] input) {
     StringBuilder hexString = new StringBuilder();
-    for (int i = 0; i < input.length; i++) {
-      String hex = Integer.toHexString(0xff & input[i]);
+    for (byte b : input) {
+      String hex = Integer.toHexString(0xff & b);
       if (hex.length() == 1) {
         hexString.append('0');
       }
@@ -47,11 +46,11 @@ final class SanePasswordEncoder {
     return hexString.toString();
   }
 
-  public static String derivePassword(String salt, String password) {
+  static String derivePassword(String salt, String password) {
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      md.update(iso8859_1.encode(salt));
-      md.update(iso8859_1.encode(CharBuffer.wrap(password)));
+      md.update(StandardCharsets.ISO_8859_1.encode(salt));
+      md.update(StandardCharsets.ISO_8859_1.encode(CharBuffer.wrap(password)));
       return encodeAsHex(md.digest());
     } catch (NoSuchAlgorithmException ex) {
       // This is not expected, so convert to RuntimeException
