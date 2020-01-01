@@ -1,9 +1,8 @@
 package au.com.southsky.jfreesane;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.collect.Maps;
 
 /**
  * A static factory of listeners that limit the rate at which they send
@@ -48,7 +47,7 @@ public final class RateLimitingScanListeners {
       final ScanListener listener, final long time, final TimeUnit timeUnit) {
     return new ScanListener() {
       // Most users will only scan from one device at a time.
-      private Map<SaneDevice, Long> lastSentTime = Maps.newHashMapWithExpectedSize(1);
+      private Map<SaneDevice, Long> lastSentTime = new HashMap<>(1);
 
       @Override
       public void scanningStarted(SaneDevice device) {
