@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;

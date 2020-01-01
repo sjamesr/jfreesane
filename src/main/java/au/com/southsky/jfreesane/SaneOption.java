@@ -2,7 +2,6 @@ package au.com.southsky.jfreesane;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -10,6 +9,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -413,7 +413,7 @@ public final class SaneOption {
     ControlOptionResult result = readOption();
     Preconditions.checkState(result.getType() == OptionValueType.FIXED);
 
-    List<Double> values = Lists.newArrayList();
+    List<Double> values = new ArrayList<>();
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       values.add(SaneWord.fromBytes(result.getValue(), i).fixedPrecisionValue());
     }
@@ -487,7 +487,7 @@ public final class SaneOption {
    */
   public double setFixedValue(double value) throws IOException, SaneException {
     Preconditions.checkArgument(
-        value >= -32768 && value <= 32767.9999, "value " + value + " is out of range");
+        value >= -32768 && value <= 32767.9999, "value %d is out of range", value);
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
     Preconditions.checkState(
