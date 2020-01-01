@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.net.HostAndPort;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,6 +15,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.InetAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
  *
  * <p>
  * If you cannot run a SANE server locally, you can set the {@code SANE_TEST_SERVER_ADDRESS}
- * environment variable to the address of a SANE server in {@link HostAndPort} format.
+ * environment variable to the address of a SANE server in "host[:port]" format.
  *
  * <p>
  * If you can't create this test environment, feel free to add the {@link org.junit.Ignore}
@@ -64,15 +64,15 @@ public class SaneSessionTest {
 
   @Before
   public void initSession() throws Exception {
-    HostAndPort hostAndPort;
     String address = System.getenv("SANE_TEST_SERVER_ADDRESS");
     if (address == null) {
       address = "localhost";
     }
-    hostAndPort = HostAndPort.fromString(address);
+    URI hostAndPort = URI.create("my://" + address);
     this.session =
         SaneSession.withRemoteSane(
-            InetAddress.getByName(hostAndPort.getHost()), hostAndPort.getPortOrDefault(6566));
+            InetAddress.getByName(hostAndPort.getHost()),
+            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort());
     session.setPasswordProvider(correctPasswordProvider);
   }
 
