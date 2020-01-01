@@ -1,9 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.io.Resources;
-import com.google.common.net.HostAndPort;
 import com.google.common.truth.Truth;
 import org.junit.Assume;
 import org.junit.Before;
@@ -16,13 +12,19 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.util.Set;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Acquires a series of images from the test device and compares them against reference images
- * obtained from the "scanimage" SANE util.
+ * obtained from the "scanimage" SANE util. By default, the SANE server running on localhost is
+ * used, but this can be overridden by specifying the address in "host[:port]" format in the
+ * SANE_TEST_SERVER_ADDRESS environment variable.
  */
 @RunWith(Parameterized.class)
 public class ImageAcquisitionTest {
@@ -31,28 +33,36 @@ public class ImageAcquisitionTest {
 
   @Before
   public void initSession() throws Exception {
-    HostAndPort hostAndPort;
     String address = System.getenv("SANE_TEST_SERVER_ADDRESS");
     if (address == null) {
       address = "localhost";
     }
-    hostAndPort = HostAndPort.fromString(address);
+    URI hostAndPort = URI.create("my://" + address);
     this.session =
         SaneSession.withRemoteSane(
-            InetAddress.getByName(hostAndPort.getHost()), hostAndPort.getPortOrDefault(6566));
+            InetAddress.getByName(hostAndPort.getHost()),
+            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort());
     session.setPasswordProvider(correctPasswordProvider);
   }
 
   @Parameterized.Parameters(name = "device={0},mode={1},depth={2},pattern={3}")
   public static Iterable<Object[]> parameters() {
-    Set<String> devices = ImmutableSet.of("test");
-    Set<String> modes = ImmutableSet.of("Gray", "Color");
-    Set<Integer> depths = ImmutableSet.of(1, 8, 16);
-    Set<String> patterns = ImmutableSet.of("Solid white", "Solid black", "Color pattern");
-    return Sets.cartesianProduct(devices, modes, depths, patterns)
-            .stream()
-            .map(e -> e.toArray(new Object[] {}))
-        ::iterator;
+    List<String> devices = Collections.singletonList("test");
+    List<String> modes = Arrays.asList("Gray", "Color");
+    List<Integer> depths = Arrays.asList(1, 8, 16);
+    List<String> patterns = Arrays.asList("Solid white", "Solid black", "Color pattern");
+    List<Object[]> result =
+        new ArrayList<>(depths.size() * modes.size() * depths.size() * patterns.size());
+    for (String dev : devices) {
+      for (String mode : modes) {
+        for (int depth : depths) {
+          for (String pattern : patterns) {
+            result.add(new Object[] {dev, mode, depth, pattern});
+          }
+        }
+      }
+    }
+    return result;
   }
 
   private SaneSession session;
@@ -89,8 +99,8 @@ public class ImageAcquisitionTest {
    * invoked to read the reference image.
    */
   private BufferedImage getExpectedImage() throws IOException {
-    String resourceName = String.format("%s-%d-%s.png", mode, depth, pattern.replace(" ", "_"));
-    InputStream resource = Resources.getResource(resourceName).openStream();
+    String resourceName = String.format("/%s-%d-%s.png", mode, depth, pattern.replace(" ", "_"));
+    InputStream resource = ImageAcquisitionTest.class.getResource(resourceName).openStream();
     return ImageIO.read(resource);
   }
 
