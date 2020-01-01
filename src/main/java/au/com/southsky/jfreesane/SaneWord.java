@@ -1,5 +1,7 @@
 package au.com.southsky.jfreesane;
 
+import com.google.common.io.ByteStreams;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -7,9 +9,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
-
-import com.google.common.base.Function;
-import com.google.common.io.ByteStreams;
 
 /**
  * Represents a SANE word type. JFreeSane chooses to represent the SANE word type as an array of
@@ -29,34 +28,6 @@ public final class SaneWord {
   public static final int SIZE_IN_BYTES = 4;
 
   private static final int PRECISION = 1 << 16;
-
-  /**
-   * A function that, when applied to a {@link SaneWord} instance, returns the integer value of that
-   * SANE word.
-   *
-   * @see SaneWord#integerValue
-   */
-  public static final Function<SaneWord, Integer> TO_INTEGER_FUNCTION =
-      new Function<SaneWord, Integer>() {
-        @Override
-        public Integer apply(SaneWord word) {
-          return word.integerValue();
-        }
-      };
-
-  /**
-   * A function that, when applied to a {@link SaneWord} instance, returns the SANE fixed precision
-   * value of that SANE word.
-   *
-   * @see SaneWord#fixedPrecisionValue
-   */
-  public static final Function<SaneWord, Double> TO_FIXED_FUNCTION =
-      new Function<SaneWord, Double>() {
-        @Override
-        public Double apply(SaneWord word) {
-          return word.fixedPrecisionValue();
-        }
-      };
 
   private final byte[] value;
 
