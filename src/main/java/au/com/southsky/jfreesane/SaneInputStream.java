@@ -3,15 +3,12 @@ package au.com.southsky.jfreesane;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import au.com.southsky.jfreesane.SaneOption.OptionUnits;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
 
 /**
  * Wraps an {@link InputStream} to provide some methods for deserializing SANE-related types.
@@ -58,25 +55,20 @@ class SaneInputStream extends InputStream {
     int length = readWord().integerValue() - 1;
 
     if (length <= 0) {
-      return ImmutableList.of();
+      return new ArrayList<>(0);
     }
 
-    ImmutableList.Builder<SaneDevice> result = ImmutableList.builder();
+    List<SaneDevice> result = new ArrayList<>();
 
     for (int i = 0; i < length; i++) {
-      SaneDevice device = readSaneDevicePointer();
-      if (device == null) {
-        throw new IllegalStateException("null pointer encountered when not expected");
-      }
-
-      result.add(device);
+      result.add(readSaneDevicePointer());
     }
 
     // read past a trailing byte in the response that I haven't figured
     // out yet...
     readWord();
 
-    return result.build();
+    return result;
   }
 
   /**
@@ -117,7 +109,7 @@ class SaneInputStream extends InputStream {
 
     // now read all the bytes
     byte[] input = new byte[length];
-    if (ByteStreams.read(this, input, 0, length) != length) {
+    if (ByteStreams.readAllBytes(this, input) != length) {
       throw new IllegalStateException("truncated input while reading string");
     }
 
@@ -185,7 +177,7 @@ class SaneInputStream extends InputStream {
         // inputStream.readWord(); // discard empty list
         break;
       case STRING_LIST_CONSTRAINT:
-        stringConstraints = Lists.newArrayList();
+        stringConstraints = new ArrayList<>();
 
         int n = readWord().integerValue();
         for (int i = 0; i < n; i++) {
@@ -199,7 +191,7 @@ class SaneInputStream extends InputStream {
 
         break;
       case VALUE_LIST_CONSTRAINT:
-        valueConstraints = Lists.newArrayList();
+        valueConstraints = new ArrayList<>();
         n = readWord().integerValue();
         for (int i = 0; i < n; i++) {
           // first element is list length, don't add that
