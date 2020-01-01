@@ -1,14 +1,12 @@
 package au.com.southsky.jfreesane;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -176,10 +174,10 @@ public final class SaneOption {
     int length = inputStream.readWord().integerValue() - 1;
 
     if (length <= 0) {
-      return ImmutableList.of();
+      return new ArrayList<>(0);
     }
 
-    ImmutableList.Builder<SaneOption> options = new ImmutableList.Builder<>();
+    List<SaneOption> options = new ArrayList<>(length);
     for (int i = 0; i <= length; i++) {
       SaneOption option = SaneOption.fromStream(inputStream, device, i);
 
@@ -214,7 +212,7 @@ public final class SaneOption {
       }
     }
 
-    return options.build();
+    return options;
   }
 
   private static SaneOption fromStream(
@@ -375,7 +373,7 @@ public final class SaneOption {
     ControlOptionResult result = readOption();
     Preconditions.checkState(result.getType() == OptionValueType.INT);
 
-    List<Integer> values = Lists.newArrayList();
+    List<Integer> values = new ArrayList<>();
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       values.add(SaneWord.fromBytes(result.getValue(), i).integerValue());
     }
@@ -522,7 +520,7 @@ public final class SaneOption {
     ControlOptionResult result = writeWordListOption(wordValues);
 
     List<Double> newValues =
-        Lists.newArrayListWithCapacity(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
+        new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       newValues.add(SaneWord.fromBytes(result.getValue(), i).fixedPrecisionValue());
     }
@@ -585,7 +583,7 @@ public final class SaneOption {
     // SANE_Action a, void *v,
     // SANE_Int * i);
 
-    ControlOptionResult result = writeOption(ImmutableList.of(newValue));
+    ControlOptionResult result = writeOption(Collections.singletonList(newValue));
     Preconditions.checkState(result.getType() == OptionValueType.INT);
     Preconditions.checkState(result.getValueSize() == SaneWord.SIZE_IN_BYTES);
 
@@ -596,7 +594,7 @@ public final class SaneOption {
     ControlOptionResult result = writeOption(newValue);
 
     List<Integer> newValues =
-        Lists.newArrayListWithCapacity(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
+        new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       newValues.add(SaneWord.fromBytes(result.getValue(), i).integerValue());
     }
@@ -659,7 +657,7 @@ public final class SaneOption {
   }
 
   private ControlOptionResult writeOption(SaneWord word) throws IOException, SaneException {
-    return writeWordListOption(ImmutableList.of(word));
+    return writeWordListOption(Collections.singletonList(word));
   }
 
   private ControlOptionResult writeOption(List<Integer> value) throws IOException, SaneException {
@@ -820,7 +818,7 @@ public final class SaneOption {
     }
 
     public Set<OptionWriteInfo> getInfo() {
-      return Sets.immutableEnumSet(info);
+      return Collections.unmodifiableSet(info);
     }
 
     public OptionValueType getType() {
