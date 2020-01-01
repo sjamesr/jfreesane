@@ -2,7 +2,6 @@ package au.com.southsky.jfreesane;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 
 import java.awt.Point;
 import java.awt.Transparency;
@@ -16,6 +15,7 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -25,10 +25,10 @@ import java.util.Set;
  */
 final class SaneImage {
   private static final Set<FrameType> singletonFrameTypes =
-      Sets.immutableEnumSet(FrameType.GRAY, FrameType.RGB);
+      Collections.unmodifiableSet(EnumSet.of(FrameType.GRAY, FrameType.RGB));
 
   private static final Set<FrameType> redGreenBlueFrameTypes =
-      Sets.immutableEnumSet(FrameType.RED, FrameType.GREEN, FrameType.BLUE);
+      Collections.unmodifiableSet(EnumSet.of(FrameType.RED, FrameType.GREEN, FrameType.BLUE));
 
   private final List<Frame> frames;
   private final int depthPerPixel;
