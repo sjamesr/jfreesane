@@ -1,11 +1,6 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import com.google.common.net.HostAndPort;
-import com.google.common.util.concurrent.SettableFuture;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,9 +17,13 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -79,7 +78,7 @@ public class SaneSessionTest {
 
   @After
   public void closeSession() throws Exception {
-    Closeables.close(session, false);
+    session.close();
   }
 
   @Test
@@ -299,7 +298,7 @@ public class SaneSessionTest {
       assertNotNull(option);
       assertEquals(OptionValueConstraintType.VALUE_LIST_CONSTRAINT, option.getConstraintType());
       assertEquals(
-          ImmutableList.of(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
+          Arrays.asList(-42, -8, 0, 17, 42, 256, 65536, 16777216, 1073741824),
           option.getIntegerValueListConstraint());
     }
   }
@@ -313,7 +312,7 @@ public class SaneSessionTest {
       SaneOption option = device.getOption("fixed-constraint-word-list");
       assertNotNull(option);
       assertEquals(OptionValueConstraintType.VALUE_LIST_CONSTRAINT, option.getConstraintType());
-      List<Double> expected = ImmutableList.of(-32.7d, 12.1d, 42d, 129.5d);
+      List<Double> expected = Arrays.asList(-32.7d, 12.1d, 42d, 129.5d);
       List<Double> actual = option.getFixedValueListConstraint();
       assertEquals(expected.size(), actual.size());
 
@@ -365,7 +364,7 @@ public class SaneSessionTest {
       assertThat(option.isConstrained()).isTrue();
       assertThat(option.getConstraintType()).isEqualTo(OptionValueConstraintType.RANGE_CONSTRAINT);
       assertEquals(OptionValueType.INT, option.getType());
-      List<Integer> values = Lists.newArrayList();
+      List<Integer> values = new ArrayList<>();
 
       RangeConstraint constraints = option.getRangeConstraints();
       for (int i = 0; i < option.getValueCount(); i++) {
@@ -499,7 +498,8 @@ public class SaneSessionTest {
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
     File passwordFile = tempFolder.newFile("sane.pass");
-    Files.asCharSink(passwordFile, StandardCharsets.ISO_8859_1).write("testuser:goodpass:test");
+    Files.write(
+        passwordFile.toPath(), "testuser:goodpass:test".getBytes(StandardCharsets.US_ASCII));
     session.setPasswordProvider(
         SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
     SaneDevice device = session.getDevice("test");
@@ -509,7 +509,7 @@ public class SaneSessionTest {
 
   @Test
   public void listenerReceivesScanStartedEvent() throws Exception {
-    final SettableFuture<SaneDevice> notifiedDevice = SettableFuture.create();
+    final CompletableFuture<SaneDevice> notifiedDevice = new CompletableFuture<>();
     final AtomicInteger frameCount = new AtomicInteger();
     final Set<FrameType> framesSeen = EnumSet.noneOf(FrameType.class);
 
@@ -517,7 +517,7 @@ public class SaneSessionTest {
         new ScanListenerAdapter() {
           @Override
           public void scanningStarted(SaneDevice device) {
-            notifiedDevice.set(device);
+            notifiedDevice.complete(device);
           }
 
           @Override
