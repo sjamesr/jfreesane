@@ -519,8 +519,7 @@ public final class SaneOption {
 
     ControlOptionResult result = writeWordListOption(wordValues);
 
-    List<Double> newValues =
-        new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
+    List<Double> newValues = new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       newValues.add(SaneWord.fromBytes(result.getValue(), i).fixedPrecisionValue());
     }
@@ -593,8 +592,7 @@ public final class SaneOption {
   public List<Integer> setIntegerValue(List<Integer> newValue) throws IOException, SaneException {
     ControlOptionResult result = writeOption(newValue);
 
-    List<Integer> newValues =
-        new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
+    List<Integer> newValues = new ArrayList<>(result.getValueSize() / SaneWord.SIZE_IN_BYTES);
     for (int i = 0; i < result.getValueSize(); i += SaneWord.SIZE_IN_BYTES) {
       newValues.add(SaneWord.fromBytes(result.getValue(), i).integerValue());
     }
