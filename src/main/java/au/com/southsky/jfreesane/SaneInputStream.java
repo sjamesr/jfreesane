@@ -2,13 +2,13 @@ package au.com.southsky.jfreesane;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.ByteStreams;
@@ -122,7 +122,7 @@ class SaneInputStream extends InputStream {
     }
 
     // skip the null terminator
-    return new String(input, 0, input.length - 1, Charsets.ISO_8859_1);
+    return new String(input, 0, input.length - 1, StandardCharsets.ISO_8859_1);
   }
 
   public SaneParameters readSaneParameters() throws IOException {
