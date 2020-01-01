@@ -1,7 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Strings;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -188,7 +186,7 @@ public final class SaneOption {
         // The first option always has an empty name. Sometimes we see options after the first option
         // that have empty names. Elsewhere we assume that option names are unique, so this option is
         // omitted
-        if (i > 0 && Strings.isNullOrEmpty(option.getName())) {
+        if (i > 0 && (option.getName() == null || option.getName().isEmpty())) {
           logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
           continue;
         }
