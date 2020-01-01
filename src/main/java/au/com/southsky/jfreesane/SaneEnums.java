@@ -56,21 +56,6 @@ final class SaneEnums {
     return Sets.immutableEnumSet(values);
   }
 
-  /**
-   * Returns the result of bitwise-ORing the wire values of the given {@code SaneEnum} set. This
-   * method does not check to make sure the result is sensible: the caller must ensure that the set
-   * contains members whose wire values can be ORed together in a logically correct fashion.
-   */
-  public static <T extends SaneEnum> int wireValue(Set<T> values) {
-    int result = 0;
-
-    for (T value : values) {
-      result |= value.getWireValue();
-    }
-
-    return result;
-  }
-
   public static <T extends Enum<T> & SaneEnum> T valueOf(Class<T> enumType, int valueType) {
     return mapForType(enumType).get(valueType);
   }
