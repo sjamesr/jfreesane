@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -780,7 +779,7 @@ public final class SaneOption {
       if (pointer != 0) {
         value = new byte[valueSize];
 
-        if (ByteStreams.read(stream, value, 0, valueSize) != valueSize) {
+        if (ByteStreams.readAllBytes(stream, value) != valueSize) {
           throw new IOException("truncated read while getting value");
         }
       }
