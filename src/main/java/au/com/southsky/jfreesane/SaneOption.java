@@ -1,11 +1,11 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * This class represents a SANE device option. An option may be active or inactive (see
@@ -296,11 +297,19 @@ public final class SaneOption {
   }
 
   public List<Integer> getIntegerValueListConstraint() {
-    return Lists.transform(descriptor.getWordConstraints(), SaneWord.TO_INTEGER_FUNCTION);
+    return descriptor
+        .getWordConstraints()
+        .stream()
+        .map(SaneWord::integerValue)
+        .collect(Collectors.toList());
   }
 
   public List<Double> getFixedValueListConstraint() {
-    return Lists.transform(descriptor.getWordConstraints(), SaneWord.TO_FIXED_FUNCTION);
+    return descriptor
+        .getWordConstraints()
+        .stream()
+        .map(SaneWord::fixedPrecisionValue)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -497,22 +506,19 @@ public final class SaneOption {
     return SaneWord.fromBytes(result.getValue()).fixedPrecisionValue();
   }
 
+  private static SaneWord fixedValueToWord(double value) {
+    Preconditions.checkArgument(
+        value >= -32768 && value <= 32767.9999, "value %f is out of range", value);
+    return SaneWord.forFixedPrecision(value);
+  }
+
   /**
    * Sets the value of the current option to the supplied list of fixed-precision values. Option
    * value must be of fixed-precision type and {@link #getValueCount} must be more than 1.
    */
   public List<Double> setFixedValue(List<Double> value) throws IOException, SaneException {
     List<SaneWord> wordValues =
-        Lists.transform(
-            value,
-            new Function<Double, SaneWord>() {
-              @Override
-              public SaneWord apply(Double input) {
-                Preconditions.checkArgument(
-                    input >= -32768 && input <= 32767.9999, "value " + input + " is out of range");
-                return SaneWord.forFixedPrecision(input);
-              }
-            });
+        value.stream().map(SaneOption::fixedValueToWord).collect(Collectors.toList());
 
     ControlOptionResult result = writeWordListOption(wordValues);
 

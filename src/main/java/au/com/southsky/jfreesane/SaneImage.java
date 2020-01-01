@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
@@ -44,13 +43,7 @@ final class SaneImage {
     this.frames =
         Ordering.explicit(
                 FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY)
-            .onResultOf(
-                new Function<Frame, FrameType>() {
-                  @Override
-                  public FrameType apply(Frame input) {
-                    return input.getType();
-                  }
-                })
+            .onResultOf(Frame::getType)
             .immutableSortedCopy(frames);
     this.depthPerPixel = depthPerPixel;
     this.width = width;
