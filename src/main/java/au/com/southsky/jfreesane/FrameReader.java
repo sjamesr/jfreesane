@@ -8,8 +8,6 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.common.primitives.UnsignedInteger;
-
 /**
  * Represents a reader of {@link Frame frames}.
  */
@@ -114,7 +112,7 @@ class FrameReader {
       return -1;
     }
 
-    if (UnsignedInteger.fromIntBits(length).longValue() > Integer.MAX_VALUE) {
+    if (Integer.toUnsignedLong(length) > Integer.MAX_VALUE) {
       throw new IllegalStateException("TODO: support massive records");
     }
 
