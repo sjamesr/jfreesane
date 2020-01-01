@@ -16,8 +16,6 @@
 
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Strings;
-
 /**
  * Implements a provider of SANE resource credentials. If the SANE server asks JFreeSane to provide
  * a password, the {@link SaneSession} will consult its password provider to determine what to send
@@ -77,7 +75,7 @@ public abstract class SanePasswordProvider {
    * @param passwordFile the path to the password file
    */
   public static SanePasswordProvider usingSanePassFile(String passwordFile) {
-    return Strings.isNullOrEmpty(passwordFile)
+    return passwordFile == null || passwordFile.isEmpty()
         ? new SaneClientAuthentication()
         : new SaneClientAuthentication(passwordFile);
   }
