@@ -1,9 +1,7 @@
 package au.com.southsky.jfreesane;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 /**
  * Represents a group of options. The SANE backend may group options together. These may be handy
@@ -13,7 +11,7 @@ import com.google.common.collect.Lists;
  */
 public class OptionGroup {
   private final String title;
-  private List<SaneOption> options = Lists.newArrayList();
+  private List<SaneOption> options = new ArrayList<>();
 
   public OptionGroup(String title) {
     this.title = title;
@@ -31,7 +29,7 @@ public class OptionGroup {
    * Returns an immutable copy of the options in this group.
    */
   public List<SaneOption> getOptions() {
-    return ImmutableList.copyOf(options);
+    return new ArrayList<>(options);
   }
 
   /**
