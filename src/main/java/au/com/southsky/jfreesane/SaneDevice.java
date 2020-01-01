@@ -1,8 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,7 +27,7 @@ public class SaneDevice implements Closeable {
   private SaneDeviceHandle handle;
 
   private List<SaneOption> options = null;
-  private final List<OptionGroup> groups = Lists.newArrayList();
+  private final List<OptionGroup> groups = new ArrayList<>();
 
   SaneDevice(SaneSession session, String name, String vendor, String model, String type) {
     this.session = session;
@@ -180,7 +177,7 @@ public class SaneDevice implements Closeable {
    */
   public List<OptionGroup> getOptionGroups() throws IOException {
     listOptions();
-    return ImmutableList.copyOf(groups);
+    return new ArrayList<>(groups);
   }
 
   /**
