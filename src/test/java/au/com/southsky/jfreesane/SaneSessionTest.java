@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
@@ -22,6 +21,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -158,7 +158,7 @@ public class SaneSessionTest {
               && option.isActive()) {
             System.out.print("=" + option.getIntegerValue());
           } else if (option.getType() == OptionValueType.STRING) {
-            System.out.print("=" + option.getStringValue(Charsets.US_ASCII));
+            System.out.print("=" + option.getStringValue(StandardCharsets.US_ASCII));
           }
         }
 
@@ -234,10 +234,12 @@ public class SaneSessionTest {
 
     try (SaneDevice device = session.getDevice("test")) {
       device.open();
-      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).matches("Gray|Color");
+      assertThat(device.getOption("mode").getStringValue(StandardCharsets.US_ASCII))
+          .matches("Gray|Color");
       assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
-      assertThat(device.getOption("mode").getStringValue(Charsets.US_ASCII)).isEqualTo("Gray");
-      assertThat(device.getOption("read-return-value").getStringValue(Charsets.US_ASCII))
+      assertThat(device.getOption("mode").getStringValue(StandardCharsets.US_ASCII))
+          .isEqualTo("Gray");
+      assertThat(device.getOption("read-return-value").getStringValue(StandardCharsets.US_ASCII))
           .isEqualTo("Default");
     }
   }
@@ -497,7 +499,7 @@ public class SaneSessionTest {
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
     File passwordFile = tempFolder.newFile("sane.pass");
-    Files.asCharSink(passwordFile, Charsets.ISO_8859_1).write("testuser:goodpass:test");
+    Files.asCharSink(passwordFile, StandardCharsets.ISO_8859_1).write("testuser:goodpass:test");
     session.setPasswordProvider(
         SanePasswordProvider.usingSanePassFile(passwordFile.getAbsolutePath()));
     SaneDevice device = session.getDevice("test");

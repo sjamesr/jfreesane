@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.HashBasedTable;
@@ -14,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -48,7 +48,7 @@ public class SaneClientAuthentication extends SanePasswordProvider {
         new CharSource() {
           @Override
           public Reader openStream() throws IOException {
-            return new InputStreamReader(new FileInputStream(path), Charsets.US_ASCII);
+            return new InputStreamReader(new FileInputStream(path), StandardCharsets.US_ASCII);
           }
         });
   }

@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -9,6 +8,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -382,7 +382,7 @@ public final class SaneOption {
    * @throws IOException if a problem occurs reading the value from the SANE backend
    */
   public String getStringValue() throws IOException, SaneException {
-    return getStringValue(Charsets.ISO_8859_1);
+    return getStringValue(StandardCharsets.ISO_8859_1);
   }
 
   public String getStringValue(Charset encoding) throws IOException, SaneException {
@@ -550,7 +550,7 @@ public final class SaneOption {
 
     // TODO(sjr): maybe this should go somewhere common?
     String optionValueFromServer =
-        new String(result.getValue(), 0, result.getValueSize() - 1, Charsets.ISO_8859_1);
+        new String(result.getValue(), 0, result.getValueSize() - 1, StandardCharsets.ISO_8859_1);
 
     Preconditions.checkState(
         result.getInfo().contains(OptionWriteInfo.INEXACT) ^ newValue.equals(optionValueFromServer),
