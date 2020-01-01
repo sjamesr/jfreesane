@@ -1,7 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.MoreObjects;
-
 /**
  * Represents the parameters returned by the SANE server when it is about to acquire a new frame.
  *
@@ -78,13 +76,19 @@ public class SaneParameters {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(SaneParameters.class)
-        .add("frameType", frameType)
-        .add("isLastFrame", lastFrame)
-        .add("bytesPerLine", bytesPerLine)
-        .add("pixelsPerLine", pixelsPerLine)
-        .add("lineCount", lineCount)
-        .add("depthPerPixel", depthPerPixel)
-        .toString();
+    return "SaneParameters{"
+        + "frameType="
+        + frameType
+        + ", lastFrame="
+        + lastFrame
+        + ", bytesPerLine="
+        + bytesPerLine
+        + ", pixelsPerLine="
+        + pixelsPerLine
+        + ", lineCount="
+        + lineCount
+        + ", depthPerPixel="
+        + depthPerPixel
+        + '}';
   }
 }
