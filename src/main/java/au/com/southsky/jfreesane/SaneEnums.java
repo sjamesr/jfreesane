@@ -1,13 +1,10 @@
 package au.com.southsky.jfreesane;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 /**
  * Utilities for dealing with instances of {@link SaneEnum}.
@@ -15,7 +12,7 @@ import com.google.common.collect.Sets;
  * @author James Ring (sjr@jdns.org)
  */
 final class SaneEnums {
-  private static Map<Class<?>, Map<Integer, ?>> cachedTypeMaps = Maps.newHashMap();
+  private static Map<Class<?>, Map<Integer, ?>> cachedTypeMaps = new HashMap<>();
 
   // no public constructor
   private SaneEnums() {}
@@ -27,14 +24,13 @@ final class SaneEnums {
       return (Map<Integer, T>) cachedTypeMaps.get(enumType);
     }
 
-    ImmutableMap.Builder<Integer, T> mapBuilder = ImmutableMap.builder();
+    Map<Integer, T> map = new HashMap<>();
 
     for (T value : enumType.getEnumConstants()) {
-      mapBuilder.put(value.getWireValue(), value);
+      map.put(value.getWireValue(), value);
     }
 
-    Map<Integer, T> result = mapBuilder.build();
-
+    Map<Integer, T> result = Collections.unmodifiableMap(map);
     cachedTypeMaps.put(enumType, result);
     return result;
   }
@@ -44,16 +40,16 @@ final class SaneEnums {
    * represent the wire values of the enum constants of the given {@code enumType}.
    */
   public static <T extends Enum<T> & SaneEnum> Set<T> enumSet(Class<T> enumType, int wireValue) {
+    Set<T> result = EnumSet.noneOf(enumType);
     T[] enumConstants = enumType.getEnumConstants();
-    List<T> values = Lists.newArrayListWithCapacity(enumConstants.length);
 
     for (T value : enumConstants) {
       if ((wireValue & value.getWireValue()) != 0) {
-        values.add(value);
+        result.add(value);
       }
     }
 
-    return Sets.immutableEnumSet(values);
+    return result;
   }
 
   public static <T extends Enum<T> & SaneEnum> T valueOf(Class<T> enumType, int valueType) {
