@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.io.ByteStreams;
 import com.google.common.primitives.UnsignedInteger;
 
@@ -123,13 +122,5 @@ class FrameReader {
     int bytesRead = (int) ByteStreams.copy(ByteStreams.limit(inputStream, length), destination);
     log.log(Level.FINE, "Read a record of {0} bytes", bytesRead);
     return bytesRead;
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(FrameReader.class)
-        .add("isBigEndian", bigEndian)
-        .add("parameters", parameters)
-        .toString();
   }
 }
