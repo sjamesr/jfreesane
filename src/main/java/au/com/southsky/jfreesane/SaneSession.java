@@ -197,13 +197,14 @@ public final class SaneSession implements Closeable {
       }
       status = inputStream.readWord();
       handle = inputStream.readWord();
-      resource = inputStream.readString();
+      // Read the resource string
+      inputStream.readString();
       if (status.integerValue() != 0) {
         throw new SaneException(SaneStatus.fromWireValue(status.integerValue()));
       }
     }
 
-    return new SaneDeviceHandle(status, handle, resource);
+    return new SaneDeviceHandle(handle);
   }
 
   BufferedImage acquireImage(SaneDevice device, ScanListener listener)
