@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.common.io.ByteStreams;
 import com.google.common.primitives.UnsignedInteger;
 
 /**
@@ -119,7 +118,7 @@ class FrameReader {
       throw new IllegalStateException("TODO: support massive records");
     }
 
-    int bytesRead = (int) ByteStreams.copy(ByteStreams.limit(inputStream, length), destination);
+    int bytesRead = ByteStreams.copy(inputStream, destination, length);
     log.log(Level.FINE, "Read a record of {0} bytes", bytesRead);
     return bytesRead;
   }
