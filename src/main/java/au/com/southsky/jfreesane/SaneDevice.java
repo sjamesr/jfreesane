@@ -1,15 +1,14 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.
@@ -30,7 +29,7 @@ public class SaneDevice implements Closeable {
 
   private SaneDeviceHandle handle;
 
-  private Map<String, SaneOption> optionTitleMap = null;
+  private List<SaneOption> options = null;
   private final List<OptionGroup> groups = Lists.newArrayList();
 
   SaneDevice(SaneSession session, String name, String vendor, String model, String type) {
@@ -164,21 +163,12 @@ public class SaneDevice implements Closeable {
    * @throws IOException if a problem occurred talking to the SANE backend
    */
   public List<SaneOption> listOptions() throws IOException {
-    if (optionTitleMap == null) {
+    if (options == null) {
       groups.clear();
-      optionTitleMap =
-          Maps.uniqueIndex(
-              SaneOption.optionsFor(this),
-              new Function<SaneOption, String>() {
-                @Override
-                public String apply(SaneOption input) {
-                  return input.getName();
-                }
-              });
+      options = SaneOption.optionsFor(this);
     }
 
-    // Maps.uniqueIndex guarantees the order of optionTitleMap.values()
-    return ImmutableList.copyOf(optionTitleMap.values());
+    return new ArrayList<>(options);
   }
 
   void addOptionGroup(OptionGroup group) {
@@ -197,9 +187,13 @@ public class SaneDevice implements Closeable {
    * Returns the option with the given name for this device. If the option does not exist,
    * {@code null} is returned. Name matching is case-sensitive.
    */
-  public SaneOption getOption(String title) throws IOException {
+  public SaneOption getOption(String optionName) throws IOException {
     listOptions();
-    return optionTitleMap.get(title);
+    return options
+        .stream()
+        .filter(o -> Objects.equals(optionName, o.getName()))
+        .findFirst()
+        .orElse(null);
   }
 
   SaneSession getSession() {
@@ -211,6 +205,6 @@ public class SaneDevice implements Closeable {
    * options after an option was set).
    */
   void invalidateOptions() {
-    optionTitleMap = null;
+    options = null;
   }
 }
