@@ -1,7 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.io.ByteStreams;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -41,7 +39,7 @@ public final class SaneWord {
    */
   public static SaneWord fromStream(InputStream input) throws IOException {
     byte[] newValue = new byte[SIZE_IN_BYTES];
-    if (ByteStreams.read(input, newValue, 0, newValue.length) != newValue.length) {
+    if (ByteStreams.readAllBytes(input, newValue) != newValue.length) {
       throw new IOException("input stream was truncated while reading a word");
     }
 
