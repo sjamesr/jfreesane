@@ -28,11 +28,8 @@ class SaneOutputStream extends BufferedOutputStream {
    * <li>if the string is non-empty, the bytes of the string (see {@link String#toCharArray})</li>
    * <li>unconditionally, a null terminator</li>
    * </ul>
-   *
-   * @param string
-   * @throws IOException
    */
-  public void write(String string) throws IOException {
+  void write(String string) throws IOException {
     write(string.toCharArray());
   }
 
@@ -45,11 +42,8 @@ class SaneOutputStream extends BufferedOutputStream {
    * <li>if the char[] is non-empty, the bytes of the char[]</li>
    * <li>unconditionally, a null terminator</li>
    * </ul>
-   *
-   * @param charArray character array to be written to the stream
-   * @throws IOException
    */
-  public void write(char[] charArray) throws IOException {
+  void write(char[] charArray) throws IOException {
     if (charArray.length > 0) {
       byte[] encoded = SanePasswordEncoder.encodedLatin1(charArray);
       write(SaneWord.forInt(encoded.length + 1));
@@ -63,14 +57,14 @@ class SaneOutputStream extends BufferedOutputStream {
    * Writes the bytes of the given {@link SaneWord} to the underlying stream. See
    * {@link SaneWord#getValue}.
    */
-  public void write(SaneWord word) throws IOException {
+  void write(SaneWord word) throws IOException {
     write(word.getValue());
   }
 
   /**
    * Writes the wire value of the given {@link SaneEnum} to the underlying stream.
    */
-  public void write(SaneEnum someEnum) throws IOException {
+  void write(SaneEnum someEnum) throws IOException {
     write(SaneWord.forInt(someEnum.getWireValue()));
   }
 }
