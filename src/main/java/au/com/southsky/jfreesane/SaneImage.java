@@ -227,7 +227,7 @@ final class SaneImage {
           !frameTypes.contains(frame.getType()), "Image already contains a frame of this type");
       Preconditions.checkArgument(
           frameTypes.isEmpty() || !singletonFrameTypes.contains(frame.getType()),
-          "The frame type is singleton but this image " + "contains another frame");
+          "The frame type is singleton but this image contains another frame");
       Preconditions.checkArgument(
           frames.isEmpty() || frames.get(0).getData().length == frame.getData().length,
           "new frame has an inconsistent size");
