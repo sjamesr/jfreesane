@@ -251,10 +251,7 @@ public final class SaneSession implements Closeable {
       outputStream.write(handle.getHandle());
       outputStream.flush();
 
-      Socket imageSocket = null;
-
-      try {
-        imageSocket = new Socket(socket.getInetAddress(), port);
+      try (Socket imageSocket = new Socket(socket.getInetAddress(), port)) {
         int status = inputStream.readWord().integerValue();
 
         if (status != 0) {
@@ -276,10 +273,6 @@ public final class SaneSession implements Closeable {
                 0x4321 == byteOrder.integerValue(),
                 listener);
         builder.addFrame(frameStream.readFrame());
-      } finally {
-        if (imageSocket != null) {
-          imageSocket.close();
-        }
       }
 
       currentFrame++;
