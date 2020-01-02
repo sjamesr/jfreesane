@@ -1,17 +1,13 @@
 package au.com.southsky.jfreesane;
 
-import java.io.IOException;
+import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
+import com.google.common.io.CharSource;
+import com.google.common.truth.Truth;
+import org.junit.Test;
+
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.UUID;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
-
-import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
-
-import com.google.common.io.CharSource;
 
 public class SaneClientAuthenticationTest {
 
@@ -27,46 +23,46 @@ public class SaneClientAuthenticationTest {
     SaneClientAuthentication sca = new SaneClientAuthentication(getTestConfigurationSource());
 
     ClientCredential pixmaCreds = sca.getCredentialForResource("pixma");
-    Assert.assertEquals("pixma", pixmaCreds.getBackend());
-    Assert.assertEquals("sane-user", pixmaCreds.getUsername());
-    Assert.assertEquals("password", pixmaCreds.getPassword());
+    Truth.assertThat(pixmaCreds.getBackend()).isEqualTo("pixma");
+    Truth.assertThat(pixmaCreds.getUsername()).isEqualTo("sane-user");
+    Truth.assertThat(pixmaCreds.getPassword()).isEqualTo("password");
 
     ClientCredential netCreds = sca.getCredentialForResource("net");
-    Assert.assertEquals("net", netCreds.getBackend());
-    Assert.assertEquals("other-user", netCreds.getUsername());
-    Assert.assertEquals("strongPassword", netCreds.getPassword());
+    Truth.assertThat(netCreds.getBackend()).isEqualTo("net");
+    Truth.assertThat(netCreds.getUsername()).isEqualTo("other-user");
+    Truth.assertThat(netCreds.getPassword()).isEqualTo("strongPassword");
 
     ClientCredential mustekCreds = sca.getCredentialForResource("mustek");
-    Assert.assertEquals("mustek", mustekCreds.getBackend());
-    Assert.assertEquals("user", mustekCreds.getUsername());
-    Assert.assertEquals("", mustekCreds.getPassword());
+    Truth.assertThat(mustekCreds.getBackend()).isEqualTo("mustek");
+    Truth.assertThat(mustekCreds.getUsername()).isEqualTo("user");
+    Truth.assertThat(mustekCreds.getPassword()).isEmpty();
   }
 
   @Test
   public void testCanAuthenticateNullResourceFailure() {
     SaneClientAuthentication sca = new SaneClientAuthentication(getTestConfigurationSource());
-    Assert.assertFalse(sca.canAuthenticate(null));
+    Truth.assertThat(sca.canAuthenticate(null)).isFalse();
   }
 
   @Test
   public void testCanAuthenticateFalse() {
     String rcString = "missing$MD5$iamarandomstring";
     SaneClientAuthentication sca = new SaneClientAuthentication(getTestConfigurationSource());
-    Assert.assertFalse(sca.canAuthenticate(rcString));
+    Truth.assertThat(sca.canAuthenticate(rcString)).isFalse();
   }
 
   @Test
   public void testCanAuthenticateTrue() {
     String rcString = "pixma$MD5$iamarandomstring";
     SaneClientAuthentication sca = new SaneClientAuthentication(getTestConfigurationSource());
-    Assert.assertTrue(sca.canAuthenticate(rcString));
+    Truth.assertThat(sca.canAuthenticate(rcString)).isTrue();
   }
 
   @Test
   public void testCanAuthenticateTrueWithoutMD5() {
     String rcString = "mustek";
     SaneClientAuthentication sca = new SaneClientAuthentication(getTestConfigurationSource());
-    Assert.assertTrue(sca.canAuthenticate(rcString));
+    Truth.assertThat(sca.canAuthenticate(rcString)).isTrue();
   }
 
   private CharSource getTestConfigurationSource() {
@@ -78,7 +74,7 @@ public class SaneClientAuthenticationTest {
     users.append("user2::bad-backend\n");
     return new CharSource() {
       @Override
-      public Reader openStream() throws IOException {
+      public Reader openStream() {
         return new StringReader(users.toString());
       }
     };
