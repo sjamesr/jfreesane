@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Splitter;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -428,6 +427,15 @@ public final class SaneSession implements Closeable {
    * @throws IOException
    */
   private void writePassword(String resource, String password) throws IOException {
+    outputStream.write(password);
+
+    // The code below always prints passwords in the clear, because Splitter.on takes
+    // a separator string, not a regular expression. We can't fix it now due to a bug
+    // in old versions of saned, which Linux distributions like Ubuntu still ship.
+    // TODO(sjamesr): revive this code when Ubuntu gets a new sane-backends release,
+    // see https://bugs.launchpad.net/ubuntu/+source/sane-backends/+bug/1858051.
+    // TODO(sjamesr): when reviving, remove Guava dependency.
+    /*
     List<String> resourceParts = Splitter.on("\\$MD5\\$").splitToList(resource);
     if (resourceParts.size() == 1) {
       // Write in clean
@@ -436,6 +444,7 @@ public final class SaneSession implements Closeable {
       outputStream.write(
           "$MD5$" + SanePasswordEncoder.derivePassword(resourceParts.get(1), password));
     }
+    */
   }
 
   SaneOutputStream getOutputStream() {
