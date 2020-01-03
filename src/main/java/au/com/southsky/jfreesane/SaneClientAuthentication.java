@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,7 +36,7 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   private final List<String> passwords;
 
   private final CharSource configurationSource;
-  private boolean initialized = false;
+  private AtomicBoolean isInitialized = new AtomicBoolean(false);
 
   public SaneClientAuthentication() {
     this(DEFAULT_CONFIGURATION_PATH);
@@ -67,31 +68,28 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   }
 
   private synchronized void initializeIfRequired() {
-    if (initialized) {
-      return;
-    }
+    if (isInitialized.compareAndSet(false, true)) {
+      try (BufferedReader r = configurationSource.openBufferedStream()) {
+        String line;
 
-    initialized = true;
-    try (BufferedReader r = configurationSource.openBufferedStream()) {
-      String line;
-
-      int lineNumber = 0;
-      while ((line = r.readLine()) != null) {
-        lineNumber++;
-        ClientCredential credential = ClientCredential.fromAuthString(line);
-        if (credential == null) {
-          logger.log(
-              Level.WARNING,
-              "ignoring invalid configuration format (line {0}): {1}",
-              new Object[] {lineNumber, line});
-        } else {
-          resources.add(credential.backend);
-          usernames.add(credential.username);
-          passwords.add(credential.password);
+        int lineNumber = 0;
+        while ((line = r.readLine()) != null) {
+          lineNumber++;
+          ClientCredential credential = ClientCredential.fromAuthString(line);
+          if (credential == null) {
+            logger.log(
+                Level.WARNING,
+                "ignoring invalid configuration format (line {0}): {1}",
+                new Object[] {lineNumber, line});
+          } else {
+            resources.add(credential.backend);
+            usernames.add(credential.username);
+            passwords.add(credential.password);
+          }
         }
+      } catch (IOException e) {
+        logger.log(Level.WARNING, "could not read auth configuration due to IOException", e);
       }
-    } catch (IOException e) {
-      logger.log(Level.WARNING, "could not read auth configuration due to IOException", e);
     }
   }
 
