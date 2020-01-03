@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,7 +42,11 @@ public class ImageAcquisitionTest {
     this.session =
         SaneSession.withRemoteSane(
             InetAddress.getByName(hostAndPort.getHost()),
-            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort());
+            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort(),
+            20,
+            TimeUnit.SECONDS,
+            20,
+            TimeUnit.SECONDS);
     session.setPasswordProvider(correctPasswordProvider);
   }
 

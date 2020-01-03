@@ -26,12 +26,17 @@ public final class SaneSession implements Closeable {
   private final Socket socket;
   private final SaneOutputStream outputStream;
   private final SaneInputStream inputStream;
+  private final int connectionTimeoutMillis;
+  private final int socketTimeoutMillis;
   private SanePasswordProvider passwordProvider = SanePasswordProvider.usingDotSanePassFile();
 
-  private SaneSession(Socket socket) throws IOException {
+  private SaneSession(Socket socket, int connectionTimeoutMillis, int socketTimeoutMillis)
+      throws IOException {
     this.socket = socket;
     this.outputStream = new SaneOutputStream(socket.getOutputStream());
     this.inputStream = new SaneInputStream(this, socket.getInputStream());
+    this.connectionTimeoutMillis = connectionTimeoutMillis;
+    this.socketTimeoutMillis = socketTimeoutMillis;
   }
 
   /**
@@ -72,7 +77,7 @@ public final class SaneSession implements Closeable {
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
    * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
-   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
    * @return a {@code SaneSession} that is connected to the remote SANE server
    * @throws IOException if any error occurs while communicating with the SANE server
@@ -122,7 +127,7 @@ public final class SaneSession implements Closeable {
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
    * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
-   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
    * @return a {@code SaneSession} that is connected to the remote SANE server
    * @throws IOException if any error occurs while communicating with the SANE server
@@ -148,7 +153,7 @@ public final class SaneSession implements Closeable {
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
    * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
-   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
    * @return a {@code SaneSession} that is connected to the remote SANE server
    * @throws IOException if any error occurs while communicating with the SANE server
@@ -160,13 +165,13 @@ public final class SaneSession implements Closeable {
       long soTimeout,
       TimeUnit soTimeUnit)
       throws IOException {
-    long millis = timeUnit.toMillis(timeout);
+    long connectTimeoutMillis = timeUnit.toMillis(timeout);
     Preconditions.checkArgument(
-        millis >= 0 && millis <= Integer.MAX_VALUE,
+        connectTimeoutMillis >= 0 && connectTimeoutMillis <= Integer.MAX_VALUE,
         "Timeout must be between 0 and Integer.MAX_VALUE milliseconds");
     // If the user specifies a non-zero timeout that rounds to 0 milliseconds,
     // set the timeout to 1 millisecond instead.
-    if (timeout > 0 && millis == 0) {
+    if (timeout > 0 && connectTimeoutMillis == 0) {
       Logger.getLogger(SaneSession.class.getName())
           .log(
               Level.WARNING,
@@ -175,16 +180,18 @@ public final class SaneSession implements Closeable {
     }
     Socket socket = new Socket();
     socket.setTcpNoDelay(true);
+    long soTimeoutMillis = 0;
 
     if (soTimeUnit != null && soTimeout > 0) {
-      long soTimeoutMillis = soTimeUnit.toMillis(soTimeout);
+      soTimeoutMillis = soTimeUnit.toMillis(soTimeout);
       Preconditions.checkArgument(
           soTimeoutMillis >= 0 && soTimeoutMillis <= Integer.MAX_VALUE,
           "Socket timeout must be between 0 and Integer.MAX_VALUE milliseconds");
       socket.setSoTimeout((int) soTimeoutMillis);
     }
-    socket.connect(saneSocketAddress, (int) millis);
-    SaneSession session = new SaneSession(socket);
+    socket.connect(saneSocketAddress, (int) connectTimeoutMillis);
+    SaneSession session =
+        new SaneSession(socket, (int) connectTimeoutMillis, (int) soTimeoutMillis);
     session.initSane();
     return session;
   }
@@ -302,7 +309,10 @@ public final class SaneSession implements Closeable {
       outputStream.write(handle.getHandle());
       outputStream.flush();
 
-      try (Socket imageSocket = new Socket(socket.getInetAddress(), port)) {
+      InetSocketAddress dataAddress = new InetSocketAddress(socket.getInetAddress(), port);
+      try (Socket imageSocket = new Socket()) {
+        imageSocket.setSoTimeout(socketTimeoutMillis);
+        imageSocket.connect(dataAddress, connectionTimeoutMillis);
         int status = inputStream.readWord().integerValue();
 
         if (status != 0) {
