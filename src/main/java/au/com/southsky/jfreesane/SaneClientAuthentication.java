@@ -1,16 +1,16 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.io.CharSource;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,17 +20,15 @@ import java.util.logging.Logger;
  * Represents the authentication configuration used by SANE clients. The SANE utilities like
  * {@code scanimage} will read the {@code ~/.sane/pass} directory (if it exists), this class
  * provides an implementation of that behavior.
- *
- * <p>
- * Threadsafe.
  */
+@ThreadSafe
 public class SaneClientAuthentication extends SanePasswordProvider {
   private static final Logger logger = Logger.getLogger(SaneClientAuthentication.class.getName());
 
   public static final String MARKER_MD5 = "$MD5$";
 
-  private static final String DEFAULT_CONFIGURATION_PATH =
-      Joiner.on(File.separator).join(System.getProperty("user.home"), ".sane", "pass");
+  private static final Path DEFAULT_CONFIGURATION_PATH =
+      Paths.get(System.getProperty("user.home"), ".sane", "pass");
 
   private final List<String> resources;
   private final List<String> usernames;
@@ -44,11 +42,15 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   }
 
   public SaneClientAuthentication(final String path) {
+    this(Paths.get(path));
+  }
+
+  public SaneClientAuthentication(final Path path) {
     this(
         new CharSource() {
           @Override
           public Reader openStream() throws IOException {
-            return new InputStreamReader(new FileInputStream(path), StandardCharsets.US_ASCII);
+            return new InputStreamReader(Files.newInputStream(path), StandardCharsets.US_ASCII);
           }
         });
   }
@@ -145,12 +147,13 @@ public class SaneClientAuthentication extends SanePasswordProvider {
     }
 
     public static ClientCredential fromAuthString(String authString) {
-      List<String> fields = Splitter.on(":").splitToList(authString);
-      if (fields.size() < 3) {
+      @SuppressWarnings("StringSplitter")
+      String[] fields = authString.split(":");
+      if (fields.length < 3) {
         return null;
       }
 
-      return new ClientCredential(fields.get(2), fields.get(0), fields.get(1));
+      return new ClientCredential(fields[2], fields[0], fields[1]);
     }
 
     public String getBackend() {
