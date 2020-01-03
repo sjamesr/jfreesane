@@ -5,9 +5,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.google.common.io.CharSource;
-import com.google.common.io.CharStreams;
-import com.google.common.io.LineProcessor;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -67,38 +66,28 @@ public class SaneClientAuthentication extends SanePasswordProvider {
     }
 
     initialized = true;
-    try {
-      CharStreams.readLines(
-          configurationSource.openStream(),
-          new LineProcessor<Void>() {
-            private int lineNumber = 0;
+    try (BufferedReader r = configurationSource.openBufferedStream()) {
+      String line;
 
-            @Override
-            public boolean processLine(String line) throws IOException {
-              lineNumber++;
-              ClientCredential credential = ClientCredential.fromAuthString(line);
-              if (credential == null) {
-                logger.log(
+      int lineNumber = 0;
+      while ((line = r.readLine()) != null) {
+        lineNumber++;
+        ClientCredential credential = ClientCredential.fromAuthString(line);
+        if (credential == null) {
+          logger.log(
+                  Level.WARNING,
+                  "ignoring invalid configuration format (line {0}): {1}",
+                  new Object[]{lineNumber, line});
+        } else {
+          credentials.put(credential.backend, credential.username, credential.password);
+          if (credentials.row(credential.backend).size() > 1) {
+            logger.log(
                     Level.WARNING,
-                    "ignoring invalid configuration format (line {0}): {1}",
-                    new Object[] {lineNumber, line});
-              } else {
-                credentials.put(credential.backend, credential.username, credential.password);
-                if (credentials.row(credential.backend).size() > 1) {
-                  logger.log(
-                      Level.WARNING,
-                      "ignoring line {0}, we already have a configuration for resource [{1}]",
-                      new Object[] {lineNumber, credential.backend});
-                }
-              }
-              return true;
-            }
-
-            @Override
-            public Void getResult() {
-              return null;
-            }
-          });
+                    "ignoring line {0}, we already have a configuration for resource [{1}]",
+                    new Object[]{lineNumber, credential.backend});
+          }
+        }
+      }
     } catch (IOException e) {
       logger.log(Level.WARNING, "could not read auth configuration due to IOException", e);
     }
