@@ -55,6 +55,10 @@ public final class SaneSession implements Closeable {
   /**
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port
    * with no connection timeout.
+   *
+   * @param saneAddress the address of the SANE server
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress) throws IOException {
     return withRemoteSane(saneAddress, DEFAULT_PORT);
@@ -63,6 +67,15 @@ public final class SaneSession implements Closeable {
   /**
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port
    * with the given connection timeout.
+   *
+   * @param saneAddress the address of the SANE server
+   * @param timeout the timeout for connections to the SANE server, zero implies no connection
+   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   * @param timeUnit connection timeout unit
+   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeUnit socket timeout unit
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
    */
   public static SaneSession withRemoteSane(
       InetAddress saneAddress, long timeout, TimeUnit timeUnit, long soTimeout, TimeUnit soTimeUnit)
@@ -73,6 +86,13 @@ public final class SaneSession implements Closeable {
   /**
    * Establishes a connection to the SANE daemon running on the given host on the default SANE port
    * with the given connection timeout.
+   *
+   * @param saneAddress the address of the SANE server
+   * @param timeout the timeout for connections to the SANE server, zero implies no connection
+   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   * @param timeUnit connection timeout unit
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, long timeout, TimeUnit timeUnit)
       throws IOException {
@@ -82,6 +102,11 @@ public final class SaneSession implements Closeable {
   /**
    * Establishes a connection to the SANE daemon running on the given host on the given port with no
    * connection timeout.
+   *
+   * @param saneAddress the address of the SANE server
+   * @param port the port of the SANE server
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
    */
   public static SaneSession withRemoteSane(InetAddress saneAddress, int port) throws IOException {
     return withRemoteSane(saneAddress, port, 0, TimeUnit.MILLISECONDS, 0, TimeUnit.MILLISECONDS);
@@ -92,18 +117,44 @@ public final class SaneSession implements Closeable {
    * connection cannot be established within the given timeout,
    * {@link java.net.SocketTimeoutException} is thrown.
    *
-   * @param saneAddress
-   * @param port
-   * @param timeout Connection timeout
-   * @param timeUnit Connection timeout unit
-   * @param soTimeout Socket timeout (for read on socket)
-   * @param soTimeUnit Socket timeout unit
-   * @return
-   * @throws IOException
+   * @param saneAddress the address of the SANE server
+   * @param port the port of the SANE server
+   * @param timeout the timeout for connections to the SANE server, zero implies no connection
+   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   * @param timeUnit connection timeout unit
+   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeUnit socket timeout unit
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
    */
   public static SaneSession withRemoteSane(
       InetAddress saneAddress,
       int port,
+      long timeout,
+      TimeUnit timeUnit,
+      long soTimeout,
+      TimeUnit soTimeUnit)
+      throws IOException {
+    return withRemoteSane(
+        new InetSocketAddress(saneAddress, port), timeout, timeUnit, soTimeout, soTimeUnit);
+  }
+
+  /**
+   * Establishes a connection to the SANE daemon running on the given host on the given port. If the
+   * connection cannot be established within the given timeout,
+   * {@link java.net.SocketTimeoutException} is thrown.
+   *
+   * @param saneSocketAddress the socket address of the SANE server
+   * @param timeout the timeout for connections to the SANE server, zero implies no connection
+   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   * @param timeUnit connection timeout unit
+   * @param soTimeout the timeout for reads from the SANE server
+   * @param soTimeUnit socket timeout unit
+   * @return a {@code SaneSession} that is connected to the remote SANE server
+   * @throws IOException if any error occurs while communicating with the SANE server
+   */
+  public static SaneSession withRemoteSane(
+      InetSocketAddress saneSocketAddress,
       long timeout,
       TimeUnit timeUnit,
       long soTimeout,
@@ -132,7 +183,7 @@ public final class SaneSession implements Closeable {
           "Socket timeout must be between 0 and Integer.MAX_VALUE milliseconds");
       socket.setSoTimeout((int) soTimeoutMillis);
     }
-    socket.connect(new InetSocketAddress(saneAddress, port), (int) millis);
+    socket.connect(saneSocketAddress, (int) millis);
     SaneSession session = new SaneSession(socket);
     session.initSane();
     return session;
