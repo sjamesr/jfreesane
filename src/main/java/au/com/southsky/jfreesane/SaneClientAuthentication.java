@@ -2,8 +2,6 @@ package au.com.southsky.jfreesane;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 import com.google.common.io.CharSource;
 
 import java.io.BufferedReader;
@@ -13,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,7 +32,10 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   private static final String DEFAULT_CONFIGURATION_PATH =
       Joiner.on(File.separator).join(System.getProperty("user.home"), ".sane", "pass");
 
-  private final Table<String, String, String> credentials = HashBasedTable.create();
+  private final List<String> resources;
+  private final List<String> usernames;
+  private final List<String> passwords;
+
   private final CharSource configurationSource;
   private boolean initialized = false;
 
@@ -58,6 +59,9 @@ public class SaneClientAuthentication extends SanePasswordProvider {
    */
   public SaneClientAuthentication(CharSource configurationSource) {
     this.configurationSource = configurationSource;
+    this.resources = new ArrayList<>(4);
+    this.usernames = new ArrayList<>(4);
+    this.passwords = new ArrayList<>(4);
   }
 
   private synchronized void initializeIfRequired() {
@@ -75,17 +79,13 @@ public class SaneClientAuthentication extends SanePasswordProvider {
         ClientCredential credential = ClientCredential.fromAuthString(line);
         if (credential == null) {
           logger.log(
-                  Level.WARNING,
-                  "ignoring invalid configuration format (line {0}): {1}",
-                  new Object[]{lineNumber, line});
+              Level.WARNING,
+              "ignoring invalid configuration format (line {0}): {1}",
+              new Object[] {lineNumber, line});
         } else {
-          credentials.put(credential.backend, credential.username, credential.password);
-          if (credentials.row(credential.backend).size() > 1) {
-            logger.log(
-                    Level.WARNING,
-                    "ignoring line {0}, we already have a configuration for resource [{1}]",
-                    new Object[]{lineNumber, credential.backend});
-          }
+          resources.add(credential.backend);
+          usernames.add(credential.username);
+          passwords.add(credential.password);
         }
       }
     } catch (IOException e) {
@@ -110,9 +110,9 @@ public class SaneClientAuthentication extends SanePasswordProvider {
     initializeIfRequired();
     String resource = rc.contains(MARKER_MD5) ? rc.substring(0, rc.indexOf(MARKER_MD5)) : rc;
 
-    Map<String, String> credentialsForResource = credentials.row(resource);
-    for (Map.Entry<String, String> credential : credentialsForResource.entrySet()) {
-      return new ClientCredential(resource, credential.getKey(), credential.getValue());
+    int idx = resources.indexOf(resource);
+    if (idx != -1) {
+      return new ClientCredential(resources.get(idx), usernames.get(idx), passwords.get(idx));
     }
 
     return null;
