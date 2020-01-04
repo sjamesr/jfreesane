@@ -408,7 +408,8 @@ public final class SaneSession implements Closeable {
       outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
       outputStream.write(resource);
       outputStream.write(passwordProvider.getUsername(resource));
-      writePassword(resource, passwordProvider.getPassword(resource));
+      // TODO(sjamesr): resource is not currently used, see writePassword.
+      writePassword(/* resource, */ passwordProvider.getPassword(resource));
       outputStream.flush();
 
       // Read dummy reply and discard (according to the spec, it is unused).
@@ -421,12 +422,8 @@ public final class SaneSession implements Closeable {
 
   /**
    * Write password to outputstream depending on resource provided by saned.
-   *
-   * @param resource as provided by sane in authorization request
-   * @param password
-   * @throws IOException
    */
-  private void writePassword(String resource, String password) throws IOException {
+  private void writePassword(/* String resource ,*/ String password) throws IOException {
     outputStream.write(password);
 
     // The code below always prints passwords in the clear, because Splitter.on takes

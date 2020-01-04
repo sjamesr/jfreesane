@@ -1,7 +1,6 @@
 package au.com.southsky.jfreesane;
 
 import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
-import com.google.common.io.CharSource;
 import com.google.common.truth.Truth;
 import org.junit.Test;
 
@@ -65,18 +64,13 @@ public class SaneClientAuthenticationTest {
     Truth.assertThat(sca.canAuthenticate(rcString)).isTrue();
   }
 
-  private CharSource getTestConfigurationSource() {
+  private Reader getTestConfigurationSource() {
     final StringBuilder users = new StringBuilder();
     users.append("sane-user:password:pixma\n");
     users.append("other-user:strongPassword:net\n");
     users.append("user::mustek\n");
     users.append("user1::bad-backend\n");
     users.append("user2::bad-backend\n");
-    return new CharSource() {
-      @Override
-      public Reader openStream() {
-        return new StringReader(users.toString());
-      }
-    };
+    return new StringReader(users.toString());
   }
 }

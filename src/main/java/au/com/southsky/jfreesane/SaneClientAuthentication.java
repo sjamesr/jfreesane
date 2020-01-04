@@ -1,13 +1,9 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.io.CharSource;
-
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,41 +31,49 @@ public class SaneClientAuthentication extends SanePasswordProvider {
   private final List<String> usernames;
   private final List<String> passwords;
 
-  private final CharSource configurationSource;
+  private final Reader reader;
+  private final Path path;
   private AtomicBoolean isInitialized = new AtomicBoolean(false);
 
   public SaneClientAuthentication() {
-    this(DEFAULT_CONFIGURATION_PATH);
+    this(DEFAULT_CONFIGURATION_PATH, null);
   }
 
-  public SaneClientAuthentication(final String path) {
-    this(Paths.get(path));
+  public SaneClientAuthentication(String path) {
+    this(Paths.get(path), null);
   }
 
-  public SaneClientAuthentication(final Path path) {
-    this(
-        new CharSource() {
-          @Override
-          public Reader openStream() throws IOException {
-            return new InputStreamReader(Files.newInputStream(path), StandardCharsets.US_ASCII);
-          }
-        });
+  public SaneClientAuthentication(Path path) {
+    this(path, null);
   }
 
   /**
    * Returns a new {@code SaneClientAuthentication} whose configuration is represented by the
-   * characters supplied by the given {@link CharSource}.
+   * characters supplied by the given {@link Reader}.
    */
-  public SaneClientAuthentication(CharSource configurationSource) {
-    this.configurationSource = configurationSource;
+  public SaneClientAuthentication(Reader reader) {
+    this(null, reader);
+  }
+
+  private SaneClientAuthentication(Path path, Reader reader) {
+    this.path = path;
+    this.reader = reader;
     this.resources = new ArrayList<>(4);
     this.usernames = new ArrayList<>(4);
     this.passwords = new ArrayList<>(4);
   }
 
+  private BufferedReader openConfig() throws IOException {
+    if (path != null) {
+      return Files.newBufferedReader(path);
+    } else {
+      return new BufferedReader(reader);
+    }
+  }
+
   private synchronized void initializeIfRequired() {
     if (isInitialized.compareAndSet(false, true)) {
-      try (BufferedReader r = configurationSource.openBufferedStream()) {
+      try (BufferedReader r = openConfig()) {
         String line;
 
         int lineNumber = 0;
