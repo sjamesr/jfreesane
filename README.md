@@ -63,9 +63,6 @@ The easiest way to get this software is using [Maven](http://maven.apache.org/).
 
 Otherwise, you can [download the jar file](https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-0.98)
 and put it in your project's CLASSPATH.
-JFreeSane also depends on [Google Guava](http://code.google.com/p/guava-libraries/), an
-excellent collection of Java libraries that you should be using in your project anyway.
-You will need to download the Guava JAR file and put that in your classpath as well.
 
 Once JFreeSane is available on your classpath, please read on for a tutorial on how to use it.
 
