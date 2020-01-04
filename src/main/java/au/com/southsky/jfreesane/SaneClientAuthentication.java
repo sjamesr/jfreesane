@@ -1,6 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -17,8 +16,10 @@ import java.util.logging.Logger;
  * Represents the authentication configuration used by SANE clients. The SANE utilities like
  * {@code scanimage} will read the {@code ~/.sane/pass} directory (if it exists), this class
  * provides an implementation of that behavior.
+ *
+ * <p>
+ * Threadsafe.
  */
-@ThreadSafe
 public class SaneClientAuthentication extends SanePasswordProvider {
   private static final Logger logger = Logger.getLogger(SaneClientAuthentication.class.getName());
 
