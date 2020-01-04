@@ -1,8 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
-
 import java.awt.Point;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -15,10 +12,13 @@ import java.awt.image.DataBufferUShort;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents a SANE image, which are composed of one or more {@link Frame frames}.
@@ -36,15 +36,32 @@ final class SaneImage {
   private final int height;
   private final int bytesPerLine;
 
+  private static int frameSortOrder(Frame frame) {
+    switch (frame.getType()) {
+      case RED:
+        return 0;
+      case GREEN:
+        return 1;
+      case BLUE:
+        return 2;
+      case RGB:
+        return 3;
+      case GRAY:
+        return 4;
+      default:
+        throw new IllegalArgumentException("unknown frame type " + frame.getType());
+    }
+  }
+
   private SaneImage(
       List<Frame> frames, int depthPerPixel, int width, int height, int bytesPerLine) {
     // this ensures that in the 3-frame situation, they are always
     // arranged in the following order: red, green, blue
     this.frames =
-        Ordering.explicit(
-                FrameType.RED, FrameType.GREEN, FrameType.BLUE, FrameType.RGB, FrameType.GRAY)
-            .onResultOf(Frame::getType)
-            .immutableSortedCopy(frames);
+        frames
+            .stream()
+            .sorted(Comparator.comparing(SaneImage::frameSortOrder))
+            .collect(Collectors.toList());
     this.depthPerPixel = depthPerPixel;
     this.width = width;
     this.height = height;
@@ -214,13 +231,13 @@ final class SaneImage {
   }
 
   public static class Builder {
-    private final List<Frame> frames = Lists.newArrayList();
+    private final List<Frame> frames = new ArrayList<>();
     private final Set<FrameType> frameTypes = EnumSet.noneOf(FrameType.class);
 
-    private final WriteOnce<Integer> depthPerPixel = new WriteOnce<Integer>();
-    private final WriteOnce<Integer> width = new WriteOnce<Integer>();
-    private final WriteOnce<Integer> height = new WriteOnce<Integer>();
-    private final WriteOnce<Integer> bytesPerLine = new WriteOnce<Integer>();
+    private final WriteOnce<Integer> depthPerPixel = new WriteOnce<>();
+    private final WriteOnce<Integer> width = new WriteOnce<>();
+    private final WriteOnce<Integer> height = new WriteOnce<>();
+    private final WriteOnce<Integer> bytesPerLine = new WriteOnce<>();
 
     public void addFrame(Frame frame) {
       Preconditions.checkArgument(
