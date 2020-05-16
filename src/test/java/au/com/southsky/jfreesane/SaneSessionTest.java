@@ -377,7 +377,6 @@ public class SaneSessionTest {
   }
 
   @Test
-  @Ignore // This test fails on Travis with UNSUPPORTED.
   public void multipleListDevicesCalls() throws Exception {
     session.listDevices();
     session.listDevices();
