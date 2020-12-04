@@ -55,6 +55,9 @@ class SaneInputStream extends InputStream {
     int length = readWord().integerValue() - 1;
 
     if (length <= 0) {
+      // remove leftover word from stream to prevent it from breaking
+      // the following operation in this session
+      readWord();
       return new ArrayList<>(0);
     }
 

@@ -3,7 +3,6 @@ package au.com.southsky.jfreesane;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -377,7 +376,6 @@ public class SaneSessionTest {
   }
 
   @Test
-  @Ignore // This test fails on Travis with UNSUPPORTED.
   public void multipleListDevicesCalls() throws Exception {
     session.listDevices();
     session.listDevices();
