@@ -491,7 +491,7 @@ public final class SaneOption {
    */
   public double setFixedValue(double value) throws IOException, SaneException {
     Preconditions.checkArgument(
-        value >= -32768 && value <= 32767.9999, "value %d is out of range", value);
+        value >= -32768 && value <= 32767.9999, "value %f is out of range", value);
     SaneWord wordValue = SaneWord.forFixedPrecision(value);
     ControlOptionResult result = writeOption(wordValue);
     Preconditions.checkState(

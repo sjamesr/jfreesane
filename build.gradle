@@ -29,6 +29,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'com.google.truth:truth:0.24'
 
+    compile 'com.google.errorprone:error_prone_annotations:2.4.0'
+
     // Cobertura requires slf4j at runtime
     testRuntime 'org.slf4j:slf4j-api:1.7.10'
 
