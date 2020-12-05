@@ -5,7 +5,7 @@ plugins {
     id 'com.jfrog.bintray' version '1.4'
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
-    id 'net.ltgt.errorprone' version '1.1.1'
+    id 'net.ltgt.errorprone' version '1.3.0'
 
     // code coverage support
     id 'jacoco'
@@ -32,12 +32,12 @@ dependencies {
     // Cobertura requires slf4j at runtime
     testRuntime 'org.slf4j:slf4j-api:1.7.10'
 
-    errorprone 'com.google.errorprone:error_prone_core:2.3.3'
-    errorproneJavac 'com.google.errorprone:error_prone_core:2.3.3'
+    errorprone 'com.google.errorprone:error_prone_core:2.4.0'
+    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
 }
 
 wrapper {
-    gradleVersion = '5.5'
+    gradleVersion = '6.7.1'
 }
 
 checkstyle {
