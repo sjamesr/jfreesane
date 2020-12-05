@@ -1,9 +1,13 @@
 package au.com.southsky.jfreesane;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
+
 final class Preconditions {
   private Preconditions() {}
 
-  static void checkState(boolean state, String message, Object... args) {
+  @FormatMethod
+  static void checkState(boolean state, @FormatString String message, Object... args) {
     if (!state) {
       throw new IllegalStateException(String.format(message, args));
     }
@@ -27,7 +31,8 @@ final class Preconditions {
     }
   }
 
-  static void checkArgument(boolean arg, String message, Object... args) {
+  @FormatMethod
+  static void checkArgument(boolean arg, @FormatString String message, Object... args) {
     if (!arg) {
       throw new IllegalArgumentException(String.format(message, args));
     }
