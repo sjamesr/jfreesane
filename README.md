@@ -55,13 +55,13 @@ The easiest way to get this software is using [Maven](http://maven.apache.org/).
      <dependency>
        <groupId>com.googlecode.jfreesane</groupId>
        <artifactId>jfreesane</artifactId>
-       <version>0.98</version>
+       <version>1.0</version>
      </dependency>
    </dependencies>
 </project>
 ```
 
-Otherwise, you can [download the jar file](https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-0.98)
+Otherwise, you can [download the jar file](https://github.com/sjamesr/jfreesane/releases/tag/jfreesane-1.0)
 and put it in your project's CLASSPATH.
 
 Once JFreeSane is available on your classpath, please read on for a tutorial on how to use it.
