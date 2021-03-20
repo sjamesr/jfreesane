@@ -50,7 +50,7 @@ final class SanePasswordEncoder {
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
       md.update(StandardCharsets.ISO_8859_1.encode(salt));
-      md.update(StandardCharsets.ISO_8859_1.encode(CharBuffer.wrap(password)));
+      md.update(password.getBytes(StandardCharsets.ISO_8859_1));
       return encodeAsHex(md.digest());
     } catch (NoSuchAlgorithmException ex) {
       // This is not expected, so convert to RuntimeException

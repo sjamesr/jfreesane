@@ -21,6 +21,7 @@ public final class SaneSession implements Closeable {
 
   private static final int READ_BUFFER_SIZE = 1 << 20; // 1mb
   private static final int DEFAULT_PORT = 6566;
+  private static final String MD5_PREFIX = "$MD5$";
 
   private final Socket socket;
   private final SaneOutputStream outputStream;
@@ -408,8 +409,7 @@ public final class SaneSession implements Closeable {
       outputStream.write(SaneRpcCode.SANE_NET_AUTHORIZE);
       outputStream.write(resource);
       outputStream.write(passwordProvider.getUsername(resource));
-      // TODO(sjamesr): resource is not currently used, see writePassword.
-      writePassword(/* resource, */ passwordProvider.getPassword(resource));
+      writePassword(resource, passwordProvider.getPassword(resource));
       outputStream.flush();
 
       // Read dummy reply and discard (according to the spec, it is unused).
@@ -423,25 +423,17 @@ public final class SaneSession implements Closeable {
   /**
    * Write password to outputstream depending on resource provided by saned.
    */
-  private void writePassword(/* String resource ,*/ String password) throws IOException {
-    outputStream.write(password);
-
-    // The code below always prints passwords in the clear, because Splitter.on takes
-    // a separator string, not a regular expression. We can't fix it now due to a bug
-    // in old versions of saned, which Linux distributions like Ubuntu still ship.
-    // TODO(sjamesr): revive this code when Ubuntu gets a new sane-backends release,
-    // see https://bugs.launchpad.net/ubuntu/+source/sane-backends/+bug/1858051.
-    // TODO(sjamesr): when reviving, remove Guava dependency.
-    /*
-    List<String> resourceParts = Splitter.on("\\$MD5\\$").splitToList(resource);
-    if (resourceParts.size() == 1) {
+  private void writePassword(String resource, String password) throws IOException {
+    int markerIdx = resource.indexOf(MD5_PREFIX);
+    if (markerIdx > -1) {
+      outputStream.write(
+          MD5_PREFIX
+              + SanePasswordEncoder.derivePassword(
+                  resource.substring(markerIdx + MD5_PREFIX.length()), password));
+    } else {
       // Write in clean
       outputStream.write(password);
-    } else {
-      outputStream.write(
-          "$MD5$" + SanePasswordEncoder.derivePassword(resourceParts.get(1), password));
     }
-    */
   }
 
   SaneOutputStream getOutputStream() {
