@@ -2,8 +2,9 @@ package au.com.southsky.jfreesane;
 
 import com.google.common.truth.Truth;
 import org.junit.Assume;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -11,44 +12,30 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Acquires a series of images from the test device and compares them against reference images
- * obtained from the "scanimage" SANE util. By default, the SANE server running on localhost is
- * used, but this can be overridden by specifying the address in "host[:port]" format in the
+ * obtained from the "scanimage" SANE util. By default, a new local sane daemon is used for each
+ * acquisition, but this can be overridden by specifying the address in "host[:port]" format in the
  * SANE_TEST_SERVER_ADDRESS environment variable.
  */
 @RunWith(Parameterized.class)
 public class ImageAcquisitionTest {
-  private SanePasswordProvider correctPasswordProvider =
-      SanePasswordProvider.forUsernameAndPassword("testuser", "goodpass");
 
-  @Before
-  public void initSession() throws Exception {
-    String address = System.getenv("SANE_TEST_SERVER_ADDRESS");
-    if (address == null) {
-      address = "localhost";
-    }
-    URI hostAndPort = URI.create("my://" + address);
-    this.session =
-        SaneSession.withRemoteSane(
-            InetAddress.getByName(hostAndPort.getHost()),
-            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort(),
-            20,
-            TimeUnit.SECONDS,
-            20,
-            TimeUnit.SECONDS);
-    session.setPasswordProvider(correctPasswordProvider);
-  }
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule public SaneDaemonRule saneDaemonRule = new SaneDaemonRule(temporaryFolder);
+
+  private final String device;
+  private final String mode;
+  private final int depth;
+  private final String pattern;
 
   @Parameterized.Parameters(name = "device={0},mode={1},depth={2},pattern={3}")
   public static Iterable<Object[]> parameters() {
@@ -70,13 +57,6 @@ public class ImageAcquisitionTest {
     return result;
   }
 
-  private SaneSession session;
-
-  private final String device;
-  private final String mode;
-  private final int depth;
-  private final String pattern;
-
   public ImageAcquisitionTest(String device, String mode, int depth, String pattern) {
     this.device = device;
     this.mode = mode;
@@ -85,11 +65,11 @@ public class ImageAcquisitionTest {
   }
 
   @Test
-  public void testImageAcquisition() throws IOException, SaneException {
+  public void testImageAcquisition() throws Exception {
     Assume.assumeFalse("color tests at depth 1 are skipped", depth == 1 && "Color".equals(mode));
     BufferedImage expectedImage = getExpectedImage();
 
-    try (SaneDevice dev = session.getDevice(device)) {
+    try (SaneDevice dev = saneDaemonRule.getSession().getDevice(device)) {
       dev.open();
       Truth.assertThat(dev.getOption("mode").setStringValue(mode)).isEqualTo(mode);
       Truth.assertThat(dev.getOption("depth").setIntegerValue(depth)).isEqualTo(depth);
