@@ -14,11 +14,7 @@ jobs:
           distribution: 'adopt'
       - name: Install saned
         run: sudo apt update && sudo apt install -y sane-utils
-      - name: Configure saned authentication
-        run: sudo bash -c 'echo testuser:goodpass:test > /etc/sane.d/saned.users'
-      - name: Start saned
-        run: /usr/sbin/saned -l -D
       - name: Run Gradle Tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check
+          arguments: check --info

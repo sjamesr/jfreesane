@@ -1,8 +1,6 @@
 package au.com.southsky.jfreesane;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -13,8 +11,6 @@ import org.junit.runners.JUnit4;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.net.InetAddress;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -35,17 +31,17 @@ import static org.junit.Assert.assertTrue;
  * Tests JFreeSane's interactions with the backend.
  *
  * <p>
- * This test assumes a sane daemon is listening on port 6566 on the local host. The daemon must have
- * a password-protected device named 'test'. The username should be 'testuser' and the password
- * should be 'goodpass'.
+ * This test starts a local sane daemon for each test case, giving tests the flexibility to exercise
+ * various sane daemon configurations.
+ * </p>
  *
  * <p>
- * If you cannot run a SANE server locally, you can set the {@code SANE_TEST_SERVER_ADDRESS}
+ * If the tests fail to start the sane daemon, you can set the {@code SANE_TEST_SERVER_ADDRESS}
  * environment variable to the address of a SANE server in "host[:port]" format.
  *
  * <p>
  * If you can't create this test environment, feel free to add the {@link org.junit.Ignore}
- * annotation to the test class.
+ * annotation to the test class for local development.
  *
  * @author James Ring (sjr@jdns.org)
  */
@@ -53,36 +49,16 @@ import static org.junit.Assert.assertTrue;
 public class SaneSessionTest {
 
   private static final Logger log = Logger.getLogger(SaneSessionTest.class.getName());
-  private SaneSession session;
-  private SanePasswordProvider correctPasswordProvider =
-      SanePasswordProvider.forUsernameAndPassword("testuser", "goodpass");
 
   @Rule public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
-  @Before
-  public void initSession() throws Exception {
-    String address = System.getenv("SANE_TEST_SERVER_ADDRESS");
-    if (address == null) {
-      address = "localhost";
-    }
-    URI hostAndPort = URI.create("my://" + address);
-    this.session =
-        SaneSession.withRemoteSane(
-            InetAddress.getByName(hostAndPort.getHost()),
-            hostAndPort.getPort() == -1 ? 6566 : hostAndPort.getPort());
-    session.setPasswordProvider(correctPasswordProvider);
-  }
-
-  @After
-  public void closeSession() throws Exception {
-    session.close();
-  }
+  @Rule public SaneDaemonRule saneDaemon = new SaneDaemonRule(tempFolder);
 
   @Test
   public void listDevicesSucceeds() throws Exception {
-    List<SaneDevice> devices = session.listDevices();
+    List<SaneDevice> devices = saneDaemon.getSession().listDevices();
     log.info("Got " + devices.size() + " device(s): " + devices);
     // Sadly the test device apparently does not show up in the device list.
     // assertThat(devices).isNotEmpty();
@@ -90,7 +66,7 @@ public class SaneSessionTest {
 
   @Test
   public void openDeviceSucceeds() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
     }
   }
@@ -98,7 +74,7 @@ public class SaneSessionTest {
   @Test
   public void optionGroupsArePopulated() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       assertThat(device.getOptionGroups()).isNotEmpty();
     }
@@ -106,7 +82,7 @@ public class SaneSessionTest {
 
   @Test
   public void imageAcquisitionSucceeds() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       BufferedImage image = device.acquireImage();
       File file = File.createTempFile("image", ".png", tempFolder.getRoot());
@@ -117,7 +93,7 @@ public class SaneSessionTest {
 
   @Test
   public void listOptionsSucceeds() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       List<SaneOption> options = device.listOptions();
       Assert.assertTrue("Expect multiple SaneOptions", options.size() > 0);
@@ -133,7 +109,7 @@ public class SaneSessionTest {
 
   @Test
   public void getOptionValueSucceeds() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       List<SaneOption> options = device.listOptions();
       Assert.assertTrue("Expect multiple SaneOptions", options.size() > 0);
@@ -168,7 +144,7 @@ public class SaneSessionTest {
   @Test
   public void setOptionValueSucceedsForString() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       SaneOption modeOption = device.getOption("mode");
       assertThat(modeOption.setStringValue("Gray")).isEqualTo("Gray");
@@ -177,7 +153,7 @@ public class SaneSessionTest {
 
   @Test
   public void adfAcquisitionSucceeds() throws Exception {
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = saneDaemon.getSession().getDevice("test");
     device.open();
     assertThat(device.getOption("source").getStringConstraints())
         .contains("Automatic Document Feeder");
@@ -199,7 +175,7 @@ public class SaneSessionTest {
 
   @Test
   public void acquireImageSucceedsAfterOutOfPaperCondition() throws Exception {
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = saneDaemon.getSession().getDevice("test");
     device.open();
     assertThat(device.getOption("source").getStringConstraints())
         .contains("Automatic Document Feeder");
@@ -215,7 +191,7 @@ public class SaneSessionTest {
   @Test
   public void acquireMonoImage() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       SaneOption modeOption = device.getOption("mode");
       assertEquals("Gray", modeOption.setStringValue("Gray"));
@@ -230,7 +206,7 @@ public class SaneSessionTest {
   @Test
   public void readsAndSetsStringsCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       assertThat(device.getOption("mode").getStringValue(StandardCharsets.US_ASCII))
           .matches("Gray|Color");
@@ -245,7 +221,7 @@ public class SaneSessionTest {
   @Test
   public void readsFixedPrecisionCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       // this option gets rounded to the nearest whole number by the backend
@@ -257,7 +233,7 @@ public class SaneSessionTest {
   @Test
   public void readsBooleanOptionsCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("hand-scanner");
@@ -271,7 +247,7 @@ public class SaneSessionTest {
   @Test
   public void readsStringListConstraintsCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("string-constraint-string-list");
@@ -290,7 +266,7 @@ public class SaneSessionTest {
   @Test
   public void readIntegerValueListConstraintsCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("int-constraint-word-list");
@@ -305,7 +281,7 @@ public class SaneSessionTest {
   @Test
   public void readFixedValueListConstraintsCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("fixed-constraint-word-list");
@@ -324,7 +300,7 @@ public class SaneSessionTest {
   @Test
   public void readIntegerConstraintRangeCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("int-constraint-range");
@@ -339,7 +315,7 @@ public class SaneSessionTest {
   @Test
   public void readFixedConstraintRangeCorrectly() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
 
       SaneOption option = device.getOption("fixed-constraint-range");
@@ -354,7 +330,7 @@ public class SaneSessionTest {
   @Test
   public void arrayOption() throws Exception {
 
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       device.getOption("enable-test-options").setBooleanValue(true);
 
@@ -377,18 +353,22 @@ public class SaneSessionTest {
 
   @Test
   public void multipleListDevicesCalls() throws Exception {
+    SaneSession session = saneDaemon.getSession();
     session.listDevices();
     session.listDevices();
   }
 
   @Test
   public void multipleGetDeviceCalls() throws Exception {
+    SaneSession session = saneDaemon.getSession();
     session.getDevice("test");
     session.getDevice("test");
   }
 
   @Test
   public void multipleOpenDeviceCalls() throws Exception {
+    SaneSession session = saneDaemon.getSession();
+
     {
       SaneDevice device = session.getDevice("test");
       openAndCloseDevice(device);
@@ -402,7 +382,7 @@ public class SaneSessionTest {
 
   @Test
   public void handScanning() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       device.getOption("hand-scanner").setBooleanValue(true);
       device.acquireImage();
@@ -411,7 +391,7 @@ public class SaneSessionTest {
 
   @Test
   public void threePassScanning() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       assertEquals(
           "Color pattern", device.getOption("test-picture").setStringValue("Color pattern"));
@@ -427,7 +407,7 @@ public class SaneSessionTest {
 
   @Test
   public void reducedArea() throws Exception {
-    try (SaneDevice device = session.getDevice("test")) {
+    try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
       device.getOption("mode").setStringValue("Color");
       device.getOption("resolution").setFixedValue(200);
@@ -442,7 +422,7 @@ public class SaneSessionTest {
   @Test
   public void passwordAuthentication() throws Exception {
     // assumes that test is a password-authenticated device
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = saneDaemon.getSession().getDevice("test");
     device.open();
     device.acquireImage();
   }
@@ -453,6 +433,8 @@ public class SaneSessionTest {
    */
   @Test
   public void invalidPasswordCausesAccessDeniedError() throws Exception {
+    saneDaemon.protectDevice("test", "testuser", "goodpass");
+    SaneSession session = saneDaemon.getSession();
     session.setPasswordProvider(
         SanePasswordProvider.forUsernameAndPassword("testuser", "badpassword"));
     try (SaneDevice device = session.getDevice("test")) {
@@ -468,6 +450,8 @@ public class SaneSessionTest {
    */
   @Test
   public void cannotAuthenticateThrowsAccessDeniedError() throws Exception {
+    saneDaemon.protectDevice("test", "someuser", "somepassword");
+    SaneSession session = saneDaemon.getSession();
     session.setPasswordProvider(
         new SanePasswordProvider() {
           @Override
@@ -495,6 +479,7 @@ public class SaneSessionTest {
 
   @Test
   public void passwordAuthenticationFromLocalFileSpecified() throws Exception {
+    SaneSession session = saneDaemon.getSession();
     File passwordFile = tempFolder.newFile("sane.pass");
     Files.write(
         passwordFile.toPath(), "testuser:goodpass:test".getBytes(StandardCharsets.US_ASCII));
@@ -529,7 +514,7 @@ public class SaneSessionTest {
           }
         };
 
-    SaneDevice device = session.getDevice("test");
+    SaneDevice device = saneDaemon.getSession().getDevice("test");
     device.open();
     device.getOption("resolution").setFixedValue(1200);
     device.getOption("mode").setStringValue("Color");
