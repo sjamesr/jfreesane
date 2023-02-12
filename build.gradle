@@ -12,6 +12,10 @@ plugins {
     id 'com.github.kt3k.coveralls' version '2.8.4'
 }
 
+java {
+  sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
+}
+
 jacocoTestReport {
     reports {
         xml.enabled = true // coveralls plugin depends on xml format report
@@ -26,13 +30,13 @@ repositories {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
-    testCompile 'com.google.truth:truth:0.24'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.google.truth:truth:0.24'
 
-    compile 'com.google.errorprone:error_prone_annotations:2.4.0'
+    implementation 'com.google.errorprone:error_prone_annotations:2.4.0'
 
     // Cobertura requires slf4j at runtime
-    testRuntime 'org.slf4j:slf4j-api:1.7.10'
+    testRuntimeOnly 'org.slf4j:slf4j-api:1.7.10'
 
     errorprone 'com.google.errorprone:error_prone_core:2.4.0'
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
