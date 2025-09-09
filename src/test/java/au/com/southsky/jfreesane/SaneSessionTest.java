@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests JFreeSane's interactions with the backend.
@@ -523,6 +524,21 @@ public class SaneSessionTest {
     assertThat(notifiedDevice.get()).isSameAs(device);
     assertThat(frameCount.get()).isEqualTo(3);
     assertThat(framesSeen).containsExactly(FrameType.RED, FrameType.GREEN, FrameType.BLUE);
+  }
+
+  @Test
+  public void canSetOptionAfterFailingToSet() throws Exception {
+    SaneDevice device = saneDaemon.getSession().getDevice("test");
+    device.open();
+    try {
+      device.getOption("mode").setStringValue("Gray ");
+      fail("expected SaneException, but none was thrown");
+    } catch (SaneException e) {
+      // expected
+    }
+
+    // The SANE session stream should be placed in a good state for another try. This should not throw.
+    assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
   }
 
   private void openAndCloseDevice(SaneDevice device) throws Exception {
