@@ -755,10 +755,12 @@ public final class SaneOption {
       // SANE_String *resource
       // See http://sane-project.org/html/doc017.html#s5.2.6.
       SaneWord status = stream.readWord();
+      SaneStatus decodedStatus = SaneStatus.fromWireValue(status);
 
-      if (status.integerValue() != 0) {
-        throw SaneException.fromStatusWord(status);
-      }
+      // If status is non-zero, the SANE spec says the rest of the fields have undefined values. However,
+      // the main SANE server implementation sets all reply bytes to zero before constructing the reply. Perhaps we can
+      // assume that the value size here, if non-zero, is actually the size of a returned value. Why would it be set to
+      // anything else?
 
       int info = stream.readWord().integerValue();
 
@@ -780,8 +782,9 @@ public final class SaneOption {
 
       String resource = stream.readString();
 
-      if (!resource.isEmpty()) {
+      if (!resource.isEmpty() && decodedStatus == SaneStatus.STATUS_ACCESS_DENIED) {
         if (!session.authorize(resource)) {
+          // TODO: if we throw here, we leave the stream in a bad state, so the user can't try to authenticate again.
           throw new SaneException(SaneStatus.STATUS_ACCESS_DENIED);
         }
 
@@ -804,6 +807,8 @@ public final class SaneOption {
         if (status.integerValue() != 0) {
           throw SaneException.fromStatusWord(status);
         }
+      } else if (decodedStatus != SaneStatus.STATUS_GOOD) {
+        throw new SaneException(decodedStatus);
       }
 
       return new ControlOptionResult(status.integerValue(), info, type, valueSize, value, resource);
