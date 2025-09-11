@@ -382,6 +382,26 @@ public class SaneSessionTest {
   }
 
   @Test
+  public void secondOpenDeviceSucceedsAfterAFailure() throws Exception {
+    SaneSession session = saneDaemon.getSession();
+
+    {
+      SaneDevice device = session.getDevice("nonexistent");
+      try {
+        device.open();
+        fail("SaneException was expected but not thrown.");
+      } catch (SaneException e) {
+        // Expected.
+      }
+    }
+
+    for (int i = 0; i < 10; i++) {
+      SaneDevice device = session.getDevice("test");
+      openAndCloseDevice(device);
+    }
+  }
+
+  @Test
   public void handScanning() throws Exception {
     try (SaneDevice device = saneDaemon.getSession().getDevice("test")) {
       device.open();
