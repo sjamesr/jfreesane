@@ -27,9 +27,7 @@ final class ByteStreams {
     return pos;
   }
 
-  /**
-   * Copies up to maxBytes from src to dst, returning how many were copied.
-   */
+  /** Copies up to maxBytes from src to dst, returning how many were copied. */
   static int copy(InputStream src, OutputStream dst, int maxBytes) throws IOException {
     byte[] buf = new byte[Math.min(maxBytes, COPY_BUF_SIZE)];
     int total = 0;

@@ -13,12 +13,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Represents the authentication configuration used by SANE clients. The SANE utilities like
- * {@code scanimage} will read the {@code ~/.sane/pass} directory (if it exists), this class
- * provides an implementation of that behavior.
+ * Represents the authentication configuration used by SANE clients. The SANE utilities like {@code
+ * scanimage} will read the {@code ~/.sane/pass} directory (if it exists), this class provides an
+ * implementation of that behavior.
  *
- * <p>
- * Threadsafe.
+ * <p>Threadsafe.
  */
 public class SaneClientAuthentication extends SanePasswordProvider {
   private static final Logger logger = Logger.getLogger(SaneClientAuthentication.class.getName());
@@ -98,9 +97,7 @@ public class SaneClientAuthentication extends SanePasswordProvider {
     }
   }
 
-  /**
-   * Returns {@code true} if the configuration contains an entry for the given resource.
-   */
+  /** Returns {@code true} if the configuration contains an entry for the given resource. */
   @Override
   public boolean canAuthenticate(String resource) {
     if (resource == null) {

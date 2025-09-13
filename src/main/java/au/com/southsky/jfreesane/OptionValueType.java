@@ -18,8 +18,8 @@ public enum OptionValueType implements SaneEnum {
   INT(1),
 
   /**
-   * The option's value is of SANE's fixed-precision type and can be written with
-   * {@link SaneOption#setFixedValue} and read by {@link SaneOption#getFixedValue}.
+   * The option's value is of SANE's fixed-precision type and can be written with {@link
+   * SaneOption#setFixedValue} and read by {@link SaneOption#getFixedValue}.
    */
   FIXED(2),
 

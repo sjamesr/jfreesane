@@ -12,17 +12,14 @@ import java.util.Arrays;
  * Represents a SANE word type. JFreeSane chooses to represent the SANE word type as an array of
  * {@link #SIZE_IN_BYTES} bytes.
  *
- * <p>
- * See <a href="http://www.sane-project.org/html/doc011.html#s4.2.1">the SANE specification</a> for
- * a thorough discussion about the SANE word type.
+ * <p>See <a href="http://www.sane-project.org/html/doc011.html#s4.2.1">the SANE specification</a>
+ * for a thorough discussion about the SANE word type.
  *
  * @author James Ring (sjr@jdns.org)
  */
 public final class SaneWord {
 
-  /**
-   * The number of bytes used to represent a SANE word.
-   */
+  /** The number of bytes used to represent a SANE word. */
   public static final int SIZE_IN_BYTES = 4;
 
   private static final int PRECISION = 1 << 16;
@@ -34,8 +31,8 @@ public final class SaneWord {
   }
 
   /**
-   * Returns a new {@code SaneWord} by consuming {@link #SIZE_IN_BYTES} bytes from the given
-   * {@link InputStream}.
+   * Returns a new {@code SaneWord} by consuming {@link #SIZE_IN_BYTES} bytes from the given {@link
+   * InputStream}.
    */
   public static SaneWord fromStream(InputStream input) throws IOException {
     byte[] newValue = new byte[SIZE_IN_BYTES];
@@ -46,9 +43,7 @@ public final class SaneWord {
     return new SaneWord(newValue);
   }
 
-  /**
-   * Returns a new {@code SaneWord} representing the given integer value.
-   */
+  /** Returns a new {@code SaneWord} representing the given integer value. */
   public static SaneWord forInt(int value) {
     ByteArrayOutputStream byteStream = new ByteArrayOutputStream(SIZE_IN_BYTES);
     DataOutputStream stream = new DataOutputStream(byteStream);
@@ -82,9 +77,7 @@ public final class SaneWord {
     return Arrays.copyOf(value, value.length);
   }
 
-  /**
-   * Treats this {@link SaneWord} as an integer and returns the represented value.
-   */
+  /** Treats this {@link SaneWord} as an integer and returns the represented value. */
   public int integerValue() {
     try {
       return new DataInputStream(new ByteArrayInputStream(value)).readInt();
@@ -93,9 +86,7 @@ public final class SaneWord {
     }
   }
 
-  /**
-   * Returns the value of this {@link SaneWord} treated as a SANE fixed precision value.
-   */
+  /** Returns the value of this {@link SaneWord} treated as a SANE fixed precision value. */
   public double fixedPrecisionValue() {
     return (double) integerValue() / PRECISION;
   }
@@ -109,9 +100,9 @@ public final class SaneWord {
   }
 
   /**
-   * Creates a new {@link SaneWord} from a copy of the given bytes within the array.
-   * {@code offset + SIZE_IN_BYTES} must be a valid index (i.e. there must be enough bytes in the
-   * array at the given offset), otherwise a runtime exception is thrown.
+   * Creates a new {@link SaneWord} from a copy of the given bytes within the array. {@code offset +
+   * SIZE_IN_BYTES} must be a valid index (i.e. there must be enough bytes in the array at the given
+   * offset), otherwise a runtime exception is thrown.
    */
   public static SaneWord fromBytes(byte[] byteValue, int offset) {
     Preconditions.checkArgument(offset >= 0, "offset must be positive or zero");
@@ -126,9 +117,9 @@ public final class SaneWord {
 
   /**
    * Creates a new {@link SaneWord} from the given double. If {@code value} cannot be exactly
-   * represented in SANE's fixed precision scheme, then
-   * {@code SaneWord.forFixedPrecision(someValue).fixedPrecisionValue()} will not necessarily yield
-   * {@code someValue}.
+   * represented in SANE's fixed precision scheme, then {@code
+   * SaneWord.forFixedPrecision(someValue).fixedPrecisionValue()} will not necessarily yield {@code
+   * someValue}.
    */
   public static SaneWord forFixedPrecision(double value) {
     return SaneWord.forInt((int) (value * PRECISION));

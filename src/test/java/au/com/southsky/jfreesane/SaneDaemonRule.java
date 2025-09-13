@@ -1,8 +1,5 @@
 package au.com.southsky.jfreesane;
 
-import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +22,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.rules.ExternalResource;
+import org.junit.rules.TemporaryFolder;
 
 public class SaneDaemonRule extends ExternalResource {
   private static final String SANE_TEST_SERVER_ENV_VAR = "SANE_TEST_SERVER_ADDRESS";

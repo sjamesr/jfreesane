@@ -25,16 +25,12 @@ public class OptionGroup {
     return OptionValueType.GROUP;
   }
 
-  /**
-   * Returns an immutable copy of the options in this group.
-   */
+  /** Returns an immutable copy of the options in this group. */
   public List<SaneOption> getOptions() {
     return new ArrayList<>(options);
   }
 
-  /**
-   * Adds an option to the group.
-   */
+  /** Adds an option to the group. */
   void addOption(SaneOption option) {
     Preconditions.checkState(option.getGroup() == this);
     options.add(option);

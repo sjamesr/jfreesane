@@ -8,19 +8,13 @@ package au.com.southsky.jfreesane;
  * @author James Ring (sjr@jdns.org)
  */
 public enum OptionValueConstraintType implements SaneEnum {
-  /**
-   * The option has no constraints on its value.
-   */
+  /** The option has no constraints on its value. */
   NO_CONSTRAINT(0, "No constraint"),
 
-  /**
-   * The option's value is constrained to some range of values.
-   */
+  /** The option's value is constrained to some range of values. */
   RANGE_CONSTRAINT(1, "Range constraint"),
 
-  /**
-   * The option's value is constrained to some list of values.
-   */
+  /** The option's value is constrained to some list of values. */
   VALUE_LIST_CONSTRAINT(2, "Value list constraint"),
 
   /**
@@ -37,9 +31,7 @@ public enum OptionValueConstraintType implements SaneEnum {
     this.description = description;
   }
 
-  /**
-   * Returns the description of the option as provided by the SANE backend.
-   */
+  /** Returns the description of the option as provided by the SANE backend. */
   public String description() {
     return description;
   }

@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '24'
           distribution: 'adopt'
       - name: Install saned
         run: sudo apt update && sudo apt install -y sane-utils

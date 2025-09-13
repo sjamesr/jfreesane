@@ -8,9 +8,7 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Represents a reader of {@link Frame frames}.
- */
+/** Represents a reader of {@link Frame frames}. */
 class FrameReader {
   private static final Logger log = Logger.getLogger(FrameReader.class.getName());
 

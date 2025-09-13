@@ -5,13 +5,12 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A static factory of listeners that limit the rate at which they send
- * {@link ScanListener#recordRead} notifications. The primary purpose of this class is to allow
- * users to easily build user interfaces that provide progress information without having to deal
- * with these potentially very high frequency notifications.
+ * A static factory of listeners that limit the rate at which they send {@link
+ * ScanListener#recordRead} notifications. The primary purpose of this class is to allow users to
+ * easily build user interfaces that provide progress information without having to deal with these
+ * potentially very high frequency notifications.
  *
- * <p>
- * For example:
+ * <p>For example:
  *
  * <pre>
  *   final JProgressBar progressBar = new JProgressBar();
