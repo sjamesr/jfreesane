@@ -299,7 +299,7 @@ final class SaneImage {
     }
   }
 
-  private static class WriteOnce<T> {
+  private static final class WriteOnce<T> {
     private T value = null;
 
     public void set(T newValue) {
