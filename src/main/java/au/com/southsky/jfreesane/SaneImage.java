@@ -20,9 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Represents a SANE image, which are composed of one or more {@link Frame frames}.
- */
+/** Represents a SANE image, which are composed of one or more {@link Frame frames}. */
 final class SaneImage {
   private static final Set<FrameType> singletonFrameTypes =
       Collections.unmodifiableSet(EnumSet.of(FrameType.GRAY, FrameType.RGB));
@@ -58,8 +56,7 @@ final class SaneImage {
     // this ensures that in the 3-frame situation, they are always
     // arranged in the following order: red, green, blue
     this.frames =
-        frames
-            .stream()
+        frames.stream()
             .sorted(Comparator.comparing(SaneImage::frameSortOrder))
             .collect(Collectors.toList());
     this.depthPerPixel = depthPerPixel;

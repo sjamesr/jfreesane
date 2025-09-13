@@ -12,14 +12,15 @@ $ ./gradlew clean
 
 Change build.gradle to have the appropriate version in releaseVersion.
 
-$ ./gradlew -PbintrayUsername=<user> -PbintrayApiKey=<apiKey> bintrayUpload
+$ ORG_GRADLE_PROJECT_mavenCentralUsername=$MAVEN_CENTRAL_TOKEN_USERNAME \
+  ORG_GRADLE_PROJECT_mavenCentralPassword=$MAVEN_CENTRAL_TOKEN_PASSWORD \
+  ORG_GRADLE_PROJECT_signingInMemoryKey=$(gpg --export-secret-keys --armor) \
+  ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=  \
+  ./gradlew publishToMavenLocal
 
-* go to http://bintray.com/
-* select the latest version, then click "Publish". JFreeSane is now available
-  on JCenter
-* click on "Maven Central". Enter your Sonatype ORSSH password. Ensure the
-  "Close and release" checkbox is selected and click "Sync". JFreeSane will then
-  go out to Maven Central shortly (usually within 10 minutes).
+* go to https://central.sonatype.com/
+* sign in, click on "Publish", select the latest version, then click "Publish". JFreeSane is now available
+  on Maven Central.
 
 $ git tag jfreesane-<releaseVersion> # e.g. git tag jfreesane-0.96
 $ git push --tags

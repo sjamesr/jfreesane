@@ -1,9 +1,8 @@
 package au.com.southsky.jfreesane;
 
+import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 import java.util.List;
 import java.util.Set;
-
-import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 
 /**
  * Describes a SANE option.

@@ -3,8 +3,7 @@ package au.com.southsky.jfreesane;
 /**
  * Represents the parameters returned by the SANE server when it is about to acquire a new frame.
  *
- * <p>
- * All parameter values are determined in advance of frame acquisition, with the exception of
+ * <p>All parameter values are determined in advance of frame acquisition, with the exception of
  * {@code lineCount}. The value of this parameter may not be known in advance, for example when the
  * scanner is a hand scanner or supports page height detection. JFreeSane will populate this value
  * after frame acquisition.
@@ -27,30 +26,22 @@ public class SaneParameters {
     this.depthPerPixel = depth;
   }
 
-  /**
-   * Returns the type of frame being acquired.
-   */
+  /** Returns the type of frame being acquired. */
   public FrameType getFrameType() {
     return frameType;
   }
 
-  /**
-   * Returns if no more frames are expected.
-   */
+  /** Returns if no more frames are expected. */
   public boolean isLastFrame() {
     return lastFrame;
   }
 
-  /**
-   * Returns the number of bytes per scan line.
-   */
+  /** Returns the number of bytes per scan line. */
   public int getBytesPerLine() {
     return bytesPerLine;
   }
 
-  /**
-   * Returns the number of pixels per scan line.
-   */
+  /** Returns the number of pixels per scan line. */
   public int getPixelsPerLine() {
     return pixelsPerLine;
   }
@@ -67,9 +58,7 @@ public class SaneParameters {
     this.lineCount = lineCount;
   }
 
-  /**
-   * Returns the number of bits used to indicate the color of each pixel.
-   */
+  /** Returns the number of bits used to indicate the color of each pixel. */
   public int getDepthPerPixel() {
     return depthPerPixel;
   }

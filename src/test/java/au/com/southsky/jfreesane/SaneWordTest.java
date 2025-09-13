@@ -1,17 +1,16 @@
 package au.com.southsky.jfreesane;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.common.truth.Truth;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * This class implements tests for {@link SaneWord}.

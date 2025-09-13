@@ -1,8 +1,6 @@
 package au.com.southsky.jfreesane;
 
-/**
- * Represents the various types of image frames in SANE.
- */
+/** Represents the various types of image frames in SANE. */
 public enum FrameType implements SaneEnum {
   GRAY(0),
   RGB(1),

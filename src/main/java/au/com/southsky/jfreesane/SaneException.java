@@ -27,9 +27,7 @@ public class SaneException extends Exception {
     }
   }
 
-  /**
-   * Returns the reason that this exception was thrown, or {@code null} if none is known.
-   */
+  /** Returns the reason that this exception was thrown, or {@code null} if none is known. */
   public SaneStatus getStatus() {
     return status;
   }

@@ -2,11 +2,10 @@ package au.com.southsky.jfreesane;
 
 import au.com.southsky.jfreesane.SaneClientAuthentication.ClientCredential;
 import com.google.common.truth.Truth;
-import org.junit.Test;
-
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.UUID;
+import org.junit.Test;
 
 public class SaneClientAuthenticationTest {
 

@@ -1,5 +1,6 @@
 package au.com.southsky.jfreesane;
 
+import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -7,8 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import au.com.southsky.jfreesane.SaneOption.OptionUnits;
 
 /**
  * Wraps an {@link InputStream} to provide some methods for deserializing SANE-related types.
@@ -86,9 +85,7 @@ class SaneInputStream extends InputStream {
     return readSaneDevice();
   }
 
-  /**
-   * Reads a single pointer and returns {@code true} if it was non-null.
-   */
+  /** Reads a single pointer and returns {@code true} if it was non-null. */
   private boolean readPointer() throws IOException {
     return readWord().integerValue() != 0;
   }

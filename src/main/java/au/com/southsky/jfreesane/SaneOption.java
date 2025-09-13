@@ -11,22 +11,20 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * This class represents a SANE device option. An option may be active or inactive (see
- * {@link #isActive}). Active options may be read (see {@link #isReadable}) and modified (see
- * {@link #isWriteable}).
+ * This class represents a SANE device option. An option may be active or inactive (see {@link
+ * #isActive}). Active options may be read (see {@link #isReadable}) and modified (see {@link
+ * #isWriteable}).
  *
- * <p>
- * Options have a type (see {@link #getType}), in order to read or write an option's value, you must
- * call the getter or setter method corresponding to the option's type. For example, for an option
- * of type {@link OptionValueType#STRING}, you will call {@link #setStringValue} or
- * {@link #getStringValue}.
+ * <p>Options have a type (see {@link #getType}), in order to read or write an option's value, you
+ * must call the getter or setter method corresponding to the option's type. For example, for an
+ * option of type {@link OptionValueType#STRING}, you will call {@link #setStringValue} or {@link
+ * #getStringValue}.
  *
- * <p>
- * Options may have constraints that impose restrictions on the range of values the option may take.
- * Constraints have a type which may be obtained using {@link #getConstraintType}. You may read the
- * actual constraints by calling the constraint getter method corresponding to the constraint type.
- * For example, an option of type {@link OptionValueType#INT} may have a constraint of type
- * {@link OptionValueConstraintType#VALUE_LIST_CONSTRAINT}, which you may obtain by calling
+ * <p>Options may have constraints that impose restrictions on the range of values the option may
+ * take. Constraints have a type which may be obtained using {@link #getConstraintType}. You may
+ * read the actual constraints by calling the constraint getter method corresponding to the
+ * constraint type. For example, an option of type {@link OptionValueType#INT} may have a constraint
+ * of type {@link OptionValueConstraintType#VALUE_LIST_CONSTRAINT}, which you may obtain by calling
  * {@link #getIntegerValueListConstraint}.
  *
  * @author James Ring (sjr@jdns.org)
@@ -57,39 +55,25 @@ public final class SaneOption {
    * any, the value has.
    */
   public enum OptionUnits implements SaneEnum {
-    /**
-     * The option has no units.
-     */
+    /** The option has no units. */
     UNIT_NONE(0),
 
-    /**
-     * The option unit is pixels.
-     */
+    /** The option unit is pixels. */
     UNIT_PIXEL(1),
 
-    /**
-     * The option unit is bits.
-     */
+    /** The option unit is bits. */
     UNIT_BIT(2),
 
-    /**
-     * The option unit is millimeters.
-     */
+    /** The option unit is millimeters. */
     UNIT_MM(3),
 
-    /**
-     * The option unit is dots per inch.
-     */
+    /** The option unit is dots per inch. */
     UNIT_DPI(4),
 
-    /**
-     * The option unit is a percentage.
-     */
+    /** The option unit is a percentage. */
     UNIT_PERCENT(5),
 
-    /**
-     * The option unit is microseconds.
-     */
+    /** The option unit is microseconds. */
     UNIT_MICROSECOND(6);
 
     private final int wireValue;
@@ -121,9 +105,7 @@ public final class SaneOption {
      */
     RELOAD_OPTIONS(2),
 
-    /**
-     * Setting the option may have caused a parameter set by the user to have changed.
-     */
+    /** Setting the option may have caused a parameter set by the user to have changed. */
     RELOAD_PARAMETERS(4);
 
     private final int wireValue;
@@ -183,8 +165,10 @@ public final class SaneOption {
         device.addOptionGroup(option.getGroup());
       } else {
         // http://code.google.com/p/jfreesane/issues/detail?id=1
-        // The first option always has an empty name. Sometimes we see options after the first option
-        // that have empty names. Elsewhere we assume that option names are unique, so this option is
+        // The first option always has an empty name. Sometimes we see options after the first
+        // option
+        // that have empty names. Elsewhere we assume that option names are unique, so this option
+        // is
         // omitted
         if (i > 0 && (option.getName() == null || option.getName().isEmpty())) {
           logger.fine(String.format("ignoring null or empty option with id %d: %s", i, option));
@@ -268,8 +252,8 @@ public final class SaneOption {
   }
 
   /**
-   * Returns {@code true} if this option has a constraint other than
-   * {@link OptionValueConstraintType#NO_CONSTRAINT}.
+   * Returns {@code true} if this option has a constraint other than {@link
+   * OptionValueConstraintType#NO_CONSTRAINT}.
    */
   public boolean isConstrained() {
     return !OptionValueConstraintType.NO_CONSTRAINT.equals(descriptor.getConstraintType());
@@ -292,17 +276,13 @@ public final class SaneOption {
   }
 
   public List<Integer> getIntegerValueListConstraint() {
-    return descriptor
-        .getWordConstraints()
-        .stream()
+    return descriptor.getWordConstraints().stream()
         .map(SaneWord::integerValue)
         .collect(Collectors.toList());
   }
 
   public List<Double> getFixedValueListConstraint() {
-    return descriptor
-        .getWordConstraints()
-        .stream()
+    return descriptor.getWordConstraints().stream()
         .map(SaneWord::fixedPrecisionValue)
         .collect(Collectors.toList());
   }
@@ -322,8 +302,8 @@ public final class SaneOption {
   }
 
   /**
-   * Reads the current boolean value option. This option must be of type
-   * {@link OptionValueType#BOOLEAN}.
+   * Reads the current boolean value option. This option must be of type {@link
+   * OptionValueType#BOOLEAN}.
    *
    * @throws IOException if a problem occurred while talking to SANE
    */
@@ -339,7 +319,7 @@ public final class SaneOption {
    * Reads the current Integer value option. We do not cache value from previous get or set
    * operations so each get involves a round trip to the server.
    *
-   * TODO: consider caching the returned value for "fast read" later
+   * <p>TODO: consider caching the returned value for "fast read" later
    *
    * @return the value of the option
    * @throws IOException if a problem occurred while talking to SANE
@@ -562,7 +542,7 @@ public final class SaneOption {
   /**
    * Set the value of the current option to the supplied value. Option value must be of integer type
    *
-   * TODO: consider caching the returned value for "fast read" later
+   * <p>TODO: consider caching the returned value for "fast read" later
    *
    * @param newValue for the option
    * @return the value actually set
@@ -721,9 +701,7 @@ public final class SaneOption {
     return descriptor.getOptionCapabilities().contains(OptionCapability.HARD_SELECT);
   }
 
-  /**
-   * Represents the result of calling {@code SANE_NET_CONTROL_OPTION} (RPC code 5).
-   */
+  /** Represents the result of calling {@code SANE_NET_CONTROL_OPTION} (RPC code 5). */
   private static final class ControlOptionResult {
     private final int status;
     private final Set<OptionWriteInfo> info;
@@ -757,9 +735,12 @@ public final class SaneOption {
       SaneWord status = stream.readWord();
       SaneStatus decodedStatus = SaneStatus.fromWireValue(status);
 
-      // If status is non-zero, the SANE spec says the rest of the fields have undefined values. However,
-      // the main SANE server implementation sets all reply bytes to zero before constructing the reply. Perhaps we can
-      // assume that the value size here, if non-zero, is actually the size of a returned value. Why would it be set to
+      // If status is non-zero, the SANE spec says the rest of the fields have undefined values.
+      // However,
+      // the main SANE server implementation sets all reply bytes to zero before constructing the
+      // reply. Perhaps we can
+      // assume that the value size here, if non-zero, is actually the size of a returned value. Why
+      // would it be set to
       // anything else?
 
       int info = stream.readWord().integerValue();
@@ -784,7 +765,8 @@ public final class SaneOption {
 
       if (!resource.isEmpty() && decodedStatus == SaneStatus.STATUS_ACCESS_DENIED) {
         if (!session.authorize(resource)) {
-          // TODO: if we throw here, we leave the stream in a bad state, so the user can't try to authenticate again.
+          // TODO: if we throw here, we leave the stream in a bad state, so the user can't try to
+          // authenticate again.
           throw new SaneException(SaneStatus.STATUS_ACCESS_DENIED);
         }
 

@@ -40,8 +40,8 @@ public final class SaneSession implements Closeable {
 
   /**
    * Returns the current password provider. By default, this password provider will be supplied by
-   * {@link SanePasswordProvider#usingDotSanePassFile}, but you may override that with
-   * {@link #setPasswordProvider}.
+   * {@link SanePasswordProvider#usingDotSanePassFile}, but you may override that with {@link
+   * #setPasswordProvider}.
    */
   public SanePasswordProvider getPasswordProvider() {
     return passwordProvider;
@@ -49,8 +49,8 @@ public final class SaneSession implements Closeable {
 
   /**
    * Sets the {@link SanePasswordProvider password provider} to use if the SANE daemon asks for
-   * credentials when accessing a resource. Throws {@link NullPointerException} if
-   * {@code passwordProvider} is {@code null}.
+   * credentials when accessing a resource. Throws {@link NullPointerException} if {@code
+   * passwordProvider} is {@code null}.
    */
   public void setPasswordProvider(SanePasswordProvider passwordProvider) {
     this.passwordProvider = Preconditions.checkNotNull(passwordProvider);
@@ -74,7 +74,7 @@ public final class SaneSession implements Closeable {
    *
    * @param saneAddress the address of the SANE server
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
-   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   *     timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
    * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
@@ -93,7 +93,7 @@ public final class SaneSession implements Closeable {
    *
    * @param saneAddress the address of the SANE server
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
-   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   *     timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
    * @return a {@code SaneSession} that is connected to the remote SANE server
    * @throws IOException if any error occurs while communicating with the SANE server
@@ -118,13 +118,13 @@ public final class SaneSession implements Closeable {
 
   /**
    * Establishes a connection to the SANE daemon running on the given host on the given port. If the
-   * connection cannot be established within the given timeout,
-   * {@link java.net.SocketTimeoutException} is thrown.
+   * connection cannot be established within the given timeout, {@link
+   * java.net.SocketTimeoutException} is thrown.
    *
    * @param saneAddress the address of the SANE server
    * @param port the port of the SANE server
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
-   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   *     timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
    * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
@@ -145,12 +145,12 @@ public final class SaneSession implements Closeable {
 
   /**
    * Establishes a connection to the SANE daemon running on the given host on the given port. If the
-   * connection cannot be established within the given timeout,
-   * {@link java.net.SocketTimeoutException} is thrown.
+   * connection cannot be established within the given timeout, {@link
+   * java.net.SocketTimeoutException} is thrown.
    *
    * @param saneSocketAddress the socket address of the SANE server
    * @param timeout the timeout for connections to the SANE server, zero implies no connection
-   * timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
+   *     timeout, must not be greater than {@link Integer#MAX_VALUE} milliseconds.
    * @param timeUnit connection timeout unit
    * @param soTimeout the timeout for reads from the SANE server, zero implies no read timeout
    * @param soTimeUnit socket timeout unit
@@ -200,7 +200,7 @@ public final class SaneSession implements Closeable {
    * not exist.
    *
    * @return a new {@link SaneDevice} with the given name associated with the current session, never
-   * {@code null}
+   *     {@code null}
    * @throws IOException if an error occurs while communicating with the SANE daemon
    */
   public SaneDevice getDevice(String name) throws IOException {
@@ -420,9 +420,7 @@ public final class SaneSession implements Closeable {
     return false;
   }
 
-  /**
-   * Write password to outputstream depending on resource provided by saned.
-   */
+  /** Write password to outputstream depending on resource provided by saned. */
   private void writePassword(/* String resource ,*/ String password) throws IOException {
     outputStream.write(password);
 

@@ -1,28 +1,26 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+
 plugins {
     id 'checkstyle'
-    id 'java'
+    id 'java-library'
     id 'wrapper'
-    id 'maven-publish'
-    id 'com.github.sherter.google-java-format' version '0.3.2'
-    id 'net.ltgt.errorprone' version '1.3.0'
+    id 'com.diffplug.spotless' version '7.2.1'
+    id 'net.ltgt.errorprone' version '4.3.0'
 
     // code coverage support
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.4'
+
+    // Publishing
+    id 'com.vanniktech.maven.publish' version '0.34.0'
 }
 
 java {
   sourceCompatibility = targetCompatibility = JavaVersion.VERSION_11
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true // coveralls plugin depends on xml format report
-        html.enabled = true
-    }
-}
-
-def releaseVersion = '1.0'
+def releaseVersion = '1.1'
 
 repositories {
     mavenCentral()
@@ -37,29 +35,27 @@ dependencies {
     // Cobertura requires slf4j at runtime
     testRuntimeOnly 'org.slf4j:slf4j-api:1.7.10'
 
-    errorprone 'com.google.errorprone:error_prone_core:2.4.0'
+    errorprone 'com.google.errorprone:error_prone_core:2.41.0'
     errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
 }
 
 wrapper {
-    gradleVersion = '6.7.1'
+    gradleVersion = '9.0.0'
 }
 
 checkstyle {
     configFile = file('checkstyle_config.xml')
     ignoreFailures = false
-    toolVersion = '6.19'
+    toolVersion = '11.0.1'
+
 }
 
-task checkstyleHtml {
-    doLast {
-        ant.xslt(in: checkstyleMain.reports.xml.destination,
-                 style: file('checkstyle-noframes-sorted.xsl'),
-                 out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+tasks.withType(Checkstyle) {
+    reports {
+        xml.required = false
+        html.required = true
     }
 }
-
-checkstyleMain.finalizedBy checkstyleHtml
 
 // Don't stop test from running because of checkstyle failures.
 checkstyleTest.mustRunAfter test
@@ -68,66 +64,44 @@ javadoc {
     options.memberLevel = JavadocMemberLevel.PROTECTED
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    baseName 'javadoc'
+mavenPublishing {
+    configure(new JavaLibrary(new JavadocJar.Javadoc(), true))
 
-    from javadoc.destinationDir
-}
+    publishToMavenCentral()
+    signAllPublications()
 
-task sourceJar(type: Jar) {
-    baseName 'sources'
+    coordinates("com.googlecode.jfreesane", "jfreesane", releaseVersion)
 
-    from sourceSets.main.allJava
-}
-
-def appendMavenCentralMetadata(Node node) {
-    node.appendNode('name', 'JFreeSane')
-    node.appendNode('description', 'A Java client for the SANE daemon')
-    node.appendNode('url', 'http://github.com/sjamesr/jfreesane')
-
-    def license = node.appendNode('licenses').appendNode('license')
-    license.appendNode('name', 'The Apache Software License, Version 2.0')
-    license.appendNode('url', 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-    license.appendNode('distribution', 'repo')
-
-    node.appendNode('scm').appendNode('url', 'https://github.com/sjamesr/jfreesane.git')
-
-    def developerInfo = node.appendNode('developers').appendNode('developer')
-    developerInfo.appendNode('id', 'dev')
-    developerInfo.appendNode('name', 'The JFreeSane Contributors')
-    developerInfo.appendNode('email', 'jfreesane-discuss@googlegroups.com')
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            artifact sourceJar {
-                classifier 'sources'
+    pom {
+        name = "JFreeSane"
+        description = "A Java client for the SANE daemon"
+        inceptionYear = "2020"
+        url = "https://github.com/username/mylibrary/"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "http://www.apache.org/licenses/LICENSE-2.0.txt"
             }
-
-            artifact javadocJar {
-                classifier 'javadoc'
+        }
+        developers {
+            developer {
+                id = "dev"
+                name = "The JFreeSane Contributors"
+                email = "jfreesane-discuss@googlegroups.com"
             }
-
-            groupId 'com.googlecode.jfreesane'
-            artifactId 'jfreesane'
-            version releaseVersion
-
-            pom.withXml {
-                appendMavenCentralMetadata(asNode())
-            }
+        }
+        scm {
+            url = "https://github.com/sjamesr/jfreesane/"
+            connection = "scm:git:git://github.com/sjamesr/jfreesane.git"
+            developerConnection = "scm:git:ssh://git@github.com/sjamesr/jfreesane.git"
         }
     }
 }
 
-// If Java formatter checks fail, tell the user how to fix them.
-task printFormatHelperMessage {
-    doLast {
-        throw new GradleException('google-java-format is required.\n' +
-            'Use ./gradlew googleJavaFormat to reformat the broken files')
+spotless {
+    java {
+        googleJavaFormat('1.27.0').groupArtifact('com.google.googlejavaformat:google-java-format')
     }
 }
-verifyGoogleJavaFormat.finalizedBy printFormatHelperMessage
-printFormatHelperMessage.onlyIf { verifyGoogleJavaFormat.state.failure != null }
+

@@ -1,14 +1,11 @@
 package au.com.southsky.jfreesane;
 
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -21,27 +18,25 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
-
-import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import javax.imageio.ImageIO;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests JFreeSane's interactions with the backend.
  *
- * <p>
- * This test starts a local sane daemon for each test case, giving tests the flexibility to exercise
- * various sane daemon configurations.
- * </p>
+ * <p>This test starts a local sane daemon for each test case, giving tests the flexibility to
+ * exercise various sane daemon configurations.
  *
- * <p>
- * If the tests fail to start the sane daemon, you can set the {@code SANE_TEST_SERVER_ADDRESS}
+ * <p>If the tests fail to start the sane daemon, you can set the {@code SANE_TEST_SERVER_ADDRESS}
  * environment variable to the address of a SANE server in "host[:port]" format.
  *
- * <p>
- * If you can't create this test environment, feel free to add the {@link org.junit.Ignore}
+ * <p>If you can't create this test environment, feel free to add the {@link org.junit.Ignore}
  * annotation to the test class for local development.
  *
  * @author James Ring (sjr@jdns.org)
@@ -557,7 +552,8 @@ public class SaneSessionTest {
       // expected
     }
 
-    // The SANE session stream should be placed in a good state for another try. This should not throw.
+    // The SANE session stream should be placed in a good state for another try. This should not
+    // throw.
     assertThat(device.getOption("mode").setStringValue("Gray")).isEqualTo("Gray");
   }
 

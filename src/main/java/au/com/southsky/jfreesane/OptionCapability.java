@@ -8,39 +8,25 @@ package au.com.southsky.jfreesane;
  * @author James Ring (sjr@jdns.org)
  */
 enum OptionCapability implements SaneEnum {
-  /**
-   * The option value may be set in software.
-   */
+  /** The option value may be set in software. */
   SOFT_SELECT(1),
 
-  /**
-   * This option may be selected by the user on the scanner (e.g. by flipping a switch).
-   */
+  /** This option may be selected by the user on the scanner (e.g. by flipping a switch). */
   HARD_SELECT(2),
 
-  /**
-   * This option may be read in software.
-   */
+  /** This option may be read in software. */
   SOFT_DETECT(4),
 
-  /**
-   * The option is not directly supported by the scanner but is emulated by the SANE backend.
-   */
+  /** The option is not directly supported by the scanner but is emulated by the SANE backend. */
   EMULATED(8),
 
-  /**
-   * The option value may be automatically set by the SANE backend if desired.
-   */
+  /** The option value may be automatically set by the SANE backend if desired. */
   AUTOMATIC(16),
 
-  /**
-   * The option is inactive.
-   */
+  /** The option is inactive. */
   INACTIVE(32),
 
-  /**
-   * The option is intended for advanced users.
-   */
+  /** The option is intended for advanced users. */
   ADVANCED(64);
 
   private final int capBit;

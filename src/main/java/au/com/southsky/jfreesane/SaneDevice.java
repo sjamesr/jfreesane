@@ -10,10 +10,9 @@ import java.util.Objects;
 /**
  * Represents a SANE device within a session. SANE devices are obtained from a {@link SaneSession}.
  *
- * <p>
- * Definitely not thread-safe. If you're going to use this object from multiple threads, you must do
- * your own synchronization. Even performing read operations (like getting an option's value) must
- * be synchronized.
+ * <p>Definitely not thread-safe. If you're going to use this object from multiple threads, you must
+ * do your own synchronization. Even performing read operations (like getting an option's value)
+ * must be synchronized.
  *
  * @author James Ring (sjr@jdns.org)
  */
@@ -53,9 +52,7 @@ public class SaneDevice implements Closeable {
     return type;
   }
 
-  /**
-   * Returns {@code true} if the device is open.
-   */
+  /** Returns {@code true} if the device is open. */
   public boolean isOpen() {
     return handle != null;
   }
@@ -87,10 +84,9 @@ public class SaneDevice implements Closeable {
    * Acquires a single image from the Sane daemon. The given {@link ScanListener} will be notified
    * about updates during the scan.
    *
-   * <p>
-   * The scanning thread will be used to make calls to {@code listener}. Scanning will not proceed
-   * until control returns to JFreeSane, so your implementation should not monopolize this thread
-   * for longer than necessary.
+   * <p>The scanning thread will be used to make calls to {@code listener}. Scanning will not
+   * proceed until control returns to JFreeSane, so your implementation should not monopolize this
+   * thread for longer than necessary.
    *
    * @param listener if not {@code null}, this object will receive notifications about scan progress
    * @return a {@link BufferedImage} representing the image obtained from Sane
@@ -172,22 +168,19 @@ public class SaneDevice implements Closeable {
     groups.add(group);
   }
 
-  /**
-   * Returns the list of option groups for this device.
-   */
+  /** Returns the list of option groups for this device. */
   public List<OptionGroup> getOptionGroups() throws IOException {
     listOptions();
     return new ArrayList<>(groups);
   }
 
   /**
-   * Returns the option with the given name for this device. If the option does not exist,
-   * {@code null} is returned. Name matching is case-sensitive.
+   * Returns the option with the given name for this device. If the option does not exist, {@code
+   * null} is returned. Name matching is case-sensitive.
    */
   public SaneOption getOption(String optionName) throws IOException {
     listOptions();
-    return options
-        .stream()
+    return options.stream()
         .filter(o -> Objects.equals(optionName, o.getName()))
         .findFirst()
         .orElse(null);

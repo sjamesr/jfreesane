@@ -32,9 +32,7 @@ public abstract class SanePasswordProvider {
    */
   public abstract boolean canAuthenticate(String resource);
 
-  /**
-   * Returns a {@code SanePasswordProvider} that returns the given username and password.
-   */
+  /** Returns a {@code SanePasswordProvider} that returns the given username and password. */
   public static SanePasswordProvider forUsernameAndPassword(
       final String username, final String password) {
     return new SanePasswordProvider() {
