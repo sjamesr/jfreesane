@@ -4,7 +4,7 @@ plugins {
     id 'wrapper'
     id 'maven-publish'
     id 'com.github.sherter.google-java-format' version '0.3.2'
-    id 'net.ltgt.errorprone' version '1.3.0'
+    id 'net.ltgt.errorprone' version '5.1.0'
 
     // code coverage support
     id 'jacoco'
@@ -17,8 +17,8 @@ java {
 
 jacocoTestReport {
     reports {
-        xml.enabled = true // coveralls plugin depends on xml format report
-        html.enabled = true
+        xml.required = true // coveralls plugin depends on xml format report
+        html.required = true
     }
 }
 
@@ -37,8 +37,7 @@ dependencies {
     // Cobertura requires slf4j at runtime
     testRuntimeOnly 'org.slf4j:slf4j-api:1.7.10'
 
-    errorprone 'com.google.errorprone:error_prone_core:2.4.0'
-    errorproneJavac 'com.google.errorprone:javac:9+181-r4173-1'
+    errorprone 'com.google.errorprone:error_prone_core:2.49.0'
 }
 
 wrapper {
@@ -51,16 +50,6 @@ checkstyle {
     toolVersion = '6.19'
 }
 
-task checkstyleHtml {
-    doLast {
-        ant.xslt(in: checkstyleMain.reports.xml.destination,
-                 style: file('checkstyle-noframes-sorted.xsl'),
-                 out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
-    }
-}
-
-checkstyleMain.finalizedBy checkstyleHtml
-
 // Don't stop test from running because of checkstyle failures.
 checkstyleTest.mustRunAfter test
 
@@ -69,13 +58,13 @@ javadoc {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    baseName 'javadoc'
+    archiveBaseName = 'javadoc'
 
     from javadoc.destinationDir
 }
 
 task sourceJar(type: Jar) {
-    baseName 'sources'
+    archiveBaseName = 'sources'
 
     from sourceSets.main.allJava
 }
@@ -104,16 +93,16 @@ publishing {
             from components.java
 
             artifact sourceJar {
-                classifier 'sources'
+                archiveClassifier = 'sources'
             }
 
             artifact javadocJar {
-                classifier 'javadoc'
+                archiveClassifier = 'javadoc'
             }
 
-            groupId 'com.googlecode.jfreesane'
-            artifactId 'jfreesane'
-            version releaseVersion
+            groupId = 'com.googlecode.jfreesane'
+            artifactId = 'jfreesane'
+            version = releaseVersion
 
             pom.withXml {
                 appendMavenCentralMetadata(asNode())
