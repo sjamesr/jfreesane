@@ -340,6 +340,7 @@ public final class SaneSession implements Closeable {
 
     listener.scanningFinished(device);
     SaneImage image = builder.build();
+    device.cancel();
     return image.toBufferedImage();
   }
 
