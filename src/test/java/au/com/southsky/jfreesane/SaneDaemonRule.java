@@ -57,7 +57,7 @@ public class SaneDaemonRule extends ExternalResource {
       return;
     }
 
-    saneDaemonBuilder = new ProcessBuilder("saned", "-l", "-p", "0", "-e", "-d", "8");
+    saneDaemonBuilder = new ProcessBuilder("saned", "-l", "-p", "0", "-e", "-d", "8", "-o");
     saneDaemonBuilder.directory(tempDir.getRoot());
   }
 
@@ -121,33 +121,6 @@ public class SaneDaemonRule extends ExternalResource {
 
     DeviceAuth auth = new DeviceAuth(name, username, password);
     passwords.add(auth);
-  }
-
-  @Override
-  protected void after() {
-    if (saneDaemon == null) {
-      return;
-    }
-
-    if (saneDaemon.isAlive()) {
-      logger.fine("Stopping SANE daemon");
-      saneDaemon.descendants().forEach(ProcessHandle::destroy);
-      saneDaemon.destroy();
-    }
-
-    try {
-      if (saneDaemon.waitFor(10, TimeUnit.SECONDS)) {
-        logger.info("SANE daemon exited with status " + saneDaemon.exitValue());
-      } else {
-        logger.info("Timed out waiting for SANE daemon to exit, forcibly terminating.");
-      }
-    } catch (InterruptedException e) {
-      logger.info("Interrupted while waiting for SANE daemon to exit, forcibly terminating.");
-      Thread.currentThread().interrupt();
-    } finally {
-      // This is a nop if the process is gone already.
-      saneDaemon.destroyForcibly();
-    }
   }
 
   private static final class SaneLogListener extends Thread {
