@@ -251,8 +251,7 @@ public class SaneSessionTest {
       assertThat(option.getConstraintType())
           .isEqualTo(OptionValueConstraintType.STRING_LIST_CONSTRAINT);
       assertThat(option.getStringConstraints())
-          .has()
-          .exactly(
+          .containsExactly(
               "First entry",
               "Second entry",
               "This is the very long third entry. Maybe the frontend has an idea how to display it");
@@ -536,7 +535,7 @@ public class SaneSessionTest {
     device.getOption("mode").setStringValue("Color");
     device.getOption("three-pass").setBooleanValue(true);
     device.acquireImage(listener);
-    assertThat(notifiedDevice.get()).isSameAs(device);
+    assertThat(notifiedDevice.get()).isSameInstanceAs(device);
     assertThat(frameCount.get()).isEqualTo(3);
     assertThat(framesSeen).containsExactly(FrameType.RED, FrameType.GREEN, FrameType.BLUE);
   }
