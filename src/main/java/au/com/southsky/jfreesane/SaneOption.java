@@ -754,9 +754,9 @@ public final class SaneOption {
       int pointer = stream.readWord().integerValue();
       byte[] value = null;
       if (pointer != 0) {
-        value = new byte[valueSize];
+        value = stream.readNBytes(valueSize);
 
-        if (ByteStreams.readAllBytes(stream, value) != valueSize) {
+        if (value.length != valueSize) {
           throw new IOException("truncated read while getting value");
         }
       }
