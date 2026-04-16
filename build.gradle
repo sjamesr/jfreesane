@@ -27,8 +27,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'com.google.truth:truth:0.24'
+    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'com.google.truth:truth:1.4.5'
 
     implementation 'com.google.errorprone:error_prone_annotations:2.4.0'
 
@@ -47,10 +47,9 @@ checkstyle {
     configFile = file('checkstyle_config.xml')
     ignoreFailures = false
     toolVersion = '11.0.1'
-
 }
 
-tasks.withType(Checkstyle) {
+tasks.withType(Checkstyle).configureEach {
     reports {
         xml.required = false
         html.required = true
