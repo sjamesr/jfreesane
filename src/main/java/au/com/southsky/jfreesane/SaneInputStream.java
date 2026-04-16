@@ -108,8 +108,8 @@ class SaneInputStream extends InputStream {
     }
 
     // now read all the bytes
-    byte[] input = new byte[length];
-    if (ByteStreams.readAllBytes(this, input) != length) {
+    byte[] input = readNBytes(length);
+    if (input.length != length) {
       throw new IllegalStateException("truncated input while reading string");
     }
 

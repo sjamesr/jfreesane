@@ -35,8 +35,8 @@ public final class SaneWord {
    * InputStream}.
    */
   public static SaneWord fromStream(InputStream input) throws IOException {
-    byte[] newValue = new byte[SIZE_IN_BYTES];
-    if (ByteStreams.readAllBytes(input, newValue) != newValue.length) {
+    byte[] newValue = input.readNBytes(SIZE_IN_BYTES);
+    if (newValue.length != SIZE_IN_BYTES) {
       throw new IOException("input stream was truncated while reading a word");
     }
 
